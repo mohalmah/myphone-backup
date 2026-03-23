@@ -49,20 +49,129 @@ You can edit built-in presets, disable sources you do not want, and add custom p
 - `adb.exe` available on `PATH`, or the full ADB path entered in the app
 - A writable local destination folder with enough space for the backup
 
+## Install ADB On Windows
+
+If `adb` is not already installed on your machine, set it up first.
+
+### Option 1. Use Android Platform Tools
+
+1. Download `SDK Platform-Tools for Windows` from the official Android developer site:
+   - [Android SDK Platform-Tools](https://developer.android.com/tools/releases/platform-tools)
+2. Extract the archive to a folder such as:
+   - `C:\platform-tools`
+3. Open PowerShell in that folder and confirm ADB works:
+
+```powershell
+.\adb.exe version
+```
+
+4. You can use the app in either of these ways:
+   - add the platform-tools folder to your Windows `PATH`
+   - leave it where it is and enter the full `adb.exe` path inside the app
+
+### Option 2. Add ADB To PATH
+
+If you want `adb` to work from any terminal:
+
+1. Open `System Properties`
+2. Open `Environment Variables`
+3. Edit the `Path` variable for your user account
+4. Add the platform-tools folder, for example:
+   - `C:\platform-tools`
+5. Open a new PowerShell window and verify:
+
+```powershell
+adb version
+```
+
+### If Windows Does Not Detect The Phone
+
+Try these checks:
+
+- reconnect the USB cable
+- use a data-capable USB cable, not a charge-only cable
+- try another USB port
+- switch the phone USB mode to `File transfer`
+- let Windows finish installing drivers
+- if needed, install the OEM USB driver for your phone brand
+
+## Phone Setup
+
+You do not need to install any APK or helper app on the phone for this desktop app to work.
+
+What you need on the phone is:
+
+- Developer options enabled
+- USB debugging enabled
+- the phone unlocked when connecting the first time
+- approval of the ADB authorization prompt
+
+### Step-By-Step On The Phone
+
+1. Open `Settings`.
+2. Open `About phone`.
+3. Tap `Build number` or your device’s equivalent entry 7 times.
+4. Go back to `Settings`.
+5. Open `Developer options`.
+6. Enable `USB debugging`.
+7. Connect the phone to the PC with USB.
+8. If the phone asks for a USB mode, choose `File transfer` if available.
+9. Watch for the RSA authorization prompt on the phone.
+10. Tap `Allow`.
+11. If you trust the PC, you can also enable `Always allow from this computer`.
+
+### Xiaomi / MIUI / HyperOS Notes
+
+Some Xiaomi devices place the required settings in slightly different locations.
+
+Typical path:
+
+1. Open `Settings`
+2. Open `About phone`
+3. Tap `OS version` repeatedly until developer mode is enabled
+4. Go to `Settings > Additional settings > Developer options`
+5. Enable `USB debugging`
+
+On some Xiaomi devices, advanced delete or file-management actions may also work better if `USB debugging (Security settings)` is enabled, but this is device-specific and may not be necessary for simple backup reads.
+
+## Verify ADB Before Opening The App
+
+Before using the app for the first time, confirm that ADB sees the phone.
+
+Run:
+
+```powershell
+adb devices
+```
+
+Expected result:
+
+- the phone serial appears in the list
+- the state is `device`
+
+If you see `unauthorized`:
+
+- unlock the phone
+- check for the authorization popup
+- tap `Allow`
+- run `adb devices` again
+
+If you prefer not to add ADB to `PATH`, you can still use the app by pointing the `ADB executable` field to the exact `adb.exe` location.
+
 ## Quick Start
 
-1. Install Android platform-tools so `adb.exe` is available.
-2. On the phone, enable `Developer options` and `USB debugging`.
-3. Connect the phone by USB.
-4. Accept the ADB authorization prompt on the phone.
-5. From the repository root, start the packaged release:
+1. Install ADB on Windows.
+2. Prepare the phone with Developer options and USB debugging.
+3. Run `adb devices` once and make sure the phone shows as `device`.
+4. From the repository root, start the packaged release:
 
 ```powershell
 cd dist\releases
 .\adb-smart-backup-v0.1.0-windows-x86_64.exe
 ```
 
-6. Click `Refresh Device` and confirm the status shows `CONNECTED`.
+5. Click `Refresh Device` and confirm the status shows `CONNECTED`.
+6. If needed, set the `ADB executable` field to your full `adb.exe` path.
 7. Leave `Dry-run mode` enabled for the first test.
 8. Scan sources, review the analysis, and run a test backup before enabling any delete option.
 
