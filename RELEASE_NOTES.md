@@ -19,9 +19,10 @@ First packaged release of ADB Smart Backup & Cleanup.
 - Selective cleanup for chosen files and subfolders
 - Detailed activity log with optional ADB command tracing
 
-### Local Release Artifact
+### Release Assets
 
-- `dist\releases\adb-smart-backup-v0.1.0-windows-x86_64.exe`
+- `adb-smart-backup-v0.1.0-windows-x86_64.exe`
+- `adb-smart-backup-v0.1.0-windows-x86_64.zip`
 
 ### GitHub Release Target
 

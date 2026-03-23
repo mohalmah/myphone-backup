@@ -55,10 +55,10 @@ You can edit built-in presets, disable sources you do not want, and add custom p
 2. On the phone, enable `Developer options` and `USB debugging`.
 3. Connect the phone by USB.
 4. Accept the ADB authorization prompt on the phone.
-5. Start the app:
+5. From the repository root, start the packaged release:
 
 ```powershell
-cd C:\dev\myphone-backup\myphone-backup\dist\releases
+cd dist\releases
 .\adb-smart-backup-v0.1.0-windows-x86_64.exe
 ```
 
@@ -206,31 +206,28 @@ The detailed activity log can optionally show:
 ### Development Run
 
 ```powershell
-cd C:\dev\myphone-backup\myphone-backup
 cargo run
 ```
 
 ### Run Tests
 
 ```powershell
-cd C:\dev\myphone-backup\myphone-backup
 cargo test
 ```
 
 ### Build A Release Binary
 
 ```powershell
-cd C:\dev\myphone-backup\myphone-backup
 cargo build --release
 ```
 
 The optimized executable will be created at:
 
-`C:\dev\myphone-backup\myphone-backup\target\release\adb-smart-backup.exe`
+`target\release\adb-smart-backup.exe`
 
 The packaged local release artifact is staged at:
 
-`C:\dev\myphone-backup\myphone-backup\dist\releases\adb-smart-backup-v0.1.0-windows-x86_64.exe`
+`dist\releases\adb-smart-backup-v0.1.0-windows-x86_64.exe`
 
 ## GitHub Releases
 
@@ -246,7 +243,14 @@ Release notes prepared in this repo:
 
 - `RELEASE_NOTES.md`
 
-At the time of writing, the remote releases page is empty, so the local release artifact in `dist\releases` is the prepared binary for the first published release.
+Published release:
+
+- [ADB Smart Backup & Cleanup v0.1.0](https://github.com/mohalmah/myphone-backup/releases/tag/v0.1.0)
+
+Release assets:
+
+- `adb-smart-backup-v0.1.0-windows-x86_64.exe`
+- `adb-smart-backup-v0.1.0-windows-x86_64.zip`
 
 ## Troubleshooting
 
@@ -284,3 +288,9 @@ For the first real run:
 - use a small test folder
 - inspect the copied files locally
 - only then enable delete behavior
+
+## License
+
+This project is licensed under the MIT License.
+
+See `LICENSE` for the full text.

@@ -2,6 +2,9 @@
 name = "adb-smart-backup"
 version = "0.1.0"
 edition = "2024"
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/mohalmah/myphone-backup"
 
 [dependencies]
 anyhow = "1"
