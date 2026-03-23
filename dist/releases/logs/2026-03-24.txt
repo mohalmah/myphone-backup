@@ -1,0 +1,229 @@
+[07:32:06] [TRACE] ADB command failed
+    ----------------
+    Command:
+    adb shell -T "sh '-c' 'if [ ! -d \"$1\" ]; then
+        echo \"__NOT_DIRECTORY__\"
+        exit 11
+    fi
+    find \"$1\" -type f | while IFS= read -r item; do
+        size=\"$(stat -c %s \"$item\" 2>/dev/null)\"
+        if [ -z \"$size\" ]; then
+            size=\"$(stat -f %z \"$item\" 2>/dev/null)\"
+        fi
+        modified=\"$(stat -c %Y \"$item\" 2>/dev/null)\"
+        if [ -z \"$modified\" ]; then
+            modified=\"$(stat -f %m \"$item\" 2>/dev/null)\"
+        fi
+        printf '\''F|%s|%s|%s\n'\'' \"${size:-0}\" \"${modified:-0}\" \"$item\"
+    done' 'list-files-recursive' '/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images'"
+    
+    Exit code: 1
+    
+    Stdout:
+    <empty>
+    
+    Stderr:
+    adb.exe: no devices/emulators found
+    ----------------
+[07:32:06] [TRACE] ADB command completed
+    ----------------
+    Command:
+    adb devices -l
+    
+    Exit code: 0
+    
+    Stdout:
+    List of devices attached
+    
+    Stderr:
+    <empty>
+    ----------------
+[07:32:06] [TRACE] ADB command failed
+    ----------------
+    Command:
+    adb shell -T "sh '-c' 'if [ ! -d \"$1\" ]; then
+        echo \"__NOT_DIRECTORY__\"
+        exit 11
+    fi
+    find \"$1\" -type f | while IFS= read -r item; do
+        size=\"$(stat -c %s \"$item\" 2>/dev/null)\"
+        if [ -z \"$size\" ]; then
+            size=\"$(stat -f %z \"$item\" 2>/dev/null)\"
+        fi
+        modified=\"$(stat -c %Y \"$item\" 2>/dev/null)\"
+        if [ -z \"$modified\" ]; then
+            modified=\"$(stat -f %m \"$item\" 2>/dev/null)\"
+        fi
+        printf '\''F|%s|%s|%s\n'\'' \"${size:-0}\" \"${modified:-0}\" \"$item\"
+    done' 'list-files-recursive' '/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Video'"
+    
+    Exit code: 1
+    
+    Stdout:
+    <empty>
+    
+    Stderr:
+    adb.exe: no devices/emulators found
+    ----------------
+[07:32:06] [TRACE] ADB command failed
+    ----------------
+    Command:
+    adb shell -T "sh '-c' 'if [ ! -d \"$1\" ]; then
+        echo \"__NOT_DIRECTORY__\"
+        exit 11
+    fi
+    find \"$1\" -type f | while IFS= read -r item; do
+        size=\"$(stat -c %s \"$item\" 2>/dev/null)\"
+        if [ -z \"$size\" ]; then
+            size=\"$(stat -f %z \"$item\" 2>/dev/null)\"
+        fi
+        modified=\"$(stat -c %Y \"$item\" 2>/dev/null)\"
+        if [ -z \"$modified\" ]; then
+            modified=\"$(stat -f %m \"$item\" 2>/dev/null)\"
+        fi
+        printf '\''F|%s|%s|%s\n'\'' \"${size:-0}\" \"${modified:-0}\" \"$item\"
+    done' 'list-files-recursive' '/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Documents'"
+    
+    Exit code: 1
+    
+    Stdout:
+    <empty>
+    
+    Stderr:
+    adb.exe: no devices/emulators found
+    ----------------
+[07:32:06] [TRACE] ADB command failed
+    ----------------
+    Command:
+    adb shell -T "sh '-c' 'if [ ! -d \"$1\" ]; then
+        echo \"__NOT_DIRECTORY__\"
+        exit 11
+    fi
+    find \"$1\" -type f | while IFS= read -r item; do
+        size=\"$(stat -c %s \"$item\" 2>/dev/null)\"
+        if [ -z \"$size\" ]; then
+            size=\"$(stat -f %z \"$item\" 2>/dev/null)\"
+        fi
+        modified=\"$(stat -c %Y \"$item\" 2>/dev/null)\"
+        if [ -z \"$modified\" ]; then
+            modified=\"$(stat -f %m \"$item\" 2>/dev/null)\"
+        fi
+        printf '\''F|%s|%s|%s\n'\'' \"${size:-0}\" \"${modified:-0}\" \"$item\"
+    done' 'list-files-recursive' '/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Audio'"
+    
+    Exit code: 1
+    
+    Stdout:
+    <empty>
+    
+    Stderr:
+    adb.exe: no devices/emulators found
+    ----------------
+[07:32:06] [TRACE] ADB command failed
+    ----------------
+    Command:
+    adb shell -T "sh '-c' 'if [ ! -d \"$1\" ]; then
+        echo \"__NOT_DIRECTORY__\"
+        exit 11
+    fi
+    find \"$1\" -type f | while IFS= read -r item; do
+        size=\"$(stat -c %s \"$item\" 2>/dev/null)\"
+        if [ -z \"$size\" ]; then
+            size=\"$(stat -f %z \"$item\" 2>/dev/null)\"
+        fi
+        modified=\"$(stat -c %Y \"$item\" 2>/dev/null)\"
+        if [ -z \"$modified\" ]; then
+            modified=\"$(stat -f %m \"$item\" 2>/dev/null)\"
+        fi
+        printf '\''F|%s|%s|%s\n'\'' \"${size:-0}\" \"${modified:-0}\" \"$item\"
+    done' 'list-files-recursive' '/sdcard/Download'"
+    
+    Exit code: 1
+    
+    Stdout:
+    <empty>
+    
+    Stderr:
+    adb.exe: no devices/emulators found
+    ----------------
+[07:32:06] [TRACE] ADB command failed
+    ----------------
+    Command:
+    adb shell -T "sh '-c' 'if [ ! -d \"$1\" ]; then
+        echo \"__NOT_DIRECTORY__\"
+        exit 11
+    fi
+    find \"$1\" -type f | while IFS= read -r item; do
+        size=\"$(stat -c %s \"$item\" 2>/dev/null)\"
+        if [ -z \"$size\" ]; then
+            size=\"$(stat -f %z \"$item\" 2>/dev/null)\"
+        fi
+        modified=\"$(stat -c %Y \"$item\" 2>/dev/null)\"
+        if [ -z \"$modified\" ]; then
+            modified=\"$(stat -f %m \"$item\" 2>/dev/null)\"
+        fi
+        printf '\''F|%s|%s|%s\n'\'' \"${size:-0}\" \"${modified:-0}\" \"$item\"
+    done' 'list-files-recursive' '/sdcard/DCIM/Camera'"
+    
+    Exit code: 1
+    
+    Stdout:
+    <empty>
+    
+    Stderr:
+    adb.exe: no devices/emulators found
+    ----------------
+[07:32:06] [TRACE] ADB command failed
+    ----------------
+    Command:
+    adb shell -T "sh '-c' 'if [ ! -d \"$1\" ]; then
+        echo \"__NOT_DIRECTORY__\"
+        exit 11
+    fi
+    find \"$1\" -type f | while IFS= read -r item; do
+        size=\"$(stat -c %s \"$item\" 2>/dev/null)\"
+        if [ -z \"$size\" ]; then
+            size=\"$(stat -f %z \"$item\" 2>/dev/null)\"
+        fi
+        modified=\"$(stat -c %Y \"$item\" 2>/dev/null)\"
+        if [ -z \"$modified\" ]; then
+            modified=\"$(stat -f %m \"$item\" 2>/dev/null)\"
+        fi
+        printf '\''F|%s|%s|%s\n'\'' \"${size:-0}\" \"${modified:-0}\" \"$item\"
+    done' 'list-files-recursive' '/sdcard/Telegram/Telegram Images'"
+    
+    Exit code: 1
+    
+    Stdout:
+    <empty>
+    
+    Stderr:
+    adb.exe: no devices/emulators found
+    ----------------
+[07:32:06] [TRACE] ADB command failed
+    ----------------
+    Command:
+    adb shell -T "sh '-c' 'if [ ! -d \"$1\" ]; then
+        echo \"__NOT_DIRECTORY__\"
+        exit 11
+    fi
+    find \"$1\" -type f | while IFS= read -r item; do
+        size=\"$(stat -c %s \"$item\" 2>/dev/null)\"
+        if [ -z \"$size\" ]; then
+            size=\"$(stat -f %z \"$item\" 2>/dev/null)\"
+        fi
+        modified=\"$(stat -c %Y \"$item\" 2>/dev/null)\"
+        if [ -z \"$modified\" ]; then
+            modified=\"$(stat -f %m \"$item\" 2>/dev/null)\"
+        fi
+        printf '\''F|%s|%s|%s\n'\'' \"${size:-0}\" \"${modified:-0}\" \"$item\"
+    done' 'list-files-recursive' '/sdcard/Telegram/Telegram Video'"
+    
+    Exit code: 1
+    
+    Stdout:
+    <empty>
+    
+    Stderr:
+    adb.exe: no devices/emulators found
+    ----------------
