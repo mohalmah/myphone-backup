@@ -3,8 +3,8 @@ use super::{
     config,
     logging::AppLogger,
     models::{
-        DeviceConnectionState, ExistingFileBehavior, FileRecord, FileStatus, RemoteFile,
-        RunSummary, Settings, SyncProgress,
+        DeviceConnectionState, ExistingFileBehavior, FileRecord, FileStatus, RemoteDirectory,
+        RemoteFile, RemoteFolderPreview, RunSummary, Settings, SyncProgress,
     },
     validator::validate_remote_vs_local,
 };
@@ -70,6 +70,52 @@ pub fn start_device_probe(adb_path: String) -> Receiver<Result<super::models::De
         let controller = AdbController::new(adb_path);
         let result = controller
             .detect_device()
+            .map_err(|error| error.to_string());
+        let _ = tx.send(result);
+    });
+    rx
+}
+
+pub fn start_remote_directory_list(
+    adb_path: String,
+    path: String,
+) -> Receiver<Result<Vec<RemoteDirectory>, String>> {
+    let (tx, rx) = channel();
+    thread::spawn(move || {
+        let controller = AdbController::new(adb_path);
+        let result = controller
+            .list_remote_directories(&path)
+            .map_err(|error| error.to_string());
+        let _ = tx.send(result);
+    });
+    rx
+}
+
+pub fn start_remote_folder_preview(
+    adb_path: String,
+    path: String,
+) -> Receiver<Result<RemoteFolderPreview, String>> {
+    let (tx, rx) = channel();
+    thread::spawn(move || {
+        let controller = AdbController::new(adb_path);
+        let result = controller
+            .preview_remote_folder_contents(&path)
+            .map_err(|error| error.to_string());
+        let _ = tx.send(result);
+    });
+    rx
+}
+
+pub fn start_remote_folder_delete(
+    adb_path: String,
+    path: String,
+) -> Receiver<Result<String, String>> {
+    let (tx, rx) = channel();
+    thread::spawn(move || {
+        let controller = AdbController::new(adb_path);
+        let result = controller
+            .delete_remote_folder_recursive(&path)
+            .map(|()| path.clone())
             .map_err(|error| error.to_string());
         let _ = tx.send(result);
     });

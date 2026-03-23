@@ -1,4 +1,7 @@
-use super::models::{DeviceConnectionState, DeviceInfo, RemoteFile};
+use super::models::{
+    DeviceConnectionState, DeviceInfo, RemoteDirectory, RemoteFile, RemoteFolderEntry,
+    RemoteFolderEntryKind, RemoteFolderPreview,
+};
 use anyhow::{Context, Result, anyhow, bail};
 use std::path::Path;
 use std::process::Command;
@@ -102,11 +105,7 @@ impl AdbController {
     }
 
     pub fn list_remote_files(&self, source_directory: &str) -> Result<Vec<RemoteFile>> {
-        let source = shell_quote(source_directory);
-        let script = format!(
-            "if [ -d {source} ]; then ls -1 -p {source}; else echo '__MISSING__'; exit 11; fi"
-        );
-        let output = self.run_shell_script(&script)?;
+        let output = self.run_shell_command("ls", &["-1", "-p", source_directory])?;
 
         let mut files = Vec::new();
         for line in output
@@ -114,9 +113,6 @@ impl AdbController {
             .map(str::trim)
             .filter(|line| !line.is_empty())
         {
-            if line == "__MISSING__" {
-                bail!("Remote folder does not exist: {source_directory}");
-            }
             if line.ends_with('/') {
                 continue;
             }
@@ -136,9 +132,36 @@ impl AdbController {
         Ok(files)
     }
 
+    pub fn list_remote_directories(&self, source_directory: &str) -> Result<Vec<RemoteDirectory>> {
+        let output = self.run_shell_command("ls", &["-1", "-p", source_directory])?;
+
+        let mut directories = Vec::new();
+        let base = source_directory.trim_end_matches('/');
+        for line in output
+            .lines()
+            .map(str::trim)
+            .filter(|line| !line.is_empty())
+        {
+            if !line.ends_with('/') {
+                continue;
+            }
+
+            let name = line.trim_end_matches('/').to_string();
+            let full_path = if base.is_empty() {
+                format!("/{}", name)
+            } else {
+                format!("{base}/{}", name)
+            };
+
+            directories.push(RemoteDirectory { name, full_path });
+        }
+
+        directories.sort_by(|left, right| left.name.to_lowercase().cmp(&right.name.to_lowercase()));
+        Ok(directories)
+    }
+
     pub fn remote_file_metadata(&self, remote_path: &str) -> Result<(u64, Option<i64>)> {
-        let script = format!("stat -c '%s|%Y' {}", shell_quote(remote_path));
-        let output = self.run_shell_script(&script)?;
+        let output = self.run_shell_command("stat", &["-c", "%s|%Y", remote_path])?;
         let trimmed = output.trim();
         let mut parts = trimmed.split('|');
 
@@ -164,20 +187,91 @@ impl AdbController {
     }
 
     pub fn delete_file(&self, remote_path: &str) -> Result<()> {
-        let script = format!("rm {}", shell_quote(remote_path));
-        self.run_shell_script(&script)?;
+        self.run_shell_command("rm", &[remote_path])?;
         Ok(())
     }
 
     pub fn remote_md5(&self, remote_path: &str) -> Result<String> {
-        let script = format!("md5sum {}", shell_quote(remote_path));
-        let output = self.run_shell_script(&script)?;
+        let output = self.run_shell_command("md5sum", &[remote_path])?;
         extract_md5(&output)
             .ok_or_else(|| anyhow!("Unable to parse remote md5sum output for {remote_path}"))
     }
 
-    fn run_shell_script(&self, script: &str) -> Result<String> {
-        let output = self.run_command(&["shell", "sh", "-c", script])?;
+    pub fn preview_remote_folder_contents(&self, folder_path: &str) -> Result<RemoteFolderPreview> {
+        let script = r#"if [ ! -d "$1" ]; then
+    echo "__NOT_DIRECTORY__"
+    exit 11
+fi
+find "$1" -mindepth 1 | while IFS= read -r item; do
+    if [ -d "$item" ]; then
+        printf 'D|%s\n' "$item"
+    else
+        size="$(stat -c %s "$item" 2>/dev/null)"
+        if [ -z "$size" ]; then
+            size="$(stat -f %z "$item" 2>/dev/null)"
+        fi
+        printf 'F|%s|%s\n' "${size:-0}" "$item"
+    fi
+done"#;
+
+        let output = self.run_shell_command("sh", &["-c", script, "preview-folder", folder_path])?;
+        if output.lines().any(|line| line.trim() == "__NOT_DIRECTORY__") {
+            bail!("Remote folder does not exist: {folder_path}");
+        }
+
+        let mut entries = Vec::new();
+        let mut file_count = 0usize;
+        let mut directory_count = 0usize;
+        let mut total_file_bytes = 0u64;
+
+        for line in output.lines().map(str::trim).filter(|line| !line.is_empty()) {
+            if let Some(path) = line.strip_prefix("D|") {
+                directory_count += 1;
+                entries.push(RemoteFolderEntry {
+                    full_path: path.to_string(),
+                    kind: RemoteFolderEntryKind::Directory,
+                    size_bytes: None,
+                });
+            } else if let Some(rest) = line.strip_prefix("F|") {
+                let mut parts = rest.splitn(2, '|');
+                let size_bytes = parts
+                    .next()
+                    .unwrap_or("0")
+                    .trim()
+                    .parse::<u64>()
+                    .unwrap_or(0);
+                let full_path = parts.next().unwrap_or("").trim().to_string();
+                if !full_path.is_empty() {
+                    file_count += 1;
+                    total_file_bytes = total_file_bytes.saturating_add(size_bytes);
+                    entries.push(RemoteFolderEntry {
+                        full_path,
+                        kind: RemoteFolderEntryKind::File,
+                        size_bytes: Some(size_bytes),
+                    });
+                }
+            }
+        }
+
+        entries.sort_by(|left, right| left.full_path.to_lowercase().cmp(&right.full_path.to_lowercase()));
+
+        Ok(RemoteFolderPreview {
+            root_path: folder_path.to_string(),
+            entries,
+            file_count,
+            directory_count,
+            total_file_bytes,
+        })
+    }
+
+    pub fn delete_remote_folder_recursive(&self, folder_path: &str) -> Result<()> {
+        self.run_shell_command("rm", &["-rf", folder_path])?;
+        Ok(())
+    }
+
+    fn run_shell_command(&self, command: &str, args: &[&str]) -> Result<String> {
+        let command_line = build_shell_command(command, args);
+        let output = self.run_command(&["shell", &command_line])?;
         Ok(output.stdout)
     }
 
@@ -213,8 +307,17 @@ impl AdbController {
     }
 }
 
+fn build_shell_command(command: &str, args: &[&str]) -> String {
+    let mut command_line = String::from(command);
+    for arg in args {
+        command_line.push(' ');
+        command_line.push_str(&shell_quote(arg));
+    }
+    command_line
+}
+
 fn shell_quote(value: &str) -> String {
-    format!("'{}'", value.replace('\'', r#"'"'"'"#))
+    format!("'{}'", value.replace('\'', r#"'\''"#))
 }
 
 fn extract_md5(output: &str) -> Option<String> {
@@ -228,11 +331,35 @@ fn extract_md5(output: &str) -> Option<String> {
 
 #[cfg(test)]
 mod tests {
-    use super::extract_md5;
+    use super::{build_shell_command, extract_md5};
 
     #[test]
     fn extracts_md5_from_md5sum_output() {
         let hash = extract_md5("0cc175b9c0f1b6a831c399e269772661  /sdcard/file.mp4");
         assert_eq!(hash.as_deref(), Some("0cc175b9c0f1b6a831c399e269772661"));
+    }
+
+    #[test]
+    fn builds_shell_command_with_quoted_spaces() {
+        let command = build_shell_command(
+            "ls",
+            &["-1", "-p", "/sdcard/Android/media/com.whatsapp/WhatsApp Documents"],
+        );
+        assert_eq!(
+            command,
+            "ls '-1' '-p' '/sdcard/Android/media/com.whatsapp/WhatsApp Documents'"
+        );
+    }
+
+    #[test]
+    fn builds_shell_command_for_rm_recursive() {
+        let command = build_shell_command(
+            "rm",
+            &["-rf", "/sdcard/Android/media/com.whatsapp/WhatsApp Documents"],
+        );
+        assert_eq!(
+            command,
+            "rm '-rf' '/sdcard/Android/media/com.whatsapp/WhatsApp Documents'"
+        );
     }
 }

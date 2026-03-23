@@ -1,0 +1,22 @@
+{
+  "adb_path": "adb",
+  "source_path": "/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Documents",
+  "destination_path": "E:\\Xiaomi12TPro\\24-03-2026 before Misk\\Whatsapp docs",
+  "validation_mode": "Size",
+  "existing_file_behavior": "Validate",
+  "auto_delete_after_success": false,
+  "dry_run": true,
+  "only_last_days": null,
+  "presets": [
+    {
+      "name": "WhatsApp Docs",
+      "source_path": "/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Documents",
+      "destination_path": "E:\\Xiaomi12TPro\\24-03-2026 before Misk\\Whatsapp docs"
+    },
+    {
+      "name": "WhatsApp Videos",
+      "source_path": "/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Video",
+      "destination_path": "E:\\Xiaomi12TPro\\24-03-2026 before Misk\\Whatsapp Video"
+    }
+  ]
+}

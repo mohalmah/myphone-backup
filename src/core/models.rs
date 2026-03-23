@@ -120,6 +120,43 @@ pub struct RemoteFile {
     pub modified_epoch_seconds: Option<i64>,
 }
 
+#[derive(Clone, Debug)]
+pub struct RemoteDirectory {
+    pub name: String,
+    pub full_path: String,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum RemoteFolderEntryKind {
+    Directory,
+    File,
+}
+
+impl RemoteFolderEntryKind {
+    pub fn label(&self) -> &'static str {
+        match self {
+            Self::Directory => "Folder",
+            Self::File => "File",
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct RemoteFolderEntry {
+    pub full_path: String,
+    pub kind: RemoteFolderEntryKind,
+    pub size_bytes: Option<u64>,
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct RemoteFolderPreview {
+    pub root_path: String,
+    pub entries: Vec<RemoteFolderEntry>,
+    pub file_count: usize,
+    pub directory_count: usize,
+    pub total_file_bytes: u64,
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum FileStatus {
     Queued,

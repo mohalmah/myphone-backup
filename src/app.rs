@@ -2,7 +2,8 @@ use crate::core::{
     config,
     models::{
         BackupPreset, DeviceConnectionState, DeviceInfo, ExistingFileBehavior, FileRecord,
-        RemoteFile, RunSummary, Settings, SyncProgress, ValidationMode,
+        RemoteDirectory, RemoteFile, RemoteFolderEntryKind, RemoteFolderPreview, RunSummary,
+        Settings, SyncProgress, ValidationMode,
     },
     sync::{self, SyncEvent, SyncHandle, SyncPlan},
 };
@@ -11,8 +12,41 @@ use eframe::egui::{
     self, Align, Color32, Context, CornerRadius, Frame, Layout, Margin, RichText, ScrollArea,
     Stroke,
 };
+use rfd::FileDialog;
+use std::path::PathBuf;
 use std::sync::mpsc::{Receiver, TryRecvError};
 use std::time::Duration;
+
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+enum RemoteFolderPickerTarget {
+    #[default]
+    SourceFolder,
+    CleanupFolder,
+}
+
+#[derive(Default)]
+struct RemoteFolderPicker {
+    is_open: bool,
+    is_loading: bool,
+    current_path: String,
+    target: RemoteFolderPickerTarget,
+    entries: Vec<RemoteDirectory>,
+    receiver: Option<Receiver<Result<Vec<RemoteDirectory>, String>>>,
+    error: Option<String>,
+}
+
+#[derive(Default)]
+struct FolderCleanupState {
+    folder_path: String,
+    preview: Option<RemoteFolderPreview>,
+    preview_receiver: Option<Receiver<Result<RemoteFolderPreview, String>>>,
+    delete_receiver: Option<Receiver<Result<String, String>>>,
+    is_fetching_preview: bool,
+    is_deleting: bool,
+    preview_error: Option<String>,
+    delete_error: Option<String>,
+    delete_armed: bool,
+}
 
 pub struct BackupApp {
     settings: Settings,
@@ -20,6 +54,8 @@ pub struct BackupApp {
     device_probe_receiver: Option<Receiver<Result<DeviceInfo, String>>>,
     sync_receiver: Option<Receiver<SyncEvent>>,
     sync_handle: Option<SyncHandle>,
+    remote_folder_picker: RemoteFolderPicker,
+    folder_cleanup: FolderCleanupState,
     files: Vec<FileRecord>,
     progress: SyncProgress,
     log_lines: Vec<String>,
@@ -35,6 +71,7 @@ impl BackupApp {
         apply_theme(&cc.egui_ctx);
 
         let settings = config::load_settings().unwrap_or_default();
+        let initial_cleanup_folder = settings.source_path.clone();
         let selected_preset_name = settings
             .presets
             .first()
@@ -49,6 +86,11 @@ impl BackupApp {
             device_probe_receiver: None,
             sync_receiver: None,
             sync_handle: None,
+            remote_folder_picker: RemoteFolderPicker::default(),
+            folder_cleanup: FolderCleanupState {
+                folder_path: initial_cleanup_folder,
+                ..Default::default()
+            },
             files: Vec::new(),
             progress: SyncProgress::default(),
             log_lines: Vec::new(),
@@ -82,6 +124,233 @@ impl BackupApp {
     fn refresh_device_info(&mut self) {
         self.status_banner = "Checking ADB connection...".to_string();
         self.device_probe_receiver = Some(sync::start_device_probe(self.settings.adb_path.clone()));
+    }
+
+    fn pick_local_destination_folder(&mut self) {
+        let initial_directory = initial_local_directory(&self.settings.destination_path);
+        if let Some(folder) = FileDialog::new()
+            .set_directory(initial_directory)
+            .pick_folder()
+        {
+            let selected = folder.to_string_lossy().to_string();
+            self.settings.destination_path = selected.clone();
+            self.status_banner = format!("Selected local destination folder: {selected}");
+            self.push_log(format!("[INFO] Local destination folder selected: {selected}"));
+        }
+    }
+
+    fn open_source_folder_picker(&mut self) {
+        let start_path = normalize_remote_path(&self.settings.source_path);
+        self.open_remote_folder_picker(RemoteFolderPickerTarget::SourceFolder, start_path);
+    }
+
+    fn open_cleanup_folder_picker(&mut self) {
+        let seed_path = if self.folder_cleanup.folder_path.trim().is_empty() {
+            self.settings.source_path.clone()
+        } else {
+            self.folder_cleanup.folder_path.clone()
+        };
+        let start_path = normalize_remote_path(&seed_path);
+        self.open_remote_folder_picker(RemoteFolderPickerTarget::CleanupFolder, start_path);
+    }
+
+    fn open_remote_folder_picker(
+        &mut self,
+        target: RemoteFolderPickerTarget,
+        start_path: String,
+    ) {
+        self.remote_folder_picker.target = target;
+        self.remote_folder_picker.is_open = true;
+        self.request_remote_directory_listing(start_path);
+    }
+
+    fn request_remote_directory_listing(&mut self, path: String) {
+        let normalized_path = normalize_remote_path(&path);
+        self.remote_folder_picker.current_path = normalized_path.clone();
+        self.remote_folder_picker.entries.clear();
+        self.remote_folder_picker.error = None;
+        self.remote_folder_picker.is_loading = true;
+        self.remote_folder_picker.receiver = Some(sync::start_remote_directory_list(
+            self.settings.adb_path.clone(),
+            normalized_path,
+        ));
+    }
+
+    fn poll_remote_folder_picker(&mut self) {
+        let mut outcome = None;
+        let mut disconnected = false;
+
+        if let Some(receiver) = &self.remote_folder_picker.receiver {
+            match receiver.try_recv() {
+                Ok(result) => outcome = Some(result),
+                Err(TryRecvError::Empty) => {}
+                Err(TryRecvError::Disconnected) => disconnected = true,
+            }
+        }
+
+        if let Some(result) = outcome {
+            self.remote_folder_picker.receiver = None;
+            self.remote_folder_picker.is_loading = false;
+            match result {
+                Ok(entries) => {
+                    self.remote_folder_picker.entries = entries;
+                    self.remote_folder_picker.error = None;
+                }
+                Err(error) => {
+                    self.remote_folder_picker.error = Some(error.clone());
+                    self.push_log(format!("[ERROR] {error}"));
+                }
+            }
+        } else if disconnected {
+            self.remote_folder_picker.receiver = None;
+            self.remote_folder_picker.is_loading = false;
+        }
+    }
+
+    fn set_cleanup_folder_path(&mut self, path: String) {
+        let normalized = normalize_remote_path(&path);
+        if self.folder_cleanup.folder_path != normalized {
+            self.folder_cleanup.folder_path = normalized;
+            self.folder_cleanup.preview = None;
+            self.folder_cleanup.preview_error = None;
+            self.folder_cleanup.delete_error = None;
+            self.folder_cleanup.delete_armed = false;
+        }
+    }
+
+    fn request_cleanup_preview(&mut self) {
+        if self.folder_cleanup.folder_path.trim().is_empty() {
+            self.folder_cleanup.preview_error =
+                Some("Choose a phone folder before fetching contents.".to_string());
+            return;
+        }
+
+        let path = normalize_remote_path(&self.folder_cleanup.folder_path);
+        self.folder_cleanup.folder_path = path.clone();
+        self.folder_cleanup.preview = None;
+        self.folder_cleanup.preview_error = None;
+        self.folder_cleanup.delete_error = None;
+        self.folder_cleanup.delete_armed = false;
+        self.folder_cleanup.is_fetching_preview = true;
+        self.folder_cleanup.preview_receiver = Some(sync::start_remote_folder_preview(
+            self.settings.adb_path.clone(),
+            path.clone(),
+        ));
+        self.status_banner = format!("Fetching folder contents for {path}...");
+        self.push_log(format!("[INFO] Fetching cleanup preview for {path}"));
+    }
+
+    fn request_cleanup_delete(&mut self) {
+        let path = normalize_remote_path(&self.folder_cleanup.folder_path);
+
+        if let Some(reason) = protected_cleanup_folder_reason(&path) {
+            self.folder_cleanup.delete_error = Some(reason.to_string());
+            return;
+        }
+
+        let preview_matches_path = self
+            .folder_cleanup
+            .preview
+            .as_ref()
+            .map(|preview| preview.root_path == path)
+            .unwrap_or(false);
+
+        if !preview_matches_path {
+            self.folder_cleanup.delete_error =
+                Some("Fetch folder contents before deleting.".to_string());
+            return;
+        }
+
+        if !self.folder_cleanup.delete_armed {
+            self.folder_cleanup.delete_error = Some(
+                "Arm deletion first by checking the confirmation box.".to_string(),
+            );
+            return;
+        }
+
+        self.folder_cleanup.delete_error = None;
+        self.folder_cleanup.is_deleting = true;
+        self.folder_cleanup.delete_receiver = Some(sync::start_remote_folder_delete(
+            self.settings.adb_path.clone(),
+            path.clone(),
+        ));
+        self.status_banner = format!("Deleting remote folder {path}...");
+        self.push_log(format!("[INFO] Deleting remote folder recursively: {path}"));
+    }
+
+    fn poll_cleanup_jobs(&mut self) {
+        let mut preview_outcome = None;
+        let mut preview_disconnected = false;
+
+        if let Some(receiver) = &self.folder_cleanup.preview_receiver {
+            match receiver.try_recv() {
+                Ok(result) => preview_outcome = Some(result),
+                Err(TryRecvError::Empty) => {}
+                Err(TryRecvError::Disconnected) => preview_disconnected = true,
+            }
+        }
+
+        if let Some(result) = preview_outcome {
+            self.folder_cleanup.preview_receiver = None;
+            self.folder_cleanup.is_fetching_preview = false;
+            match result {
+                Ok(preview) => {
+                    let message = format!(
+                        "Fetched cleanup preview: {} files, {} folders.",
+                        preview.file_count, preview.directory_count
+                    );
+                    self.folder_cleanup.preview_error = None;
+                    self.folder_cleanup.preview = Some(preview);
+                    self.status_banner = message.clone();
+                    self.push_log(format!("[INFO] {message}"));
+                }
+                Err(error) => {
+                    self.folder_cleanup.preview = None;
+                    self.folder_cleanup.preview_error = Some(error.clone());
+                    self.status_banner = "Failed to fetch folder contents.".to_string();
+                    self.push_log(format!("[ERROR] {error}"));
+                }
+            }
+        } else if preview_disconnected {
+            self.folder_cleanup.preview_receiver = None;
+            self.folder_cleanup.is_fetching_preview = false;
+        }
+
+        let mut delete_outcome = None;
+        let mut delete_disconnected = false;
+
+        if let Some(receiver) = &self.folder_cleanup.delete_receiver {
+            match receiver.try_recv() {
+                Ok(result) => delete_outcome = Some(result),
+                Err(TryRecvError::Empty) => {}
+                Err(TryRecvError::Disconnected) => delete_disconnected = true,
+            }
+        }
+
+        if let Some(result) = delete_outcome {
+            self.folder_cleanup.delete_receiver = None;
+            self.folder_cleanup.is_deleting = false;
+            self.folder_cleanup.delete_armed = false;
+            match result {
+                Ok(path) => {
+                    self.folder_cleanup.preview = None;
+                    self.folder_cleanup.preview_error = None;
+                    self.folder_cleanup.delete_error = None;
+                    self.status_banner = format!("Deleted remote folder: {path}");
+                    self.push_log(format!(
+                        "[INFO] Deleted remote folder and all contents: {path}"
+                    ));
+                }
+                Err(error) => {
+                    self.folder_cleanup.delete_error = Some(error.clone());
+                    self.status_banner = "Remote folder delete failed.".to_string();
+                    self.push_log(format!("[ERROR] {error}"));
+                }
+            }
+        } else if delete_disconnected {
+            self.folder_cleanup.delete_receiver = None;
+            self.folder_cleanup.is_deleting = false;
+        }
     }
 
     fn save_settings(&mut self) {
@@ -289,14 +558,128 @@ impl BackupApp {
             self.sync_handle = None;
         }
     }
+
+    fn show_remote_folder_picker(&mut self, ctx: &Context) {
+        if !self.remote_folder_picker.is_open {
+            return;
+        }
+
+        let current_path = self.remote_folder_picker.current_path.clone();
+        let picker_target = self.remote_folder_picker.target;
+        let entries = self.remote_folder_picker.entries.clone();
+        let error = self.remote_folder_picker.error.clone();
+        let is_loading = self.remote_folder_picker.is_loading;
+        let can_go_up = parent_remote_path(&current_path).is_some();
+        let mut window_open = self.remote_folder_picker.is_open;
+        let mut navigate_to = None;
+        let mut select_current = false;
+        let mut refresh_listing = false;
+        let mut go_up = false;
+
+        egui::Window::new(match picker_target {
+            RemoteFolderPickerTarget::SourceFolder => "Select Backup Source Folder",
+            RemoteFolderPickerTarget::CleanupFolder => "Select Folder For Cleanup",
+        })
+            .open(&mut window_open)
+            .collapsible(false)
+            .resizable(true)
+            .default_size([620.0, 420.0])
+            .show(ctx, |ui| {
+                ui.label("Browse directories on the connected Android device");
+                ui.add_space(6.0);
+                ui.label(RichText::new(&current_path).monospace());
+                ui.add_space(10.0);
+
+                ui.horizontal(|ui| {
+                    if ui
+                        .add_enabled(can_go_up && !is_loading, egui::Button::new("Up"))
+                        .clicked()
+                    {
+                        go_up = true;
+                    }
+
+                    if ui
+                        .add_enabled(!is_loading, egui::Button::new("Refresh"))
+                        .clicked()
+                    {
+                        refresh_listing = true;
+                    }
+
+                    if ui.button("Use This Folder").clicked() {
+                        select_current = true;
+                    }
+                });
+
+                ui.add_space(10.0);
+
+                if is_loading {
+                    ui.spinner();
+                    ui.label("Loading folders from device...");
+                } else if let Some(error) = &error {
+                    ui.colored_label(Color32::from_rgb(168, 52, 33), error);
+                } else if entries.is_empty() {
+                    ui.label("No subfolders found here. You can still use the current folder.");
+                }
+
+                ScrollArea::vertical()
+                    .max_height(260.0)
+                    .auto_shrink([false; 2])
+                    .show(ui, |ui| {
+                        for directory in &entries {
+                            let label = format!("[Dir] {}", directory.name);
+                            if ui
+                                .add_enabled(!is_loading, egui::Button::new(label))
+                                .clicked()
+                            {
+                                navigate_to = Some(directory.full_path.clone());
+                            }
+                            ui.small(RichText::new(&directory.full_path).monospace());
+                            ui.add_space(6.0);
+                        }
+                    });
+            });
+
+        self.remote_folder_picker.is_open = window_open;
+
+        if let Some(path) = navigate_to {
+            self.request_remote_directory_listing(path);
+        } else if go_up {
+            if let Some(parent) = parent_remote_path(&current_path) {
+                self.request_remote_directory_listing(parent);
+            }
+        } else if refresh_listing {
+            self.request_remote_directory_listing(current_path.clone());
+        } else if select_current {
+            match picker_target {
+                RemoteFolderPickerTarget::SourceFolder => {
+                    self.settings.source_path = current_path.clone();
+                    self.status_banner = format!("Selected phone source folder: {current_path}");
+                    self.push_log(format!("[INFO] Phone source folder selected: {current_path}"));
+                }
+                RemoteFolderPickerTarget::CleanupFolder => {
+                    self.set_cleanup_folder_path(current_path.clone());
+                    self.status_banner = format!("Selected cleanup folder: {current_path}");
+                    self.push_log(format!("[INFO] Cleanup folder selected: {current_path}"));
+                }
+            }
+            self.remote_folder_picker.is_open = false;
+        }
+    }
 }
 
 impl eframe::App for BackupApp {
     fn update(&mut self, ctx: &Context, _frame: &mut eframe::Frame) {
         self.poll_device_probe();
         self.poll_sync_events();
+        self.poll_remote_folder_picker();
+        self.poll_cleanup_jobs();
 
-        if self.sync_receiver.is_some() || self.device_probe_receiver.is_some() {
+        if self.sync_receiver.is_some()
+            || self.device_probe_receiver.is_some()
+            || self.remote_folder_picker.receiver.is_some()
+            || self.folder_cleanup.preview_receiver.is_some()
+            || self.folder_cleanup.delete_receiver.is_some()
+        {
             ctx.request_repaint_after(Duration::from_millis(200));
         }
 
@@ -351,151 +734,285 @@ impl eframe::App for BackupApp {
             .resizable(true)
             .default_width(360.0)
             .show(ctx, |ui| {
-                settings_card(ui, "Connection", |ui| {
-                    ui.label("ADB executable");
-                    ui.text_edit_singleline(&mut self.settings.adb_path);
-                    ui.add_space(8.0);
-                    if ui.button("Refresh Device").clicked() {
-                        self.refresh_device_info();
-                    }
+                ScrollArea::vertical()
+                    .auto_shrink([false; 2])
+                    .show(ui, |ui| {
+                        settings_card(ui, "Connection", |ui| {
+                            ui.label("ADB executable");
+                            ui.text_edit_singleline(&mut self.settings.adb_path);
+                            ui.add_space(8.0);
+                            if ui.button("Refresh Device").clicked() {
+                                self.refresh_device_info();
+                            }
 
-                    ui.add_space(10.0);
-                    ui.label(RichText::new("Current Device").strong());
-                    ui.label(device_summary(&self.device_info));
-                });
-
-                settings_card(ui, "Folders", |ui| {
-                    ui.label("Phone source folder");
-                    ui.text_edit_singleline(&mut self.settings.source_path);
-                    ui.add_space(8.0);
-                    ui.label("Local destination folder");
-                    ui.text_edit_singleline(&mut self.settings.destination_path);
-                });
-
-                settings_card(ui, "Validation", |ui| {
-                    egui::ComboBox::from_label("Validation mode")
-                        .selected_text(self.settings.validation_mode.label())
-                        .show_ui(ui, |ui| {
-                            ui.selectable_value(
-                                &mut self.settings.validation_mode,
-                                ValidationMode::Size,
-                                ValidationMode::Size.label(),
-                            );
-                            ui.selectable_value(
-                                &mut self.settings.validation_mode,
-                                ValidationMode::Md5,
-                                ValidationMode::Md5.label(),
-                            );
+                            ui.add_space(10.0);
+                            ui.label(RichText::new("Current Device").strong());
+                            ui.label(device_summary(&self.device_info));
                         });
 
-                    egui::ComboBox::from_label("Existing local files")
-                        .selected_text(self.settings.existing_file_behavior.label())
-                        .show_ui(ui, |ui| {
-                            ui.selectable_value(
-                                &mut self.settings.existing_file_behavior,
-                                ExistingFileBehavior::Skip,
-                                ExistingFileBehavior::Skip.label(),
+                        settings_card(ui, "Folders", |ui| {
+                            ui.label("Phone source folder");
+                            ui.horizontal(|ui| {
+                                ui.text_edit_singleline(&mut self.settings.source_path);
+                                if ui
+                                    .add_enabled(
+                                        !self.is_running(),
+                                        egui::Button::new("Select Phone Folder..."),
+                                    )
+                                    .clicked()
+                                {
+                                    self.open_source_folder_picker();
+                                }
+                            });
+                            ui.small(
+                                "Phone selection uses the built-in ADB folder browser so the app keeps a valid /sdcard/... path.",
                             );
-                            ui.selectable_value(
-                                &mut self.settings.existing_file_behavior,
-                                ExistingFileBehavior::Validate,
-                                ExistingFileBehavior::Validate.label(),
-                            );
+                            ui.add_space(8.0);
+                            ui.label("Local destination folder");
+                            ui.horizontal(|ui| {
+                                ui.text_edit_singleline(&mut self.settings.destination_path);
+                                if ui.button("Select Windows Folder...").clicked() {
+                                    self.pick_local_destination_folder();
+                                }
+                            });
+                            ui.small("Opens the normal Windows folder picker.");
                         });
 
-                    ui.checkbox(
-                        &mut self.settings.auto_delete_after_success,
-                        "Auto delete on device after successful validation",
-                    );
-                    ui.checkbox(&mut self.settings.dry_run, "Dry-run mode (simulate only)");
+                        settings_card(ui, "Folder Cleanup", |ui| {
+                            ui.label("Phone folder to delete recursively");
+                            ui.horizontal(|ui| {
+                                ui.text_edit_singleline(&mut self.folder_cleanup.folder_path);
+                                if ui
+                                    .add_enabled(
+                                        !self.folder_cleanup.is_fetching_preview
+                                            && !self.folder_cleanup.is_deleting,
+                                        egui::Button::new("Select Phone Folder..."),
+                                    )
+                                    .clicked()
+                                {
+                                    self.open_cleanup_folder_picker();
+                                }
+                            });
+                            ui.small(
+                                "Fetch contents first, then delete the selected phone folder and everything inside it.",
+                            );
 
-                    let mut filter_recent = self.settings.only_last_days.is_some();
-                    if ui
-                        .checkbox(&mut filter_recent, "Copy only recent files")
-                        .changed()
-                    {
-                        self.settings.only_last_days = if filter_recent { Some(7) } else { None };
-                    }
-                    if let Some(days) = &mut self.settings.only_last_days {
-                        ui.horizontal(|ui| {
-                            ui.label("Days");
-                            ui.add(egui::DragValue::new(days).range(1..=365));
+                            ui.add_space(8.0);
+                            ui.horizontal(|ui| {
+                                if ui
+                                    .add_enabled(
+                                        !self.folder_cleanup.is_fetching_preview
+                                            && !self.folder_cleanup.is_deleting,
+                                        egui::Button::new("Fetch Contents"),
+                                    )
+                                    .clicked()
+                                {
+                                    self.request_cleanup_preview();
+                                }
+
+                                if ui.button("Clear Preview").clicked() {
+                                    self.folder_cleanup.preview = None;
+                                    self.folder_cleanup.preview_error = None;
+                                    self.folder_cleanup.delete_error = None;
+                                    self.folder_cleanup.delete_armed = false;
+                                }
+                            });
+
+                            if let Some(reason) = protected_cleanup_folder_reason(
+                                &self.folder_cleanup.folder_path,
+                            ) {
+                                ui.colored_label(Color32::from_rgb(168, 52, 33), reason);
+                            }
+
+                            if self.folder_cleanup.is_fetching_preview {
+                                ui.horizontal(|ui| {
+                                    ui.spinner();
+                                    ui.label("Fetching folder contents from device...");
+                                });
+                            }
+
+                            if let Some(preview) = &self.folder_cleanup.preview {
+                                ui.label(RichText::new(cleanup_summary(preview)).strong());
+                            }
+
+                            if let Some(error) = &self.folder_cleanup.preview_error {
+                                ui.colored_label(Color32::from_rgb(168, 52, 33), error);
+                            }
+                            if let Some(error) = &self.folder_cleanup.delete_error {
+                                ui.colored_label(Color32::from_rgb(168, 52, 33), error);
+                            }
+
+                            ui.add_space(8.0);
+                            ui.checkbox(
+                                &mut self.folder_cleanup.delete_armed,
+                                "I understand this permanently deletes the selected phone folder and all its contents",
+                            );
+
+                            let preview_matches_path = self
+                                .folder_cleanup
+                                .preview
+                                .as_ref()
+                                .map(|preview| {
+                                    preview.root_path
+                                        == normalize_remote_path(&self.folder_cleanup.folder_path)
+                                })
+                                .unwrap_or(false);
+                            let delete_allowed = preview_matches_path
+                                && self.folder_cleanup.delete_armed
+                                && !self.folder_cleanup.is_fetching_preview
+                                && !self.folder_cleanup.is_deleting
+                                && protected_cleanup_folder_reason(
+                                    &self.folder_cleanup.folder_path,
+                                )
+                                .is_none();
+
+                            if ui
+                                .add_enabled(
+                                    delete_allowed,
+                                    egui::Button::new("Delete Folder + Contents"),
+                                )
+                                .clicked()
+                            {
+                                self.request_cleanup_delete();
+                            }
+
+                            if self.folder_cleanup.is_deleting {
+                                ui.horizontal(|ui| {
+                                    ui.spinner();
+                                    ui.label("Deleting folder recursively on device...");
+                                });
+                            }
                         });
-                    }
-                });
 
-                settings_card(ui, "Presets", |ui| {
-                    ui.label("Preset name");
-                    ui.text_edit_singleline(&mut self.preset_name_input);
-                    ui.horizontal(|ui| {
-                        if ui.button("Save Current Preset").clicked() {
-                            self.save_current_preset();
-                        }
-                        if ui.button("Load Selected").clicked() {
-                            self.load_selected_preset();
-                        }
+                        settings_card(ui, "Validation", |ui| {
+                            egui::ComboBox::from_label("Validation mode")
+                                .selected_text(self.settings.validation_mode.label())
+                                .show_ui(ui, |ui| {
+                                    ui.selectable_value(
+                                        &mut self.settings.validation_mode,
+                                        ValidationMode::Size,
+                                        ValidationMode::Size.label(),
+                                    );
+                                    ui.selectable_value(
+                                        &mut self.settings.validation_mode,
+                                        ValidationMode::Md5,
+                                        ValidationMode::Md5.label(),
+                                    );
+                                });
+
+                            egui::ComboBox::from_label("Existing local files")
+                                .selected_text(self.settings.existing_file_behavior.label())
+                                .show_ui(ui, |ui| {
+                                    ui.selectable_value(
+                                        &mut self.settings.existing_file_behavior,
+                                        ExistingFileBehavior::Skip,
+                                        ExistingFileBehavior::Skip.label(),
+                                    );
+                                    ui.selectable_value(
+                                        &mut self.settings.existing_file_behavior,
+                                        ExistingFileBehavior::Validate,
+                                        ExistingFileBehavior::Validate.label(),
+                                    );
+                                });
+
+                            ui.checkbox(
+                                &mut self.settings.auto_delete_after_success,
+                                "Auto delete on device after successful validation",
+                            );
+                            ui.checkbox(&mut self.settings.dry_run, "Dry-run mode (simulate only)");
+
+                            let mut filter_recent = self.settings.only_last_days.is_some();
+                            if ui
+                                .checkbox(&mut filter_recent, "Copy only recent files")
+                                .changed()
+                            {
+                                self.settings.only_last_days =
+                                    if filter_recent { Some(7) } else { None };
+                            }
+                            if let Some(days) = &mut self.settings.only_last_days {
+                                ui.horizontal(|ui| {
+                                    ui.label("Days");
+                                    ui.add(egui::DragValue::new(days).range(1..=365));
+                                });
+                            }
+                        });
+
+                        settings_card(ui, "Presets", |ui| {
+                            ui.label("Preset name");
+                            ui.text_edit_singleline(&mut self.preset_name_input);
+                            ui.horizontal(|ui| {
+                                if ui.button("Save Current Preset").clicked() {
+                                    self.save_current_preset();
+                                }
+                                if ui.button("Load Selected").clicked() {
+                                    self.load_selected_preset();
+                                }
+                            });
+                            egui::ComboBox::from_label("Saved presets")
+                                .selected_text(if self.selected_preset_name.is_empty() {
+                                    "Select a preset".to_string()
+                                } else {
+                                    self.selected_preset_name.clone()
+                                })
+                                .show_ui(ui, |ui| {
+                                    for preset in &self.settings.presets {
+                                        ui.selectable_value(
+                                            &mut self.selected_preset_name,
+                                            preset.name.clone(),
+                                            preset.name.clone(),
+                                        );
+                                    }
+                                });
+                            if ui.button("Save Settings").clicked() {
+                                self.save_settings();
+                            }
+                        });
+
+                        settings_card(ui, "Run Controls", |ui| {
+                            ui.horizontal(|ui| {
+                                if ui
+                                    .add_enabled(
+                                        !self.is_running(),
+                                        egui::Button::new("Start Backup"),
+                                    )
+                                    .clicked()
+                                {
+                                    self.start_full_backup();
+                                }
+
+                                let paused = self
+                                    .sync_handle
+                                    .as_ref()
+                                    .map(SyncHandle::is_paused)
+                                    .unwrap_or(false);
+                                if ui
+                                    .add_enabled(
+                                        self.is_running(),
+                                        egui::Button::new(if paused { "Resume" } else { "Pause" }),
+                                    )
+                                    .clicked()
+                                {
+                                    if let Some(handle) = &self.sync_handle {
+                                        handle.toggle_pause();
+                                    }
+                                }
+
+                                if ui
+                                    .add_enabled(self.is_running(), egui::Button::new("Stop"))
+                                    .clicked()
+                                {
+                                    if let Some(handle) = &self.sync_handle {
+                                        handle.request_stop();
+                                    }
+                                }
+                            });
+
+                            ui.add_space(8.0);
+                            ui.label(
+                                "Deletion is always per-file and only attempted after validation passes.",
+                            );
+                        });
                     });
-                    egui::ComboBox::from_label("Saved presets")
-                        .selected_text(if self.selected_preset_name.is_empty() {
-                            "Select a preset".to_string()
-                        } else {
-                            self.selected_preset_name.clone()
-                        })
-                        .show_ui(ui, |ui| {
-                            for preset in &self.settings.presets {
-                                ui.selectable_value(
-                                    &mut self.selected_preset_name,
-                                    preset.name.clone(),
-                                    preset.name.clone(),
-                                );
-                            }
-                        });
-                    if ui.button("Save Settings").clicked() {
-                        self.save_settings();
-                    }
-                });
-
-                settings_card(ui, "Run Controls", |ui| {
-                    ui.horizontal(|ui| {
-                        if ui
-                            .add_enabled(!self.is_running(), egui::Button::new("Start Backup"))
-                            .clicked()
-                        {
-                            self.start_full_backup();
-                        }
-
-                        let paused = self
-                            .sync_handle
-                            .as_ref()
-                            .map(SyncHandle::is_paused)
-                            .unwrap_or(false);
-                        if ui
-                            .add_enabled(
-                                self.is_running(),
-                                egui::Button::new(if paused { "Resume" } else { "Pause" }),
-                            )
-                            .clicked()
-                        {
-                            if let Some(handle) = &self.sync_handle {
-                                handle.toggle_pause();
-                            }
-                        }
-
-                        if ui
-                            .add_enabled(self.is_running(), egui::Button::new("Stop"))
-                            .clicked()
-                        {
-                            if let Some(handle) = &self.sync_handle {
-                                handle.request_stop();
-                            }
-                        }
-                    });
-
-                    ui.add_space(8.0);
-                    ui.label(
-                        "Deletion is always per-file and only attempted after validation passes.",
-                    );
-                });
             });
 
         egui::TopBottomPanel::bottom("log_panel")
@@ -630,10 +1147,87 @@ impl eframe::App for BackupApp {
                         });
                 });
 
+            if self.folder_cleanup.preview.is_some()
+                || self.folder_cleanup.is_fetching_preview
+                || self.folder_cleanup.preview_error.is_some()
+                || self.folder_cleanup.delete_error.is_some()
+            {
+                ui.add_space(14.0);
+                ui.horizontal(|ui| {
+                    ui.label(RichText::new("Folder Cleanup Preview").strong());
+                    ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                        if let Some(preview) = &self.folder_cleanup.preview {
+                            ui.label(
+                                RichText::new(format!("{} entries", preview.entries.len()))
+                                    .color(Color32::from_rgb(118, 104, 85)),
+                            );
+                        }
+                    });
+                });
+                ui.add_space(8.0);
+
+                Frame::new()
+                    .fill(Color32::WHITE)
+                    .stroke(Stroke::new(1.0, Color32::from_rgb(221, 211, 190)))
+                    .corner_radius(CornerRadius::same(14))
+                    .inner_margin(Margin::same(14))
+                    .show(ui, |ui| {
+                        if self.folder_cleanup.is_fetching_preview {
+                            ui.horizontal(|ui| {
+                                ui.spinner();
+                                ui.label("Fetching cleanup preview...");
+                            });
+                        }
+
+                        if let Some(error) = &self.folder_cleanup.preview_error {
+                            ui.colored_label(Color32::from_rgb(168, 52, 33), error);
+                        }
+                        if let Some(error) = &self.folder_cleanup.delete_error {
+                            ui.colored_label(Color32::from_rgb(168, 52, 33), error);
+                        }
+
+                        if let Some(preview) = &self.folder_cleanup.preview {
+                            ui.label(RichText::new(cleanup_summary(preview)).strong());
+                            ui.add_space(8.0);
+
+                            ScrollArea::vertical()
+                                .max_height(260.0)
+                                .auto_shrink([false; 2])
+                                .show(ui, |ui| {
+                                    egui::Grid::new("cleanup_preview_grid")
+                                        .striped(true)
+                                        .num_columns(3)
+                                        .min_col_width(120.0)
+                                        .spacing([12.0, 8.0])
+                                        .show(ui, |ui| {
+                                            ui.label(RichText::new("Type").strong());
+                                            ui.label(RichText::new("Size").strong());
+                                            ui.label(RichText::new("Path").strong());
+                                            ui.end_row();
+
+                                            for entry in &preview.entries {
+                                                ui.label(entry.kind.label());
+                                                ui.label(match entry.kind {
+                                                    RemoteFolderEntryKind::Directory => "-".to_string(),
+                                                    RemoteFolderEntryKind::File => format_bytes(
+                                                        entry.size_bytes.unwrap_or(0),
+                                                    ),
+                                                });
+                                                ui.label(RichText::new(&entry.full_path).monospace());
+                                                ui.end_row();
+                                            }
+                                        });
+                                });
+                        }
+                    });
+            }
+
             if let Some(remote_file) = retry_target {
                 self.start_retry(remote_file);
             }
         });
+
+        self.show_remote_folder_picker(ctx);
     }
 }
 
@@ -826,5 +1420,76 @@ fn format_duration(seconds: f64) -> String {
         format!("{minutes}m {secs}s")
     } else {
         format!("{secs}s")
+    }
+}
+
+fn cleanup_summary(preview: &RemoteFolderPreview) -> String {
+    format!(
+        "Root: {} | {} files | {} folders | {} total file data",
+        preview.root_path,
+        preview.file_count,
+        preview.directory_count,
+        format_bytes(preview.total_file_bytes)
+    )
+}
+
+fn protected_cleanup_folder_reason(path: &str) -> Option<&'static str> {
+    if path.trim().is_empty() {
+        return Some("Choose a phone folder first.");
+    }
+
+    let normalized = normalize_remote_path(path);
+    match normalized.as_str() {
+        "/" => Some("Deleting the root folder is blocked."),
+        "/sdcard" => Some("Deleting /sdcard is blocked."),
+        "/storage" => Some("Deleting /storage is blocked."),
+        "/storage/emulated" => Some("Deleting /storage/emulated is blocked."),
+        "/storage/emulated/0" => Some("Deleting /storage/emulated/0 is blocked."),
+        "/sdcard/Android" => Some("Deleting /sdcard/Android is blocked."),
+        "/sdcard/Android/media" => Some("Deleting /sdcard/Android/media is blocked."),
+        _ => None,
+    }
+}
+
+fn initial_local_directory(path: &str) -> PathBuf {
+    let candidate = PathBuf::from(path);
+    if candidate.is_dir() {
+        return candidate;
+    }
+
+    if let Some(parent) = candidate.parent() {
+        if parent.is_dir() {
+            return parent.to_path_buf();
+        }
+    }
+
+    std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."))
+}
+
+fn normalize_remote_path(path: &str) -> String {
+    let trimmed = path.trim();
+    if trimmed.is_empty() {
+        return "/sdcard".to_string();
+    }
+
+    let normalized = trimmed.replace('\\', "/");
+    if normalized == "/" {
+        "/".to_string()
+    } else {
+        normalized.trim_end_matches('/').to_string()
+    }
+}
+
+fn parent_remote_path(path: &str) -> Option<String> {
+    let normalized = normalize_remote_path(path);
+    if normalized == "/" {
+        return None;
+    }
+
+    let trimmed = normalized.trim_end_matches('/');
+    match trimmed.rfind('/') {
+        Some(0) => Some("/".to_string()),
+        Some(index) => Some(trimmed[..index].to_string()),
+        None => None,
     }
 }
