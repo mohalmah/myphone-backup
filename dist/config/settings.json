@@ -5,7 +5,7 @@
   "validation_mode": "Size",
   "existing_file_behavior": "Validate",
   "auto_delete_after_success": false,
-  "dry_run": true,
+  "dry_run": false,
   "only_last_days": null,
   "presets": [
     {

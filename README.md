@@ -1,0 +1,286 @@
+# ADB Smart Backup & Cleanup
+
+ADB Smart Backup & Cleanup is a Windows desktop app for safely backing up Android media folders over ADB, validating each transfer, and optionally cleaning up files on the phone only after a successful copy.
+
+It is built with Rust and `egui`, and is designed around a simple rule:
+
+`copy -> validate -> optionally delete`
+
+## What It Does
+
+- Detects an Android device connected through ADB
+- Lets you back up one or many Android folders in a single run
+- Includes ready-to-use presets for WhatsApp, Telegram, Downloads, and Camera
+- Scans configured source folders and shows file counts and total size before backup
+- Checks destination free space before a run starts
+- Warns when the local system drive may be too low on space for the transfer
+- Validates transferred files by size or MD5 before any delete is allowed
+- Supports dry-run mode so you can simulate the job before copying or deleting anything
+- Includes a separate cleanup tab for previewing and deleting phone folders, contents, or selected items
+- Writes detailed logs, including optional ADB command traces and command output
+
+## Current Presets
+
+Built-in source presets include:
+
+- WhatsApp Images
+- WhatsApp Videos
+- WhatsApp Documents
+- WhatsApp Audio
+- Telegram Images
+- Telegram Video
+- Downloads
+- Camera
+
+Built-in backup presets include:
+
+- WhatsApp Essentials
+- WhatsApp Full Media
+- Messaging Media
+- Downloads
+- Camera Roll
+
+You can edit built-in presets, disable sources you do not want, and add custom phone folders.
+
+## Requirements
+
+- Windows
+- An Android phone with USB debugging enabled
+- `adb.exe` available on `PATH`, or the full ADB path entered in the app
+- A writable local destination folder with enough space for the backup
+
+## Quick Start
+
+1. Install Android platform-tools so `adb.exe` is available.
+2. On the phone, enable `Developer options` and `USB debugging`.
+3. Connect the phone by USB.
+4. Accept the ADB authorization prompt on the phone.
+5. Start the app:
+
+```powershell
+cd C:\dev\myphone-backup\myphone-backup\dist\releases
+.\adb-smart-backup-v0.1.0-windows-x86_64.exe
+```
+
+6. Click `Refresh Device` and confirm the status shows `CONNECTED`.
+7. Leave `Dry-run mode` enabled for the first test.
+8. Scan sources, review the analysis, and run a test backup before enabling any delete option.
+
+## Recommended First Test
+
+Use this order the first time:
+
+1. Pick a small throwaway source folder on the phone.
+2. Choose a local destination with plenty of free space.
+3. Keep `Dry-run mode` on and `Auto delete after success` off.
+4. Click `Scan Sources`.
+5. Click `Analyze Selected Sources`.
+6. Review file counts, size, and free-space checks.
+7. Run the backup.
+8. Turn dry-run off and run again.
+9. Only enable auto-delete after you are satisfied that copy and validation are working correctly.
+
+## Backup Workflow
+
+The `Backup` tab is for safe media transfer.
+
+### 1. Connection
+
+- Confirm the device is connected and authorized
+- If needed, set the `ADB executable` field to a full path such as `C:\platform-tools\adb.exe`
+
+### 2. Backup Destination
+
+- Choose the local destination folder with the Windows folder picker
+- This is the root folder where selected source folders will be copied
+- Each enabled source can also define its own destination subfolder
+
+### 3. Presets And Source Library
+
+- Choose a preset to quickly load common folder sets
+- Enable or disable individual sources
+- Edit the Android source path for any preset entry
+- Change the destination subfolder for each source
+- Add your own custom Android folders
+- Use `Pick Folder` to browse folders on the connected phone
+
+### 4. Scan Sources
+
+`Scan Sources` checks the configured phone folders and shows:
+
+- Whether each folder exists
+- File count
+- Total size
+- Any scan error for that source
+
+This helps you decide what to include before starting a backup.
+
+### 5. Analyze Selected Sources
+
+`Analyze Selected Sources` builds a combined preflight summary for the enabled sources and shows:
+
+- Total files found
+- Total bytes found
+- Files that need copying
+- Files already present locally
+- Conflicting files
+- Destination free space
+- Whether the destination appears to have enough room
+- A system drive warning when Windows may be tight on space
+
+### 6. Validation And Delete Settings
+
+Validation modes:
+
+- `File size`
+- `MD5 hash`
+
+Existing file behavior:
+
+- `Skip if name + size match`
+- `Validate before delete`
+
+Safety toggles:
+
+- `Dry-run mode`
+- `Auto delete after success`
+
+Important:
+
+- Device-side deletion is blocked unless the file exists locally and validation passes
+- Backup deletion is done per file, never as a bulk folder wipe
+- If an error occurs, later delete actions are not supposed to continue blindly
+
+## Cleanup Workflow
+
+The `Cleanup` tab is separate from backup because it is destructive by nature.
+
+Use it when you want to inspect a folder first and then delete:
+
+- the entire folder and its contents
+- only the contents while keeping the folder
+- only selected files and subfolders
+
+### Cleanup Steps
+
+1. Choose a phone folder.
+2. Click `Fetch Contents`.
+3. Review the preview summary:
+   - root folder
+   - file count
+   - folder count
+   - total file size
+4. Review the fetched entries, ordered by size.
+5. Select items if you want a selective delete.
+6. Arm the confirmation checkbox.
+7. Run one of the delete actions.
+
+The cleanup preview is intended to let you inspect what will be removed before any destructive action runs.
+
+## Logs And Settings
+
+The app writes settings and logs relative to the current working directory.
+
+If you run the packaged release from `dist\releases`, you should expect:
+
+- `config\settings.json`
+- `logs\YYYY-MM-DD.txt`
+
+If you run the app from the repo root with `cargo run`, those folders are created in the repo root instead.
+
+The detailed activity log can optionally show:
+
+- ADB command line
+- Exit code
+- `stdout`
+- `stderr`
+
+## Rebuild From Source
+
+### Prerequisites
+
+- Rust toolchain for Windows MSVC
+- Cargo
+- ADB available for runtime testing
+
+### Development Run
+
+```powershell
+cd C:\dev\myphone-backup\myphone-backup
+cargo run
+```
+
+### Run Tests
+
+```powershell
+cd C:\dev\myphone-backup\myphone-backup
+cargo test
+```
+
+### Build A Release Binary
+
+```powershell
+cd C:\dev\myphone-backup\myphone-backup
+cargo build --release
+```
+
+The optimized executable will be created at:
+
+`C:\dev\myphone-backup\myphone-backup\target\release\adb-smart-backup.exe`
+
+The packaged local release artifact is staged at:
+
+`C:\dev\myphone-backup\myphone-backup\dist\releases\adb-smart-backup-v0.1.0-windows-x86_64.exe`
+
+## GitHub Releases
+
+Repository:
+
+- [mohalmah/myphone-backup](https://github.com/mohalmah/myphone-backup)
+
+Releases page:
+
+- [GitHub Releases](https://github.com/mohalmah/myphone-backup/releases)
+
+Release notes prepared in this repo:
+
+- `RELEASE_NOTES.md`
+
+At the time of writing, the remote releases page is empty, so the local release artifact in `dist\releases` is the prepared binary for the first published release.
+
+## Troubleshooting
+
+### Device shows `UNAUTHORIZED`
+
+- Unlock the phone
+- Reconnect USB
+- Accept the ADB authorization prompt
+- Click `Refresh Device`
+
+### `adb` is not found
+
+- Install Android platform-tools
+- Enter the full path to `adb.exe` in the app
+
+### Backup says there is not enough space
+
+- Choose a different destination drive
+- Free space on the destination drive
+- Review the system-drive warning as well, not just the destination drive
+
+### A phone path contains spaces or non-Latin names
+
+- Use the phone folder picker rather than typing the path manually when possible
+- Keep detailed logging enabled if you are diagnosing ADB quoting or filename issues
+
+## Safety Note
+
+This project is meant to reduce risk, not remove the need for care.
+
+For the first real run:
+
+- start with dry-run
+- keep auto-delete off
+- use a small test folder
+- inspect the copied files locally
+- only then enable delete behavior

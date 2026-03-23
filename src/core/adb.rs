@@ -1,13 +1,17 @@
-use super::models::{
-    DeviceConnectionState, DeviceInfo, RemoteDirectory, RemoteFile, RemoteFolderEntry,
-    RemoteFolderEntryKind, RemoteFolderPreview,
+use super::{
+    logging::LogEntry,
+    models::{
+        DeviceConnectionState, DeviceInfo, RemoteDirectory, RemoteFile, RemoteFolderEntry,
+        RemoteFolderEntryKind, RemoteFolderPreview,
+    },
 };
 use anyhow::{Context, Result, anyhow, bail};
-use std::path::Path;
+use std::{path::Path, sync::Arc};
 use std::process::Command;
 
 pub struct AdbController {
     executable: String,
+    observer: Option<Arc<dyn Fn(LogEntry) + Send + Sync>>,
 }
 
 struct CommandResult {
@@ -29,8 +33,14 @@ impl CommandResult {
 }
 
 impl AdbController {
-    pub fn new(executable: String) -> Self {
-        Self { executable }
+    pub fn with_observer(
+        executable: String,
+        observer: Arc<dyn Fn(LogEntry) + Send + Sync>,
+    ) -> Self {
+        Self {
+            executable,
+            observer: Some(observer),
+        }
     }
 
     pub fn detect_device(&self) -> Result<DeviceInfo> {
@@ -104,80 +114,128 @@ impl AdbController {
         })
     }
 
-    pub fn list_remote_files(&self, source_directory: &str) -> Result<Vec<RemoteFile>> {
-        let output = self.run_shell_command("ls", &["-1", "-p", source_directory])?;
+    pub fn list_remote_files_recursive(
+        &self,
+        source_directory: &str,
+        source_label: &str,
+        destination_subfolder: &str,
+    ) -> Result<Vec<RemoteFile>> {
+        let script = r#"if [ ! -d "$1" ]; then
+    echo "__NOT_DIRECTORY__"
+    exit 11
+fi
+find "$1" -type f | while IFS= read -r item; do
+    size="$(stat -c %s "$item" 2>/dev/null)"
+    if [ -z "$size" ]; then
+        size="$(stat -f %z "$item" 2>/dev/null)"
+    fi
+    modified="$(stat -c %Y "$item" 2>/dev/null)"
+    if [ -z "$modified" ]; then
+        modified="$(stat -f %m "$item" 2>/dev/null)"
+    fi
+    printf 'F|%s|%s|%s\n' "${size:-0}" "${modified:-0}" "$item"
+done"#;
+        let output =
+            self.run_shell_command("sh", &["-c", script, "list-files-recursive", source_directory])?;
 
         let mut files = Vec::new();
+        let normalized_root = normalize_remote_root(source_directory);
+
         for line in output
             .lines()
             .map(str::trim)
             .filter(|line| !line.is_empty())
         {
-            if line.ends_with('/') {
+            if line == "__NOT_DIRECTORY__" {
+                bail!("Remote folder does not exist: {source_directory}");
+            }
+
+            let mut parts = line.splitn(4, '|');
+            if parts.next().unwrap_or_default() != "F" {
                 continue;
             }
 
-            let remote_path = format!("{}/{}", source_directory.trim_end_matches('/'), line);
-            let (size_bytes, modified_epoch_seconds) = self.remote_file_metadata(&remote_path)?;
+            let size_bytes = parts
+                .next()
+                .unwrap_or("0")
+                .trim()
+                .parse::<u64>()
+                .unwrap_or(0);
+            let modified_epoch_seconds = parts
+                .next()
+                .unwrap_or("0")
+                .trim()
+                .parse::<i64>()
+                .ok();
+            let remote_path = parts.next().unwrap_or_default().trim().to_string();
+            if remote_path.is_empty() {
+                continue;
+            }
+            let relative_path = relative_remote_path(&normalized_root, &remote_path);
+            let name = relative_path
+                .rsplit('/')
+                .next()
+                .unwrap_or(&remote_path)
+                .to_string();
 
             files.push(RemoteFile {
-                name: line.to_string(),
+                name,
                 remote_path,
                 size_bytes,
                 modified_epoch_seconds,
+                source_root: normalized_root.clone(),
+                source_label: source_label.to_string(),
+                destination_subfolder: destination_subfolder.to_string(),
+                relative_path,
             });
         }
 
-        files.sort_by(|left, right| left.name.to_lowercase().cmp(&right.name.to_lowercase()));
+        files.sort_by(|left, right| {
+            left.relative_path
+                .to_lowercase()
+                .cmp(&right.relative_path.to_lowercase())
+        });
         Ok(files)
     }
 
     pub fn list_remote_directories(&self, source_directory: &str) -> Result<Vec<RemoteDirectory>> {
-        let output = self.run_shell_command("ls", &["-1", "-p", source_directory])?;
+        let script = r#"if [ ! -d "$1" ]; then
+    echo "__NOT_DIRECTORY__"
+    exit 11
+fi
+find "$1" -mindepth 1 -maxdepth 1 -type d | while IFS= read -r item; do
+    printf 'D|%s\n' "$item"
+done"#;
+        let output =
+            self.run_shell_command("sh", &["-c", script, "list-directories", source_directory])?;
 
         let mut directories = Vec::new();
-        let base = source_directory.trim_end_matches('/');
         for line in output
             .lines()
             .map(str::trim)
             .filter(|line| !line.is_empty())
         {
-            if !line.ends_with('/') {
+            if line == "__NOT_DIRECTORY__" {
+                bail!("Remote folder does not exist: {source_directory}");
+            }
+            let Some(full_path) = line.strip_prefix("D|") else {
+                continue;
+            };
+            let full_path = full_path.trim().to_string();
+            if full_path.is_empty() {
                 continue;
             }
-
-            let name = line.trim_end_matches('/').to_string();
-            let full_path = if base.is_empty() {
-                format!("/{}", name)
-            } else {
-                format!("{base}/{}", name)
-            };
+            let name = full_path
+                .rsplit('/')
+                .next()
+                .unwrap_or(&full_path)
+                .to_string();
 
             directories.push(RemoteDirectory { name, full_path });
         }
 
         directories.sort_by(|left, right| left.name.to_lowercase().cmp(&right.name.to_lowercase()));
         Ok(directories)
-    }
-
-    pub fn remote_file_metadata(&self, remote_path: &str) -> Result<(u64, Option<i64>)> {
-        let output = self.run_shell_command("stat", &["-c", "%s|%Y", remote_path])?;
-        let trimmed = output.trim();
-        let mut parts = trimmed.split('|');
-
-        let size = parts
-            .next()
-            .context("Missing remote file size")?
-            .trim()
-            .parse::<u64>()
-            .with_context(|| {
-                format!("Invalid remote size metadata for {remote_path}: {trimmed}")
-            })?;
-        let modified = parts
-            .next()
-            .and_then(|value| value.trim().parse::<i64>().ok());
-
-        Ok((size, modified))
     }
 
     pub fn pull_file(&self, remote_path: &str, destination: &Path) -> Result<String> {
@@ -253,7 +311,19 @@ done"#;
             }
         }
 
-        entries.sort_by(|left, right| left.full_path.to_lowercase().cmp(&right.full_path.to_lowercase()));
+        entries.sort_by(|left, right| match (&left.kind, &right.kind) {
+            (RemoteFolderEntryKind::File, RemoteFolderEntryKind::Directory) => std::cmp::Ordering::Less,
+            (RemoteFolderEntryKind::Directory, RemoteFolderEntryKind::File) => std::cmp::Ordering::Greater,
+            (RemoteFolderEntryKind::File, RemoteFolderEntryKind::File) => right
+                .size_bytes
+                .unwrap_or(0)
+                .cmp(&left.size_bytes.unwrap_or(0))
+                .then_with(|| left.full_path.to_lowercase().cmp(&right.full_path.to_lowercase())),
+            (RemoteFolderEntryKind::Directory, RemoteFolderEntryKind::Directory) => left
+                .full_path
+                .to_lowercase()
+                .cmp(&right.full_path.to_lowercase()),
+        });
 
         Ok(RemoteFolderPreview {
             root_path: folder_path.to_string(),
@@ -269,13 +339,54 @@ done"#;
         Ok(())
     }
 
+    pub fn delete_remote_folder_contents(&self, folder_path: &str) -> Result<()> {
+        let script = r#"if [ ! -d "$1" ]; then
+    echo "__NOT_DIRECTORY__"
+    exit 11
+fi
+find "$1" -mindepth 1 -maxdepth 1 | while IFS= read -r item; do
+    rm -rf "$item"
+done"#;
+        let output =
+            self.run_shell_command("sh", &["-c", script, "delete-folder-contents", folder_path])?;
+        if output.lines().any(|line| line.trim() == "__NOT_DIRECTORY__") {
+            bail!("Remote folder does not exist: {folder_path}");
+        }
+        Ok(())
+    }
+
+    pub fn delete_remote_entries(&self, entries: &[RemoteFolderEntry]) -> Result<usize> {
+        for entry in entries {
+            match entry.kind {
+                RemoteFolderEntryKind::Directory => {
+                    self.run_shell_command("rm", &["-rf", &entry.full_path])?;
+                }
+                RemoteFolderEntryKind::File => {
+                    self.run_shell_command("rm", &[&entry.full_path])?;
+                }
+            }
+        }
+
+        Ok(entries.len())
+    }
+
     fn run_shell_command(&self, command: &str, args: &[&str]) -> Result<String> {
         let command_line = build_shell_command(command, args);
-        let output = self.run_command(&["shell", &command_line])?;
+        let output = match self.run_command(&["shell", "-T", &command_line]) {
+            Ok(output) => output,
+            Err(error) if error
+                .to_string()
+                .contains("target doesn't support PTY args -Tt") =>
+            {
+                self.run_command(&["shell", &command_line])?
+            }
+            Err(error) => return Err(error),
+        };
         Ok(output.stdout)
     }
 
     fn run_command(&self, args: &[&str]) -> Result<CommandResult> {
+        let rendered_command = render_command_line(&self.executable, args);
         let output = Command::new(&self.executable)
             .args(args)
             .output()
@@ -291,6 +402,15 @@ done"#;
             stderr: String::from_utf8_lossy(&output.stderr).replace('\r', ""),
         };
 
+        self.emit_trace_log(LogEntry::trace(
+            if output.status.success() {
+                "ADB command completed"
+            } else {
+                "ADB command failed"
+            },
+            format_command_result(&rendered_command, output.status.code(), &result),
+        ));
+
         if !output.status.success() {
             let detail = result.merged_output();
             bail!(
@@ -304,6 +424,12 @@ done"#;
         }
 
         Ok(result)
+    }
+
+    fn emit_trace_log(&self, entry: LogEntry) {
+        if let Some(observer) = &self.observer {
+            observer(entry);
+        }
     }
 }
 
@@ -329,9 +455,64 @@ fn extract_md5(output: &str) -> Option<String> {
         .map(|value| value.to_lowercase())
 }
 
+fn normalize_remote_root(path: &str) -> String {
+    let normalized = path.replace('\\', "/");
+    normalized.trim_end_matches('/').to_string()
+}
+
+fn relative_remote_path(root: &str, full_path: &str) -> String {
+    let normalized_root = normalize_remote_root(root);
+    let normalized_path = full_path.replace('\\', "/");
+    normalized_path
+        .strip_prefix(&(normalized_root.clone() + "/"))
+        .unwrap_or(&normalized_path)
+        .to_string()
+}
+
+fn render_command_line(executable: &str, args: &[&str]) -> String {
+    let mut parts = Vec::with_capacity(args.len() + 1);
+    parts.push(render_command_part(executable));
+    for arg in args {
+        parts.push(render_command_part(arg));
+    }
+    parts.join(" ")
+}
+
+fn render_command_part(part: &str) -> String {
+    if part.is_empty() {
+        return "\"\"".to_string();
+    }
+
+    if part.contains([' ', '\t', '"']) {
+        format!("\"{}\"", part.replace('"', "\\\""))
+    } else {
+        part.to_string()
+    }
+}
+
+fn format_command_result(command_line: &str, exit_code: Option<i32>, result: &CommandResult) -> String {
+    let stdout = if result.stdout.trim().is_empty() {
+        "<empty>".to_string()
+    } else {
+        result.stdout.trim().to_string()
+    };
+    let stderr = if result.stderr.trim().is_empty() {
+        "<empty>".to_string()
+    } else {
+        result.stderr.trim().to_string()
+    };
+
+    format!(
+        "Command:\n{command_line}\n\nExit code: {}\n\nStdout:\n{stdout}\n\nStderr:\n{stderr}",
+        exit_code
+            .map(|value| value.to_string())
+            .unwrap_or_else(|| "terminated by signal".to_string())
+    )
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{build_shell_command, extract_md5};
+    use super::{build_shell_command, extract_md5, render_command_line};
 
     #[test]
     fn extracts_md5_from_md5sum_output() {
@@ -360,6 +541,18 @@ mod tests {
         assert_eq!(
             command,
             "rm '-rf' '/sdcard/Android/media/com.whatsapp/WhatsApp Documents'"
+        );
+    }
+
+    #[test]
+    fn renders_adb_command_line_with_quotes() {
+        let command = render_command_line(
+            "C:\\platform-tools\\adb.exe",
+            &["shell", "ls '/sdcard/WhatsApp Documents'"],
+        );
+        assert_eq!(
+            command,
+            "C:\\platform-tools\\adb.exe shell \"ls '/sdcard/WhatsApp Documents'\""
         );
     }
 }

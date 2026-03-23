@@ -71,8 +71,23 @@ impl ExistingFileBehavior {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct BackupPreset {
     pub name: String,
+    #[serde(default)]
     pub source_path: String,
     pub destination_path: String,
+    #[serde(default)]
+    pub sources: Vec<BackupSourceConfig>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+pub struct BackupSourceConfig {
+    pub id: String,
+    pub label: String,
+    pub source_path: String,
+    pub destination_subfolder: String,
+    #[serde(default = "default_true")]
+    pub enabled: bool,
+    #[serde(default)]
+    pub built_in: bool,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -85,18 +100,25 @@ pub struct Settings {
     pub auto_delete_after_success: bool,
     pub dry_run: bool,
     pub only_last_days: Option<u32>,
+    #[serde(default = "default_backup_sources")]
+    pub backup_sources: Vec<BackupSourceConfig>,
     pub presets: Vec<BackupPreset>,
 }
 
 impl Default for Settings {
     fn default() -> Self {
-        let default_preset = BackupPreset {
-            name: "WhatsApp Videos".to_string(),
-            source_path: "/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Video"
-                .to_string(),
-            destination_path: "E:\\Xiaomi12TPro\\24-03-2026 before Misk\\Whatsapp Video"
-                .to_string(),
-        };
+        let backup_sources = default_backup_sources();
+        let presets = default_backup_presets();
+        let default_preset = presets
+            .first()
+            .cloned()
+            .unwrap_or_else(|| BackupPreset {
+                name: "WhatsApp Essentials".to_string(),
+                source_path: "/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Video"
+                    .to_string(),
+                destination_path: "E:\\AndroidBackups\\WhatsApp".to_string(),
+                sources: vec![],
+            });
 
         Self {
             adb_path: "adb".to_string(),
@@ -107,8 +129,29 @@ impl Default for Settings {
             auto_delete_after_success: false,
             dry_run: true,
             only_last_days: None,
-            presets: vec![default_preset],
+            backup_sources,
+            presets,
         }
+    }
+}
+
+impl Settings {
+    pub fn effective_backup_sources(&self) -> Vec<BackupSourceConfig> {
+        let mut sources = self.backup_sources.clone();
+        if sources.is_empty() && !self.source_path.trim().is_empty() {
+            sources.push(legacy_source_from_path(
+                &self.source_path,
+                &guess_destination_subfolder(&self.source_path),
+            ));
+        }
+
+        if sources.iter().all(|source| !source.enabled) && !sources.is_empty() {
+            if let Some(first) = sources.first_mut() {
+                first.enabled = true;
+            }
+        }
+
+        sources
     }
 }
 
@@ -118,6 +161,10 @@ pub struct RemoteFile {
     pub remote_path: String,
     pub size_bytes: u64,
     pub modified_epoch_seconds: Option<i64>,
+    pub source_root: String,
+    pub source_label: String,
+    pub destination_subfolder: String,
+    pub relative_path: String,
 }
 
 #[derive(Clone, Debug)]
@@ -155,6 +202,44 @@ pub struct RemoteFolderPreview {
     pub file_count: usize,
     pub directory_count: usize,
     pub total_file_bytes: u64,
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct BackupPreflight {
+    pub source_path: String,
+    pub destination_path: String,
+    pub total_files: usize,
+    pub total_bytes: u64,
+    pub files_to_copy: usize,
+    pub bytes_to_copy: u64,
+    pub matching_local_files: usize,
+    pub conflicting_local_files: usize,
+    pub destination_available_bytes: Option<u64>,
+    pub destination_has_enough_space: bool,
+    pub destination_space_error: Option<String>,
+    pub system_drive_path: Option<String>,
+    pub system_drive_available_bytes: Option<u64>,
+    pub system_drive_warning: Option<String>,
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct BackupAnalysis {
+    pub files: Vec<RemoteFile>,
+    pub source_summaries: Vec<BackupSourceScan>,
+    pub preflight: BackupPreflight,
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct BackupSourceScan {
+    pub id: String,
+    pub label: String,
+    pub source_path: String,
+    pub destination_subfolder: String,
+    pub enabled: bool,
+    pub file_count: usize,
+    pub total_bytes: u64,
+    pub exists: bool,
+    pub error: Option<String>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -211,6 +296,10 @@ pub struct FileRecord {
     pub local_path: PathBuf,
     pub size_bytes: u64,
     pub modified_epoch_seconds: Option<i64>,
+    pub source_root: String,
+    pub source_label: String,
+    pub destination_subfolder: String,
+    pub relative_path: String,
     pub status: FileStatus,
     pub detail: String,
     pub attempts: u8,
@@ -218,12 +307,24 @@ pub struct FileRecord {
 
 impl FileRecord {
     pub fn from_remote(remote: &RemoteFile, destination_root: &Path) -> Self {
+        let mut local_path = destination_root.to_path_buf();
+        if !remote.destination_subfolder.trim().is_empty() {
+            local_path.push(&remote.destination_subfolder);
+        }
+        for segment in remote.relative_path.split('/').filter(|segment| !segment.is_empty()) {
+            local_path.push(segment);
+        }
+
         Self {
             name: remote.name.clone(),
             remote_path: remote.remote_path.clone(),
-            local_path: destination_root.join(&remote.name),
+            local_path,
             size_bytes: remote.size_bytes,
             modified_epoch_seconds: remote.modified_epoch_seconds,
+            source_root: remote.source_root.clone(),
+            source_label: remote.source_label.clone(),
+            destination_subfolder: remote.destination_subfolder.clone(),
+            relative_path: remote.relative_path.clone(),
             status: FileStatus::Queued,
             detail: "Queued".to_string(),
             attempts: 0,
@@ -254,4 +355,189 @@ pub struct RunSummary {
     pub conflicts: usize,
     pub dry_run_actions: usize,
     pub cancelled: bool,
+}
+
+fn default_true() -> bool {
+    true
+}
+
+fn built_in_source(
+    id: &str,
+    label: &str,
+    source_path: &str,
+    destination_subfolder: &str,
+    enabled: bool,
+) -> BackupSourceConfig {
+    BackupSourceConfig {
+        id: id.to_string(),
+        label: label.to_string(),
+        source_path: source_path.to_string(),
+        destination_subfolder: destination_subfolder.to_string(),
+        enabled,
+        built_in: true,
+    }
+}
+
+pub fn default_backup_sources() -> Vec<BackupSourceConfig> {
+    vec![
+        built_in_source(
+            "whatsapp-images",
+            "WhatsApp Images",
+            "/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images",
+            "WhatsApp Images",
+            true,
+        ),
+        built_in_source(
+            "whatsapp-videos",
+            "WhatsApp Videos",
+            "/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Video",
+            "WhatsApp Videos",
+            true,
+        ),
+        built_in_source(
+            "whatsapp-documents",
+            "WhatsApp Documents",
+            "/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Documents",
+            "WhatsApp Documents",
+            true,
+        ),
+        built_in_source(
+            "whatsapp-audio",
+            "WhatsApp Audio",
+            "/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Audio",
+            "WhatsApp Audio",
+            false,
+        ),
+        built_in_source(
+            "downloads",
+            "Downloads",
+            "/sdcard/Download",
+            "Downloads",
+            false,
+        ),
+        built_in_source(
+            "camera",
+            "Camera",
+            "/sdcard/DCIM/Camera",
+            "Camera",
+            false,
+        ),
+        built_in_source(
+            "telegram-images",
+            "Telegram Images",
+            "/sdcard/Telegram/Telegram Images",
+            "Telegram Images",
+            false,
+        ),
+        built_in_source(
+            "telegram-video",
+            "Telegram Video",
+            "/sdcard/Telegram/Telegram Video",
+            "Telegram Video",
+            false,
+        ),
+    ]
+}
+
+pub fn default_backup_presets() -> Vec<BackupPreset> {
+    vec![
+        BackupPreset {
+            name: "WhatsApp Essentials".to_string(),
+            source_path: "/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Video"
+                .to_string(),
+            destination_path: "E:\\AndroidBackups\\WhatsApp".to_string(),
+            sources: default_backup_sources()
+                .into_iter()
+                .filter(|source| {
+                    matches!(
+                        source.id.as_str(),
+                        "whatsapp-images" | "whatsapp-videos" | "whatsapp-documents"
+                    )
+                })
+                .map(|mut source| {
+                    source.enabled = true;
+                    source
+                })
+                .collect(),
+        },
+        BackupPreset {
+            name: "WhatsApp Full Media".to_string(),
+            source_path: "/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Video"
+                .to_string(),
+            destination_path: "E:\\AndroidBackups\\WhatsApp".to_string(),
+            sources: default_backup_sources()
+                .into_iter()
+                .map(|mut source| {
+                    source.enabled = source.id.starts_with("whatsapp");
+                    source
+                })
+                .collect(),
+        },
+        BackupPreset {
+            name: "Messaging Media".to_string(),
+            source_path: "/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Video"
+                .to_string(),
+            destination_path: "E:\\AndroidBackups\\Messaging".to_string(),
+            sources: default_backup_sources()
+                .into_iter()
+                .map(|mut source| {
+                    source.enabled = matches!(
+                        source.id.as_str(),
+                        "whatsapp-images"
+                            | "whatsapp-videos"
+                            | "whatsapp-documents"
+                            | "telegram-images"
+                            | "telegram-video"
+                    );
+                    source
+                })
+                .collect(),
+        },
+        BackupPreset {
+            name: "Downloads".to_string(),
+            source_path: "/sdcard/Download".to_string(),
+            destination_path: "E:\\AndroidBackups\\Downloads".to_string(),
+            sources: vec![built_in_source(
+                "downloads",
+                "Downloads",
+                "/sdcard/Download",
+                "Downloads",
+                true,
+            )],
+        },
+        BackupPreset {
+            name: "Camera Roll".to_string(),
+            source_path: "/sdcard/DCIM/Camera".to_string(),
+            destination_path: "E:\\AndroidBackups\\Camera".to_string(),
+            sources: vec![built_in_source(
+                "camera",
+                "Camera",
+                "/sdcard/DCIM/Camera",
+                "Camera",
+                true,
+            )],
+        },
+    ]
+}
+
+pub fn legacy_source_from_path(source_path: &str, destination_subfolder: &str) -> BackupSourceConfig {
+    BackupSourceConfig {
+        id: "custom-legacy".to_string(),
+        label: destination_subfolder.to_string(),
+        source_path: source_path.to_string(),
+        destination_subfolder: destination_subfolder.to_string(),
+        enabled: true,
+        built_in: false,
+    }
+}
+
+pub fn guess_destination_subfolder(path: &str) -> String {
+    let normalized = path.replace('\\', "/");
+    normalized
+        .trim_end_matches('/')
+        .rsplit('/')
+        .next()
+        .filter(|segment| !segment.is_empty())
+        .unwrap_or("Backup Folder")
+        .to_string()
 }
