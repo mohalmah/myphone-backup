@@ -2326,8 +2326,10 @@ fn apply_theme(ctx: &Context) {
     let mut visuals = egui::Visuals::light();
     visuals.panel_fill = Color32::from_rgb(247, 241, 230);
     visuals.extreme_bg_color = Color32::from_rgb(255, 252, 246);
+    visuals.faint_bg_color = Color32::from_rgb(247, 241, 230);
     visuals.override_text_color = Some(Color32::from_rgb(51, 43, 35));
     visuals.widgets.noninteractive.bg_fill = Color32::from_rgb(248, 243, 236);
+    visuals.widgets.noninteractive.bg_stroke = Stroke::new(1.0, Color32::from_rgb(221, 211, 190));
     visuals.widgets.inactive.bg_fill = Color32::from_rgb(244, 238, 227);
     visuals.widgets.hovered.bg_fill = Color32::from_rgb(234, 225, 207);
     visuals.widgets.active.bg_fill = Color32::from_rgb(225, 213, 188);
