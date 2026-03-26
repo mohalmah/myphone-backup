@@ -1242,6 +1242,11 @@ impl BackupApp {
 }
 
 impl eframe::App for BackupApp {
+    fn clear_color(&self, _visuals: &egui::Visuals) -> [f32; 4] {
+        // Match the panel_fill theme color (247, 241, 230) to prevent black gaps between panels
+        [247.0 / 255.0, 241.0 / 255.0, 230.0 / 255.0, 1.0]
+    }
+
     fn update(&mut self, ctx: &Context, _frame: &mut eframe::Frame) {
         self.poll_background_logs();
         self.poll_device_probe();
