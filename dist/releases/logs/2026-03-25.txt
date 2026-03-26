@@ -1,0 +1,56 @@
+[20:26:29] [TRACE] ADB command completed
+    ----------------
+    Command:
+    adb devices -l
+    
+    Exit code: 0
+    
+    Stdout:
+    List of devices attached
+    d2524e0c               device product:ditingp_global model:22081212UG device:diting transport_id:19
+    
+    Stderr:
+    <empty>
+    ----------------
+[20:26:36] [TRACE] ADB command completed
+    ----------------
+    Command:
+    adb devices -l
+    
+    Exit code: 0
+    
+    Stdout:
+    List of devices attached
+    d2524e0c               device product:ditingp_global model:22081212UG device:diting transport_id:19
+    
+    Stderr:
+    <empty>
+    ----------------
+[20:26:54] [TRACE] ADB command completed
+    ----------------
+    Command:
+    adb devices -l
+    
+    Exit code: 0
+    
+    Stdout:
+    List of devices attached
+    d2524e0c               device product:ditingp_global model:22081212UG device:diting transport_id:19
+    
+    Stderr:
+    <empty>
+    ----------------
+[20:27:16] [TRACE] ADB command completed
+    ----------------
+    Command:
+    adb devices -l
+    
+    Exit code: 0
+    
+    Stdout:
+    List of devices attached
+    d2524e0c               device product:ditingp_global model:22081212UG device:diting transport_id:19
+    
+    Stderr:
+    <empty>
+    ----------------

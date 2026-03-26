@@ -109,16 +109,13 @@ impl Default for Settings {
     fn default() -> Self {
         let backup_sources = default_backup_sources();
         let presets = default_backup_presets();
-        let default_preset = presets
-            .first()
-            .cloned()
-            .unwrap_or_else(|| BackupPreset {
-                name: "WhatsApp Essentials".to_string(),
-                source_path: "/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Video"
-                    .to_string(),
-                destination_path: "E:\\AndroidBackups\\WhatsApp".to_string(),
-                sources: vec![],
-            });
+        let default_preset = presets.first().cloned().unwrap_or_else(|| BackupPreset {
+            name: "WhatsApp Essentials".to_string(),
+            source_path: "/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Video"
+                .to_string(),
+            destination_path: "E:\\AndroidBackups\\WhatsApp".to_string(),
+            sources: vec![],
+        });
 
         Self {
             adb_path: "adb".to_string(),
@@ -311,7 +308,11 @@ impl FileRecord {
         if !remote.destination_subfolder.trim().is_empty() {
             local_path.push(&remote.destination_subfolder);
         }
-        for segment in remote.relative_path.split('/').filter(|segment| !segment.is_empty()) {
+        for segment in remote
+            .relative_path
+            .split('/')
+            .filter(|segment| !segment.is_empty())
+        {
             local_path.push(segment);
         }
 
@@ -415,13 +416,7 @@ pub fn default_backup_sources() -> Vec<BackupSourceConfig> {
             "Downloads",
             false,
         ),
-        built_in_source(
-            "camera",
-            "Camera",
-            "/sdcard/DCIM/Camera",
-            "Camera",
-            false,
-        ),
+        built_in_source("camera", "Camera", "/sdcard/DCIM/Camera", "Camera", false),
         built_in_source(
             "telegram-images",
             "Telegram Images",
@@ -520,7 +515,10 @@ pub fn default_backup_presets() -> Vec<BackupPreset> {
     ]
 }
 
-pub fn legacy_source_from_path(source_path: &str, destination_subfolder: &str) -> BackupSourceConfig {
+pub fn legacy_source_from_path(
+    source_path: &str,
+    destination_subfolder: &str,
+) -> BackupSourceConfig {
     BackupSourceConfig {
         id: "custom-legacy".to_string(),
         label: destination_subfolder.to_string(),

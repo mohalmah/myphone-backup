@@ -227,3 +227,1085 @@
     Stderr:
     adb.exe: no devices/emulators found
     ----------------
+[07:39:15] [TRACE] ADB command failed
+    ----------------
+    Command:
+    adb shell -T "sh '-c' 'if [ ! -d \"$1\" ]; then
+        echo \"__NOT_DIRECTORY__\"
+        exit 11
+    fi
+    find \"$1\" -type f | while IFS= read -r item; do
+        size=\"$(stat -c %s \"$item\" 2>/dev/null)\"
+        if [ -z \"$size\" ]; then
+            size=\"$(stat -f %z \"$item\" 2>/dev/null)\"
+        fi
+        modified=\"$(stat -c %Y \"$item\" 2>/dev/null)\"
+        if [ -z \"$modified\" ]; then
+            modified=\"$(stat -f %m \"$item\" 2>/dev/null)\"
+        fi
+        printf '\''F|%s|%s|%s\n'\'' \"${size:-0}\" \"${modified:-0}\" \"$item\"
+    done' 'list-files-recursive' '/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images'"
+    
+    Exit code: 1
+    
+    Stdout:
+    <empty>
+    
+    Stderr:
+    adb.exe: no devices/emulators found
+    ----------------
+[07:39:15] [TRACE] ADB command completed
+    ----------------
+    Command:
+    adb devices -l
+    
+    Exit code: 0
+    
+    Stdout:
+    List of devices attached
+    
+    Stderr:
+    <empty>
+    ----------------
+[07:39:15] [TRACE] ADB command failed
+    ----------------
+    Command:
+    adb shell -T "sh '-c' 'if [ ! -d \"$1\" ]; then
+        echo \"__NOT_DIRECTORY__\"
+        exit 11
+    fi
+    find \"$1\" -type f | while IFS= read -r item; do
+        size=\"$(stat -c %s \"$item\" 2>/dev/null)\"
+        if [ -z \"$size\" ]; then
+            size=\"$(stat -f %z \"$item\" 2>/dev/null)\"
+        fi
+        modified=\"$(stat -c %Y \"$item\" 2>/dev/null)\"
+        if [ -z \"$modified\" ]; then
+            modified=\"$(stat -f %m \"$item\" 2>/dev/null)\"
+        fi
+        printf '\''F|%s|%s|%s\n'\'' \"${size:-0}\" \"${modified:-0}\" \"$item\"
+    done' 'list-files-recursive' '/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Video'"
+    
+    Exit code: 1
+    
+    Stdout:
+    <empty>
+    
+    Stderr:
+    adb.exe: no devices/emulators found
+    ----------------
+[07:39:15] [TRACE] ADB command failed
+    ----------------
+    Command:
+    adb shell -T "sh '-c' 'if [ ! -d \"$1\" ]; then
+        echo \"__NOT_DIRECTORY__\"
+        exit 11
+    fi
+    find \"$1\" -type f | while IFS= read -r item; do
+        size=\"$(stat -c %s \"$item\" 2>/dev/null)\"
+        if [ -z \"$size\" ]; then
+            size=\"$(stat -f %z \"$item\" 2>/dev/null)\"
+        fi
+        modified=\"$(stat -c %Y \"$item\" 2>/dev/null)\"
+        if [ -z \"$modified\" ]; then
+            modified=\"$(stat -f %m \"$item\" 2>/dev/null)\"
+        fi
+        printf '\''F|%s|%s|%s\n'\'' \"${size:-0}\" \"${modified:-0}\" \"$item\"
+    done' 'list-files-recursive' '/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Documents'"
+    
+    Exit code: 1
+    
+    Stdout:
+    <empty>
+    
+    Stderr:
+    adb.exe: no devices/emulators found
+    ----------------
+[07:39:15] [TRACE] ADB command failed
+    ----------------
+    Command:
+    adb shell -T "sh '-c' 'if [ ! -d \"$1\" ]; then
+        echo \"__NOT_DIRECTORY__\"
+        exit 11
+    fi
+    find \"$1\" -type f | while IFS= read -r item; do
+        size=\"$(stat -c %s \"$item\" 2>/dev/null)\"
+        if [ -z \"$size\" ]; then
+            size=\"$(stat -f %z \"$item\" 2>/dev/null)\"
+        fi
+        modified=\"$(stat -c %Y \"$item\" 2>/dev/null)\"
+        if [ -z \"$modified\" ]; then
+            modified=\"$(stat -f %m \"$item\" 2>/dev/null)\"
+        fi
+        printf '\''F|%s|%s|%s\n'\'' \"${size:-0}\" \"${modified:-0}\" \"$item\"
+    done' 'list-files-recursive' '/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Audio'"
+    
+    Exit code: 1
+    
+    Stdout:
+    <empty>
+    
+    Stderr:
+    adb.exe: no devices/emulators found
+    ----------------
+[07:39:15] [TRACE] ADB command failed
+    ----------------
+    Command:
+    adb shell -T "sh '-c' 'if [ ! -d \"$1\" ]; then
+        echo \"__NOT_DIRECTORY__\"
+        exit 11
+    fi
+    find \"$1\" -type f | while IFS= read -r item; do
+        size=\"$(stat -c %s \"$item\" 2>/dev/null)\"
+        if [ -z \"$size\" ]; then
+            size=\"$(stat -f %z \"$item\" 2>/dev/null)\"
+        fi
+        modified=\"$(stat -c %Y \"$item\" 2>/dev/null)\"
+        if [ -z \"$modified\" ]; then
+            modified=\"$(stat -f %m \"$item\" 2>/dev/null)\"
+        fi
+        printf '\''F|%s|%s|%s\n'\'' \"${size:-0}\" \"${modified:-0}\" \"$item\"
+    done' 'list-files-recursive' '/sdcard/Download'"
+    
+    Exit code: 1
+    
+    Stdout:
+    <empty>
+    
+    Stderr:
+    adb.exe: no devices/emulators found
+    ----------------
+[07:39:15] [TRACE] ADB command failed
+    ----------------
+    Command:
+    adb shell -T "sh '-c' 'if [ ! -d \"$1\" ]; then
+        echo \"__NOT_DIRECTORY__\"
+        exit 11
+    fi
+    find \"$1\" -type f | while IFS= read -r item; do
+        size=\"$(stat -c %s \"$item\" 2>/dev/null)\"
+        if [ -z \"$size\" ]; then
+            size=\"$(stat -f %z \"$item\" 2>/dev/null)\"
+        fi
+        modified=\"$(stat -c %Y \"$item\" 2>/dev/null)\"
+        if [ -z \"$modified\" ]; then
+            modified=\"$(stat -f %m \"$item\" 2>/dev/null)\"
+        fi
+        printf '\''F|%s|%s|%s\n'\'' \"${size:-0}\" \"${modified:-0}\" \"$item\"
+    done' 'list-files-recursive' '/sdcard/DCIM/Camera'"
+    
+    Exit code: 1
+    
+    Stdout:
+    <empty>
+    
+    Stderr:
+    adb.exe: no devices/emulators found
+    ----------------
+[07:39:15] [TRACE] ADB command failed
+    ----------------
+    Command:
+    adb shell -T "sh '-c' 'if [ ! -d \"$1\" ]; then
+        echo \"__NOT_DIRECTORY__\"
+        exit 11
+    fi
+    find \"$1\" -type f | while IFS= read -r item; do
+        size=\"$(stat -c %s \"$item\" 2>/dev/null)\"
+        if [ -z \"$size\" ]; then
+            size=\"$(stat -f %z \"$item\" 2>/dev/null)\"
+        fi
+        modified=\"$(stat -c %Y \"$item\" 2>/dev/null)\"
+        if [ -z \"$modified\" ]; then
+            modified=\"$(stat -f %m \"$item\" 2>/dev/null)\"
+        fi
+        printf '\''F|%s|%s|%s\n'\'' \"${size:-0}\" \"${modified:-0}\" \"$item\"
+    done' 'list-files-recursive' '/sdcard/Telegram/Telegram Images'"
+    
+    Exit code: 1
+    
+    Stdout:
+    <empty>
+    
+    Stderr:
+    adb.exe: no devices/emulators found
+    ----------------
+[07:39:16] [TRACE] ADB command failed
+    ----------------
+    Command:
+    adb shell -T "sh '-c' 'if [ ! -d \"$1\" ]; then
+        echo \"__NOT_DIRECTORY__\"
+        exit 11
+    fi
+    find \"$1\" -type f | while IFS= read -r item; do
+        size=\"$(stat -c %s \"$item\" 2>/dev/null)\"
+        if [ -z \"$size\" ]; then
+            size=\"$(stat -f %z \"$item\" 2>/dev/null)\"
+        fi
+        modified=\"$(stat -c %Y \"$item\" 2>/dev/null)\"
+        if [ -z \"$modified\" ]; then
+            modified=\"$(stat -f %m \"$item\" 2>/dev/null)\"
+        fi
+        printf '\''F|%s|%s|%s\n'\'' \"${size:-0}\" \"${modified:-0}\" \"$item\"
+    done' 'list-files-recursive' '/sdcard/Telegram/Telegram Video'"
+    
+    Exit code: 1
+    
+    Stdout:
+    <empty>
+    
+    Stderr:
+    adb.exe: no devices/emulators found
+    ----------------
+[07:40:14] [TRACE] ADB command failed
+    ----------------
+    Command:
+    adb shell -T "sh '-c' 'if [ ! -d \"$1\" ]; then
+        echo \"__NOT_DIRECTORY__\"
+        exit 11
+    fi
+    find \"$1\" -type f | while IFS= read -r item; do
+        size=\"$(stat -c %s \"$item\" 2>/dev/null)\"
+        if [ -z \"$size\" ]; then
+            size=\"$(stat -f %z \"$item\" 2>/dev/null)\"
+        fi
+        modified=\"$(stat -c %Y \"$item\" 2>/dev/null)\"
+        if [ -z \"$modified\" ]; then
+            modified=\"$(stat -f %m \"$item\" 2>/dev/null)\"
+        fi
+        printf '\''F|%s|%s|%s\n'\'' \"${size:-0}\" \"${modified:-0}\" \"$item\"
+    done' 'list-files-recursive' '/sdcard/Download'"
+    
+    Exit code: 1
+    
+    Stdout:
+    <empty>
+    
+    Stderr:
+    adb.exe: no devices/emulators found
+    ----------------
+[07:40:48] [TRACE] ADB command failed
+    ----------------
+    Command:
+    adb shell -T "sh '-c' 'if [ ! -d \"$1\" ]; then
+        echo \"__NOT_DIRECTORY__\"
+        exit 11
+    fi
+    find \"$1\" -mindepth 1 -maxdepth 1 -type d | while IFS= read -r item; do
+        printf '\''D|%s\n'\'' \"$item\"
+    done' 'list-directories' '/sdcard/Download'"
+    
+    Exit code: 1
+    
+    Stdout:
+    <empty>
+    
+    Stderr:
+    adb.exe: no devices/emulators found
+    ----------------
+[07:44:48] [TRACE] ADB command completed
+    ----------------
+    Command:
+    adb devices -l
+    
+    Exit code: 0
+    
+    Stdout:
+    List of devices attached
+    d2524e0c               device product:ditingp_global model:22081212UG device:diting transport_id:18
+    
+    Stderr:
+    <empty>
+    ----------------
+[07:44:59] [TRACE] ADB command completed
+    ----------------
+    Command:
+    adb shell -T "sh '-c' 'if [ ! -d \"$1\" ]; then
+        echo \"__NOT_DIRECTORY__\"
+        exit 11
+    fi
+    find \"$1\" -mindepth 1 -maxdepth 1 -type d | while IFS= read -r item; do
+        printf '\''D|%s\n'\'' \"$item\"
+    done' 'list-directories' '/sdcard/Download'"
+    
+    Exit code: 0
+    
+    Stdout:
+    D|/sdcard/Download/Adobe Acrobat
+    D|/sdcard/Download/MGC_CRASH_LOG
+    D|/sdcard/Download/Telegram
+    D|/sdcard/Download/Mohammed_Mahfadi_Resume_22biz
+    D|/sdcard/Download/11 steps to unleash your Innovative mind
+    D|/sdcard/Download/5 Tips for Boosting Your Productivity at Work-images
+    D|/sdcard/Download/9 Steps to Keep track of your innovative ideas
+    D|/sdcard/Download/downloaded_rom
+    D|/sdcard/Download/AGC.8.6
+    D|/sdcard/Download/AGC.8.4
+    D|/sdcard/Download/snaptube
+    D|/sdcard/Download/SocialMagnet
+    D|/sdcard/Download/StatusSaver
+    D|/sdcard/Download/Browser
+    D|/sdcard/Download/DOC-20230214-WA0013
+    D|/sdcard/Download/CamScanner
+    D|/sdcard/Download/Mohammed_Mahfadi_Resume_22biz (2023)
+    D|/sdcard/Download/soicalmedia
+    D|/sdcard/Download/MGC_SHADING_MAP
+    D|/sdcard/Download/DuckDuckGo
+    D|/sdcard/Download/AGC.9.4
+    D|/sdcard/Download/youtubedl-android
+    D|/sdcard/Download/janna-lt-bold
+    D|/sdcard/Download/vanced
+    D|/sdcard/Download/Essay Writer
+    D|/sdcard/Download/Invoice Generator - Zoho
+    D|/sdcard/Download/com.imo.android.imoim
+    D|/sdcard/Download/com.mi.globalbrowser.tmp_start
+    D|/sdcard/Download/AGC
+    D|/sdcard/Download/Nearby Share
+    D|/sdcard/Download/AGC.9.6
+    D|/sdcard/Download/Meet
+    D|/sdcard/Download/Status Downloader for Whatsapp
+    D|/sdcard/Download/com.interfun.buz
+    D|/sdcard/Download/.anydesk
+    D|/sdcard/Download/ilovepdf_pages-to-jpg
+    D|/sdcard/Download/IMO
+    D|/sdcard/Download/trfih
+    D|/sdcard/Download/.temp_mivideo
+    D|/sdcard/Download/Traveloka
+    D|/sdcard/Download/Canva
+    D|/sdcard/Download/Quick Share
+    D|/sdcard/Download/.td6f2a46_E13AC85F752182FF69DE7222033E21FBB6F3546F86747DBCA28BA61D65E07C848AFF86BC485515BE7661EDE8AD5B8D96
+    D|/sdcard/Download/TeraBox
+    D|/sdcard/Download/Airtable
+    
+    Stderr:
+    <empty>
+    ----------------
+[07:45:09] [TRACE] ADB command completed
+    ----------------
+    Command:
+    adb shell -T "sh '-c' 'if [ ! -d \"$1\" ]; then
+        echo \"__NOT_DIRECTORY__\"
+        exit 11
+    fi
+    find \"$1\" -mindepth 1 -maxdepth 1 -type d | while IFS= read -r item; do
+        printf '\''D|%s\n'\'' \"$item\"
+    done' 'list-directories' '/sdcard'"
+    
+    Exit code: 0
+    
+    Stdout:
+    <empty>
+    
+    Stderr:
+    <empty>
+    ----------------
+[07:45:10] [TRACE] ADB command completed
+    ----------------
+    Command:
+    adb shell -T "sh '-c' 'if [ ! -d \"$1\" ]; then
+        echo \"__NOT_DIRECTORY__\"
+        exit 11
+    fi
+    find \"$1\" -mindepth 1 -maxdepth 1 -type d | while IFS= read -r item; do
+        printf '\''D|%s\n'\'' \"$item\"
+    done' 'list-directories' '/'"
+    
+    Exit code: 0
+    
+    Stdout:
+    D|/acct
+    D|/apex
+    D|/bootstrap-apex
+    D|/config
+    D|/cust
+    D|/data
+    D|/debug_ramdisk
+    D|/dev
+    D|/mi_ext
+    D|/mnt
+    D|/odm
+    D|/odm_dlkm
+    D|/oem
+    D|/opconfig
+    D|/opcust
+    D|/proc
+    D|/product
+    D|/second_stage_resources
+    D|/storage
+    D|/sys
+    D|/system
+    D|/system_ext
+    D|/tmp
+    D|/vendor
+    D|/vendor_dlkm
+    
+    Stderr:
+    find: '/cache': Permission denied
+    find: '/data_mirror': Permission denied
+    find: '/init': Permission denied
+    find: '/init.environ.rc': Permission denied
+    find: '/init.recovery.hardware.rc': Permission denied
+    find: '/linkerconfig': Permission denied
+    find: '/metadata': Permission denied
+    find: '/postinstall': Permission denied
+    find: '/system_dlkm': Permission denied
+    ----------------
+[07:49:04] [TRACE] ADB command completed
+    ----------------
+    Command:
+    adb devices -l
+    
+    Exit code: 0
+    
+    Stdout:
+    List of devices attached
+    d2524e0c               device product:ditingp_global model:22081212UG device:diting transport_id:18
+    
+    Stderr:
+    <empty>
+    ----------------
+[07:49:07] [TRACE] ADB command completed
+    ----------------
+    Command:
+    adb devices -l
+    
+    Exit code: 0
+    
+    Stdout:
+    List of devices attached
+    d2524e0c               device product:ditingp_global model:22081212UG device:diting transport_id:18
+    
+    Stderr:
+    <empty>
+    ----------------
+[07:50:39] [TRACE] ADB command completed
+    ----------------
+    Command:
+    adb devices -l
+    
+    Exit code: 0
+    
+    Stdout:
+    List of devices attached
+    d2524e0c               device product:ditingp_global model:22081212UG device:diting transport_id:18
+    
+    Stderr:
+    <empty>
+    ----------------
+[07:53:32] [TRACE] ADB command completed
+    ----------------
+    Command:
+    adb devices -l
+    
+    Exit code: 0
+    
+    Stdout:
+    List of devices attached
+    d2524e0c               device product:ditingp_global model:22081212UG device:diting transport_id:18
+    
+    Stderr:
+    <empty>
+    ----------------
+[07:54:19] [TRACE] ADB command failed
+    ----------------
+    Command:
+    adb shell -T "sh '-c' 'if [ ! -d \"$1\" ]; then
+        echo \"__NOT_DIRECTORY__\"
+        exit 11
+    fi
+    find \"$1\" -type f | while IFS= read -r item; do
+        size=\"$(stat -c %s \"$item\" 2>/dev/null)\"
+        if [ -z \"$size\" ]; then
+            size=\"$(stat -f %z \"$item\" 2>/dev/null)\"
+        fi
+        modified=\"$(stat -c %Y \"$item\" 2>/dev/null)\"
+        if [ -z \"$modified\" ]; then
+            modified=\"$(stat -f %m \"$item\" 2>/dev/null)\"
+        fi
+        printf '\''F|%s|%s|%s\n'\'' \"${size:-0}\" \"${modified:-0}\" \"$item\"
+    done' 'list-files-recursive' '/sdcard/DCIM/Camera'"
+    
+    Exit code: 255
+    
+    Stdout:
+    F|25195892|1674460765|/sdcard/DCIM/Camera/Raw/IMG_20230123_155924.dng
+    F|25195892|1677935865|/sdcard/DCIM/Camera/Raw/IMG_20230304_211745.dng
+    F|25195892|1677935874|/sdcard/DCIM/Camera/Raw/IMG_20230304_211754.dng
+    F|4379644|1672027932|/sdcard/DCIM/Camera/IMG_20221226_121210.jpg
+    F|4693739|1671975773|/sdcard/DCIM/Camera/IMG_20221225_214251.jpg
+    F|4262315|1671975785|/sdcard/DCIM/Camera/IMG_20221225_214303.jpg
+    F|7253075|1671975786|/sdcard/DCIM/Camera/IMG_20221225_214305.jpg
+    F|2348199|1671976019|/sdcard/DCIM/Camera/IMG_20221225_214659.jpg
+    F|7848522|1671980627|/sdcard/DCIM/Camera/IMG_20221225_230344.jpg
+    F|1140087|1671975116|/sdcard/DCIM/Camera/PXL_20221225_133149597.jpg
+    F|1129368|1671975116|/sdcard/DCIM/Camera/PXL_20221225_133156125.jpg
+    F|6143478|1672016539|/sdcard/DCIM/Camera/IMG_20221226_090218.jpg
+    F|4861465|1672017374|/sdcard/DCIM/Camera/IMG_20221226_091613.jpg
+    F|8117741|1672027527|/sdcard/DCIM/Camera/IMG_20221226_120524.jpg
+    F|1136097|1672033127|/sdcard/DCIM/Camera/PXL_20221226_053845987.PORTRAIT.jpg
+    F|6579662|1672033107|/sdcard/DCIM/Camera/IMG_20221226_133824.jpg
+    F|2824867|1672031638|/sdcard/DCIM/Camera/PXL_20221226_051216143.PHOTOSPHERE.jpg
+    F|2166174|1672031675|/sdcard/DCIM/Camera/PXL_20221226_051434256.MP.jpg
+    F|1196209|1672031770|/sdcard/DCIM/Camera/PXL_20221226_051609458.PORTRAIT.jpg
+    F|1765094|1672031830|/sdcard/DCIM/Camera/PXL_20221226_051707846.PORTRAIT.jpg
+    F|1610753|1672031833|/sdcard/DCIM/Camera/PXL_20221226_051712189.PORTRAIT.jpg
+    F|1308413|1672031836|/sdcard/DCIM/Camera/PXL_20221226_051715213.PORTRAIT.jpg
+    F|976986|1672031858|/sdcard/DCIM/Camera/PXL_20221226_051737098.PORTRAIT.jpg
+    F|6712793|1672033110|/sdcard/DCIM/Camera/IMG_20221226_133828.jpg
+    F|6457733|1672033113|/sdcard/DCIM/Camera/IMG_20221226_133829.jpg
+    F|6230907|1672033115|/sdcard/DCIM/Camera/IMG_20221226_133830.jpg
+    F|30283560|1672034569|/sdcard/DCIM/Camera/IMG_20221226_140248_3x4.jpg
+    [07:54:19] [TRACE] ADB command failed
+    ----------------
+    Command:
+    adb shell -T "sh '-c' 'if [ ! -d \"$1\" ]; thenF|37|1706853226|/sdcard/DCIM/Camera/.temp/.nomedia
+
+            echo \"__NOT_DIRECTORY__\"F|6435763|1672034168|/sdcard/DCIM/Camera/IMG_20221226_135604.jpg
+    
+    exit 11    
+F|1848232|1672033157|/sdcard/DCIM/Camera/PXL_20221226_053914217.PORTRAIT.jpg    
+fi    
+F|1429080|1672033172|/sdcard/DCIM/Camera/PXL_20221226_053930220.PORTRAIT.jpg    
+    find \"$1\" -type f | while IFS= read -r item; doF|6434069|1672034387|/sdcard/DCIM/Camera/IMG_20221226_135943.jpg
+
+            size=\"$(stat -c %s \"$item\" 2>/dev/null)\"F|16085855|1672034416|/sdcard/DCIM/Camera/IMG_20221226_140014.jpg
+
+            if [ -z \"$size\" ]; thenF|51036283|1672034436|/sdcard/DCIM/Camera/IMG_20221226_140031.jpg
+            size=\"$(stat -f %z \"$item\" 2>/dev/null)\"
+
+        fi    
+F|13470989|1672034568|/sdcard/DCIM/Camera/IMG_20221226_140248_16x9.jpg
+        F|1111577|1672054219|/sdcard/DCIM/Camera/PXL_20221226_113015635.NIGHT.jpg
+    F|5725428|1712825621|/sdcard/DCIM/Camera/SGCAM_20240411_165338258.jpg
+    modified=\"$(stat -c %Y \"$item\" 2>/dev/null)\"    
+    F|5212848|1712825637|/sdcard/DCIM/Camera/SGCAM_20240411_165355419.jpg    if [ -z \"$modified\" ]; then
+
+        F|43|1714295209|/sdcard/DCIM/Camera/.dolly_zoom/.nomedia        modified=\"$(stat -f %m \"$item\" 2>/dev/null)\"
+
+        fi
+        printf '\''F|%s|%s|%s\n'\'' \"${size:-0}\" \"${modified:-0}\" \"$item\"    
+F|4007882|1672053902|/sdcard/DCIM/Camera/IMG_20221226_192500.jpg
+        done' 'list-files-recursive' '/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images'"F|3617932|1672053904|/sdcard/DCIM/Camera/IMG_20221226_192502.jpg
+
+        
+F|2469405|1672053921|/sdcard/DCIM/Camera/IMG_20221226_192519.jpg    Exit code: 255
+
+        
+F|1998019|1672053931|/sdcard/DCIM/Camera/IMG_20221226_192529.jpg    
+Stdout:    
+F|2194623|1672054060|/sdcard/DCIM/Camera/IMG_20221226_192737.jpg    
+F|82|1672042000|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/.nomedia    
+F|1808241|1672054063|/sdcard/DCIM/Camera/IMG_20221226_192742.jpg    
+F|197715|1600551220|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200919-WA0080.jpg    
+F|2052665|1672054066|/sdcard/DCIM/Camera/IMG_20221226_192744.jpg    
+F|45501|1587850077|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200424-WA0026.jpg    
+F|1944538|1672054067|/sdcard/DCIM/Camera/IMG_20221226_192746.jpg    
+F|83096|1600032987|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200913-WA0028.jpg    
+F|567452|1672067817|/sdcard/DCIM/Camera/PXL_20221226_151656573.jpg    
+F|62516|1614464842|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210227-WA0014.jpg    
+F|946627|1672058256|/sdcard/DCIM/Camera/IMG_20221226_203734.jpg    
+F|56987|1626461286|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210716-WA0016.jpg    
+F|1578181|1672058258|/sdcard/DCIM/Camera/IMG_20221226_203736.jpg    
+F|108613|1590443305|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200526-WA0001.jpg    
+F|2177734|1712824979|/sdcard/DCIM/Camera/SGCAM_20240411_164257164.jpg    
+F|95571|1648405166|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20220326-WA0058.jpg    F|697528|1672130447|/sdcard/DCIM/Camera/PXL_20221227_084047239.jpg
+    F|2239594|1672107041|/sdcard/DCIM/Camera/IMG_20221227_101038.jpg
+
+        F|6791926|1712825400|/sdcard/DCIM/Camera/SGCAM_20240411_164958101.jpgF|30499|1576533785|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20191216-WA0030.jpg
+    
+F|1933916|1672107049|/sdcard/DCIM/Camera/IMG_20221227_101047.jpg    
+F|89911|1629316931|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210818-WA0038.jpg    
+F|7489902|1712825619|/sdcard/DCIM/Camera/SGCAM_20240411_165336140.jpg    
+F|74159|1638642770|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20211203-WA0033.jpg    F|790947|1672130456|/sdcard/DCIM/Camera/PXL_20221227_084056248.jpg
+    F|2694615|1672130458|/sdcard/DCIM/Camera/PXL_20221227_084056977.MP.jpg
+
+        F|680361|1672130449|/sdcard/DCIM/Camera/PXL_20221227_084048759.jpg
+F|36548|1597184916|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200811-WA0006.jpg    F|664346|1672130451|/sdcard/DCIM/Camera/PXL_20221227_084050982.jpg
+
+    F|775608|1672130452|/sdcard/DCIM/Camera/PXL_20221227_084052215.jpg
+    F|3633695|1672130462|/sdcard/DCIM/Camera/PXL_20221227_084101507.MP.jpg
+    F|702150|1672130463|/sdcard/DCIM/Camera/PXL_20221227_084102628.jpg    
+F|98555|1588358118|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200501-WA0040.jpg
+        F|136362|1666735350|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20221025-WA0050.jpgF|780664|1672130456|/sdcard/DCIM/Camera/PXL_20221227_084055349.jpg
+
+        F|985854|1672150997|/sdcard/DCIM/Camera/IMG_20221227_222317.jpg
+F|58497|1643334731|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20220122-WA0014.jpg    
+F|4137219|1672135847|/sdcard/DCIM/Camera/IMG_20221227_181043.jpg
+    F|4106341|1672130462|/sdcard/DCIM/Camera/PXL_20221227_084100400.MP.jpg
+    F|3985195|1672135852|/sdcard/DCIM/Camera/IMG_20221227_181048.jpg
+    F|4321947|1672135863|/sdcard/DCIM/Camera/IMG_20221227_181100.jpg    
+F|108157|1577225689|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20191224-WA0055.jpg    
+    F|3871234|1672135866|/sdcard/DCIM/Camera/IMG_20221227_181103.jpgF|108302|1656905291|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20220703-WA0039.jpg
+    
+    F|3833300|1672137814|/sdcard/DCIM/Camera/IMG_20221227_184330.jpgF|69799|1590700081|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200528-WA0069.jpg
+    
+F|1249590|1696817425|/sdcard/DCIM/Camera/PXL_20231009_101024906.MP.jpg    
+F|64399|1625872577|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210709-WA0043.jpg    
+F|1569445|1672137894|/sdcard/DCIM/Camera/IMG_20221227_184452.jpg    
+F|60487|1580420891|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200130-WA0063.jpg    
+F|1453748|1672137913|/sdcard/DCIM/Camera/IMG_20221227_184512.jpg    
+F|66142|1671396515|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20221217-WA0038.jpg
+        F|1436712|1672137919|/sdcard/DCIM/Camera/IMG_20221227_184518.jpg
+F|42768|1596572000|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200804-WA0033.jpg    F|1431349|1672137949|/sdcard/DCIM/Camera/IMG_20221227_184548.jpg
+    F|13867646|1672138032|/sdcard/DCIM/Camera/IMG_20221227_184709.jpg
+
+    F|3747436|1672147132|/sdcard/DCIM/Camera/IMG_20221227_211850.jpg
+    F|4067289|1672147138|/sdcard/DCIM/Camera/IMG_20221227_211856.jpg
+        F|1616462|1672147154|/sdcard/DCIM/Camera/IMG_20221227_211911.jpgF|121388|1617928095|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210408-WA0071.jpg
+    
+F|4441207|1672147157|/sdcard/DCIM/Camera/IMG_20221227_211916.jpg    
+F|41996|1587850109|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200425-WA0031.jpg    
+F|3949327|1672147160|/sdcard/DCIM/Camera/IMG_20221227_211919.jpg    
+F|124108|1592509772|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200618-WA0024.jpg    
+F|3898658|1672147163|/sdcard/DCIM/Camera/IMG_20221227_211921.jpg    
+F|41247|1572554506|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20191030-WA0010.jpg    
+F|4115161|1672147369|/sdcard/DCIM/Camera/IMG_20221227_212246.jpg    
+F|27216|1668552435|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20221114-WA0000.jpg    
+F|4586515|1672147203|/sdcard/DCIM/Camera/IMG_20221227_212001.jpg    
+    F|4609135|1672147206|/sdcard/DCIM/Camera/IMG_20221227_212005.jpgF|59053|1644175512|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20220206-WA0012.jpg
+
+        F|55784|1648929547|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20220402-WA0020.jpgF|4679426|1672147214|/sdcard/DCIM/Camera/IMG_20221227_212013.jpg
+
+        F|79577|1665105552|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20221006-WA0021.jpgF|4288637|1672147379|/sdcard/DCIM/Camera/IMG_20221227_212257.jpg
+
+        F|49294|1663388638|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20220914-WA0009.jpgF|4286241|1672147257|/sdcard/DCIM/Camera/IMG_20221227_212054.jpg
+
+        F|4787530|1672147267|/sdcard/DCIM/Camera/IMG_20221227_212105.jpg
+    F|4047766|1672147383|/sdcard/DCIM/Camera/IMG_20221227_212302.jpg
+    F|1751567|1672150973|/sdcard/DCIM/Camera/IMG_20221227_222252.jpg
+    F|924797|1672151007|/sdcard/DCIM/Camera/IMG_20221227_222326.jpg
+    F|546227|1672191040|/sdcard/DCIM/Camera/PXL_20221228_013039504.jpg
+    F|587898|1672191040|/sdcard/DCIM/Camera/PXL_20221228_013039877.jpg
+    F|670275|1672191006|/sdcard/DCIM/Camera/PXL_20221228_013006318.jpgF|114101|1566511178|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20190822-WA0077.jpg
+
+        F|135221|1642377093|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20220113-WA0020.jpgF|651102|1672191009|/sdcard/DCIM/Camera/PXL_20221228_013008724.jpg
+
+    F|649231|1672191010|/sdcard/DCIM/Camera/PXL_20221228_013009887.jpg
+        F|145541|1668551062|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20221114-WA0047.jpgF|653813|1672191011|/sdcard/DCIM/Camera/PXL_20221228_013010694.jpg
+
+        F|582857|1672191015|/sdcard/DCIM/Camera/PXL_20221228_013014720.jpg
+F|37839|1614714616|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210302-WA0054.jpg    F|611345|1672191015|/sdcard/DCIM/Camera/PXL_20221228_013014978.jpg
+
+        F|559048|1672191036|/sdcard/DCIM/Camera/PXL_20221228_013035858.jpg
+F|68841|1579814141|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200120-WA0028.jpg    F|634183|1672191011|/sdcard/DCIM/Camera/PXL_20221228_013011246.jpg
+
+        F|564955|1672191037|/sdcard/DCIM/Camera/PXL_20221228_013036490.jpgF|66351|1574447991|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20191120-WA0012.jpg
+
+        F|37942|1587850114|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200426-WA0000.jpgF|544635|1672191037|/sdcard/DCIM/Camera/PXL_20221228_013036796.jpg
+
+        F|176234|1594581171|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200711-WA0041.jpg
+F|610398|1672191012|/sdcard/DCIM/Camera/PXL_20221228_013011844.jpg    
+F|64737|1615065802|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210305-WA0080.jpg
+        F|657892|1672191013|/sdcard/DCIM/Camera/PXL_20221228_013012390.jpgF|37510|1632949711|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210929-WA0007.jpg
+
+        F|613115|1672191014|/sdcard/DCIM/Camera/PXL_20221228_013013202.jpgF|158752|1639440042|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20211212-WA0063.jpg
+
+    F|608663|1672191014|/sdcard/DCIM/Camera/PXL_20221228_013013698.jpg    
+    F|26668|1575744007|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20191207-WA0000.jpgF|595565|1672191015|/sdcard/DCIM/Camera/PXL_20221228_013013968.jpg
+
+    F|595994|1672191015|/sdcard/DCIM/Camera/PXL_20221228_013014217.jpg    
+    F|54163|1586036170|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200404-WA0028.jpgF|573700|1672191036|/sdcard/DCIM/Camera/PXL_20221228_013036257.jpg
+
+        F|73833|1620709671|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210509-WA0041.jpg
+F|517607|1672191040|/sdcard/DCIM/Camera/PXL_20221228_013039176.jpg    
+F|41622|1570139834|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20191003-WA0003.jpg    
+F|582194|1672191041|/sdcard/DCIM/Camera/PXL_20221228_013040561.jpg    
+F|78284|1649210766|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20220404-WA0041.jpg    
+F|576635|1672191037|/sdcard/DCIM/Camera/PXL_20221228_013037142.jpg    
+F|25683|1614375304|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210226-WA0009.jpg    
+F|532635|1672191038|/sdcard/DCIM/Camera/PXL_20221228_013037496.jpg    
+F|56623|1619901126|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210430-WA0031.jpg
+    F|72406|1608340828|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20201218-WA0031.jpg    
+F|551251|1672191038|/sdcard/DCIM/Camera/PXL_20221228_013037842.jpg    
+    F|5358192|1712825640|/sdcard/DCIM/Camera/SGCAM_20240411_165358396.jpg
+F|57172|1585167285|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200324-WA0025.jpg    
+F|4737677|1672297646|/sdcard/DCIM/Camera/IMG_20221229_150724.jpg    F|58691|1622162543|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210524-WA0039.jpg
+
+        F|541907|1672191043|/sdcard/DCIM/Camera/PXL_20221228_013042469.jpgF|29171|1598210173|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200823-WA0026.jpg
+
+        F|4449458|1672297673|/sdcard/DCIM/Camera/IMG_20221229_150750.jpg
+    F|528288|1672191042|/sdcard/DCIM/Camera/PXL_20221228_013042168.jpg
+    F|5626009|1712825960|/sdcard/DCIM/Camera/SGCAM_20240411_165918036.jpg
+F|42399|1637874301|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20211124-WA0082.jpg    
+F|7517307|1672298172|/sdcard/DCIM/Camera/IMG_20221229_151608.jpg    
+F|136855|1663542281|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20220918-WA0004.jpg    F|2860102|1672191131|/sdcard/DCIM/Camera/PXL_20221228_013211292.MP.jpg
+    F|4328931|1712832804|/sdcard/DCIM/Camera/IMG_20240411_185317.jpg
+    
+F|569836|1712826293|/sdcard/DCIM/Camera/IMG_20240411_170453.jpg    
+F|49152|1611776293|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210127-WA0096.jpg    F|552152|1672191148|/sdcard/DCIM/Camera/PXL_20221228_013227787.jpg
+    
+F|4809095|1712826169|/sdcard/DCIM/Camera/SGCAM_20240411_170246948.jpg    
+F|30588|1580158534|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200127-WA0048.jpg    F|578101|1672191147|/sdcard/DCIM/Camera/PXL_20221228_013226958.jpg
+
+    F|569004|1672191148|/sdcard/DCIM/Camera/PXL_20221228_013227515.jpg    
+    F|44207|1616275170|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210320-WA0031.jpgF|683436|1672221268|/sdcard/DCIM/Camera/IMG_20221228_175428.jpg
+    F|59932|1599944830|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200912-WA0059.jpg
+
+        F|4286150|1672226915|/sdcard/DCIM/Camera/IMG_20221228_192834_1.jpgF|92398|1654112394|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20220530-WA0044.jpg
+
+        F|1565333|1672221239|/sdcard/DCIM/Camera/PXL_20221228_095358354.jpgF|14894|1571776969|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20191022-WA0032.jpg
+
+    F|57386|1602452200|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20201011-WA0008.jpg
+        F|2496167|1672226911|/sdcard/DCIM/Camera/IMG_20221228_192830.jpgF|19159|1641752611|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20211230-WA0040.jpg
+
+        F|86988|1600206155|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200914-WA0033.jpgF|2648565|1672226912|/sdcard/DCIM/Camera/IMG_20221228_192831.jpg
+
+    F|4663359|1712832803|/sdcard/DCIM/Camera/IMG_20240411_185319.jpg    
+F|39361|1628544708|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210808-WA0039.jpg
+        F|8378180|1672298182|/sdcard/DCIM/Camera/IMG_20221229_151620.jpgF|42695|1575146867|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20191129-WA0017.jpg
+
+        F|4704003|1712826278|/sdcard/DCIM/Camera/SGCAM_20240411_170434700.PORTRAIT.jpgF|58274|1600998024|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200925-WA0001.jpg
+
+        F|4874738|1712833775|/sdcard/DCIM/Camera/SGCAM_20240411_190934091.jpg
+F|30965|1654934280|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20220609-WA0006.jpg    F|4630225|1672226957|/sdcard/DCIM/Camera/IMG_20221228_192916.jpg
+    F|55001|1604958963|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20201109-WA0083.jpg
+
+    F|75298|1607025862|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20201203-WA0021.jpg
+        F|148864|1616127331|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210318-WA0021.jpg
+F|5418502|1672298683|/sdcard/DCIM/Camera/IMG_20221229_152440.jpg    
+F|45572|1588626364|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200504-WA0030.jpg    
+F|5325207|1672298696|/sdcard/DCIM/Camera/IMG_20221229_152454.jpg
+        F|27093|1660941026|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20220820-WA0001.jpgF|8948724|1712833758|/sdcard/DCIM/Camera/SGCAM_20240411_190915393.PORTRAIT.jpg
+    
+F|6649872|1672299401|/sdcard/DCIM/Camera/IMG_20221229_153638.jpg
+        F|5136897|1672299387|/sdcard/DCIM/Camera/IMG_20221229_153623.jpgF|65216|1670109672|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20221204-WA0002.jpg
+    
+F|3900673|1712833778|/sdcard/DCIM/Camera/SGCAM_20240411_190936126.jpg    
+F|68297|1653418211|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20220523-WA0035.jpg    
+F|4631683|1672299389|/sdcard/DCIM/Camera/IMG_20221229_153626.jpg    F|80450|1645056826|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20220213-WA0021.jpg
+    
+F|51598|1641949761|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20220111-WA0046.jpg    
+F|4949311|1672299395|/sdcard/DCIM/Camera/IMG_20221229_153633.jpg
+        F|5488370|1672299399|/sdcard/DCIM/Camera/IMG_20221229_153636.jpgF|84534|1656094733|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20220625-WA0009.jpg
+    
+    F|50782|1611954706|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210128-WA0029.jpg
+F|3811674|1712833780|/sdcard/DCIM/Camera/SGCAM_20240411_190937179.jpg    
+F|56045|1591301407|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200603-WA0026.jpg    
+F|5343064|1672299404|/sdcard/DCIM/Camera/IMG_20221229_153642.jpg    
+F|28686|1590346824|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200524-WA0151.jpg    
+F|4849001|1672299410|/sdcard/DCIM/Camera/IMG_20221229_153648.jpg
+        F|36764|1591555214|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200606-WA0052.jpgF|1176869|1757899496|/sdcard/DCIM/Camera/IMG_20250915_092455.jpg
+
+        F|21621|1618953159|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210417-WA0017.jpgF|6882158|1757899680|/sdcard/DCIM/Camera/IMG_20250915_092757.jpg
+    F|2105890|1712845525|/sdcard/DCIM/Camera/SGCAM_20240411_222522807.jpg
+    F|2501733|1672301115|/sdcard/DCIM/Camera/PXL_20221229_080514818.jpg
+    F|6997518|1672301146|/sdcard/DCIM/Camera/IMG_20221229_160543.jpg
+    F|2235443|1712845546|/sdcard/DCIM/Camera/SGCAM_20240411_222544954.jpg
+    F|650882|1672332603|/sdcard/DCIM/Camera/PXL_20221229_165002567.jpg
+    F|1571908|1672376271|/sdcard/DCIM/Camera/IMG_20221230_125749.jpg
+    F|2796872|1672301361|/sdcard/DCIM/Camera/PXL_20221229_080919963.MP.jpg
+    F|2185445|1672332593|/sdcard/DCIM/Camera/PXL_20221229_164951941.MP.jpg
+    
+F|2199112|1712845549|/sdcard/DCIM/Camera/SGCAM_20240411_222547106.jpg    
+F|36487|1587415008|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200420-WA0032.jpg    
+    F|164203|1672374703|/sdcard/DCIM/Camera/IMG_20221230_123143.jpgF|49830|1600463402|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200917-WA0023.jpg
+
+    F|6219489|1672380031|/sdcard/DCIM/Camera/IMG_20221230_140028.jpg    
+F|53484|1622412638|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210530-WA0032.jpg
+        F|6259871|1672380029|/sdcard/DCIM/Camera/IMG_20221230_140025.jpgF|38637|1601340656|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200928-WA0026.jpg
+
+        F|7444192|1731025933|/sdcard/DCIM/Camera/IMG_20241108_083211.jpgF|82765|1614375296|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210226-WA0045.jpg
+
+        F|4367885|1672380049|/sdcard/DCIM/Camera/IMG_20221230_140048.jpg
+F|59101|1595618042|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200724-WA0030.jpg    
+F|4520706|1672380052|/sdcard/DCIM/Camera/IMG_20221230_140051.jpg    
+    F|29774|1600625640|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200920-WA0037.jpgF|6496414|1731500846|/sdcard/DCIM/Camera/IMG_20241113_202717.jpg
+
+        F|4294344|1731062192|/sdcard/DCIM/Camera/IMG_20241108_183631.jpg
+    F|7481137|1757899679|/sdcard/DCIM/Camera/IMG_20250915_092756.jpgF|21533|1637874445|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20211124-WA0170.jpg
+
+    F|1274150|1672457630|/sdcard/DCIM/Camera/PXL_20221231_033350106.jpg    
+F|66382|1610568166|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210113-WA0020.jpg    
+F|4004225|1672457842|/sdcard/DCIM/Camera/IMG_20221231_113720.jpg
+    F|1132376|1672457629|/sdcard/DCIM/Camera/PXL_20221231_033348554.jpg
+        F|4408498|1672457658|/sdcard/DCIM/Camera/IMG_20221231_113414.jpg
+    F|4452599|1672457840|/sdcard/DCIM/Camera/IMG_20221231_113717.jpg
+    F|73192|1587850119|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200423-WA0109.jpgF|3879264|1672457845|/sdcard/DCIM/Camera/IMG_20221231_113723.jpg
+
+        F|175304|1646173265|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20220223-WA0020.jpgF|3728497|1672457850|/sdcard/DCIM/Camera/IMG_20221231_113728.jpg
+
+        F|32341|1603832460|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20201027-WA0011.jpg
+F|4367104|1672457852|/sdcard/DCIM/Camera/IMG_20221231_113730.jpg
+    F|4438811|1712908586|/sdcard/DCIM/Camera/SGCAM_20240412_155625095.jpg
+        F|4004592|1672459766|/sdcard/DCIM/Camera/PXL_20221231_040924730.MP.jpgF|41272|1596397061|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200802-WA0059.jpg
+
+        F|2058152|1672458000|/sdcard/DCIM/Camera/IMG_20221231_113958.jpgF|41658|1637874432|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20211125-WA0051.jpg
+
+        F|5053439|1672459777|/sdcard/DCIM/Camera/PXL_20221231_040935363.MP.jpgF|20952|1578424976|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200107-WA0003.jpg
+
+        F|4696209|1672462129|/sdcard/DCIM/Camera/IMG_20221231_124845.jpgF|29626|1610739513|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210114-WA0072.jpg
+    
+F|43649|1651781903|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20220505-WA0011.jpg    
+F|4738077|1672462105|/sdcard/DCIM/Camera/IMG_20221231_124819.jpg    
+    F|1257307|1672462094|/sdcard/DCIM/Camera/PXL_20221231_044812679.jpgF|63156|1667513340|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20221103-WA0044.jpg
+    
+F|2356838|1672462131|/sdcard/DCIM/Camera/IMG_20221231_124850.jpg
+        F|23312|1657595475|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20220711-WA0065.jpgF|3286077|1712908606|/sdcard/DCIM/Camera/SGCAM_20240412_155643622.jpg
+
+    F|4108407|1672463791|/sdcard/DCIM/Camera/IMG_20221231_131628.jpg
+    F|122072|1669849013|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20221130-WA0003.jpg    
+F|4119374|1672463795|/sdcard/DCIM/Camera/IMG_20221231_131632.jpg    
+F|55995|1569660553|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20190924-WA0052.jpg
+        F|3955910|1672463802|/sdcard/DCIM/Camera/IMG_20221231_131639.jpgF|45737|1593803486|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200703-WA0063.jpg
+
+    F|39388|1620709738|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210509-WA0005.jpg
+    F|61312|1628544696|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210808-WA0040.jpg
+    F|43698|1596397072|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200802-WA0060.jpg
+        F|8079|1570306921|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20191005-WA0024.jpgF|2652050|1672480664|/sdcard/DCIM/Camera/PXL_20221231_095743757.MP.jpg
+    F|37180|1594154251|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200707-WA0057.jpg
+    F|32083|1642472025|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20220117-WA0026.jpg
+
+        F|881019|1672480667|/sdcard/DCIM/Camera/PXL_20221231_095746756.jpgF|23320|1586208591|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200406-WA0085.jpg
+
+        F|3459377|1712908607|/sdcard/DCIM/Camera/SGCAM_20240412_155645677.jpgF|29817|1575744006|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20191206-WA0031.jpg
+
+        F|1068158|1672480686|/sdcard/DCIM/Camera/PXL_20221231_095804588.jpgF|97080|1597184913|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200810-WA0037.jpg
+
+        F|636639|1672191012|/sdcard/DCIM/Camera/PXL_20221228_013011549.jpgF|75190|1578943682|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200113-WA0007.jpg
+
+    F|619701|1672191012|/sdcard/DCIM/Camera/PXL_20221228_013012114.jpg    
+F|55366|1611954681|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210128-WA0017.jpg    
+F|629053|1672191014|/sdcard/DCIM/Camera/PXL_20221228_013013462.jpg    
+F|156239|1662316607|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20220904-WA0011.jpg    
+F|523875|1672191039|/sdcard/DCIM/Camera/PXL_20221228_013038160.jpg    
+    F|628805|1672191013|/sdcard/DCIM/Camera/PXL_20221228_013012676.jpg
+    F|28194|1599944923|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200912-WA0060.jpgF|549360|1672191041|/sdcard/DCIM/Camera/PXL_20221228_013040876.jpg
+
+        F|570639|1672191042|/sdcard/DCIM/Camera/PXL_20221228_013041222.jpgF|40785|1633462556|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20211004-WA0035.jpg
+
+        F|624857|1672191013|/sdcard/DCIM/Camera/PXL_20221228_013012920.jpgF|26139|1590346801|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200524-WA0163.jpg
+
+        F|535903|1672191039|/sdcard/DCIM/Camera/PXL_20221228_013038838.jpgF|47306|1612555437|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210205-WA0078.jpg
+
+    F|57534|1662927973|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20220911-WA0119.jpg    
+F|598741|1672191041|/sdcard/DCIM/Camera/PXL_20221228_013040249.jpg    F|147847|1657595505|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20220710-WA0013.jpg
+
+        F|25634|1636051385|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20211102-WA0015.jpgF|521120|1672191039|/sdcard/DCIM/Camera/PXL_20221228_013038468.jpg
+
+        F|53380|1663388640|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20220914-WA0010.jpgF|520079|1672191042|/sdcard/DCIM/Camera/PXL_20221228_013041541.jpg
+
+        F|64105|1607025877|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20201203-WA0033.jpgF|598744|1672191042|/sdcard/DCIM/Camera/PXL_20221228_013041851.jpg
+
+        F|133854|1620843725|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210512-WA0067.jpgF|666322|1672191142|/sdcard/DCIM/Camera/PXL_20221228_013222459.jpg
+
+        F|110921|1616127332|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210318-WA0033.jpgF|707700|1672191144|/sdcard/DCIM/Camera/PXL_20221228_013223668.jpg
+
+        F|5943069|1672298216|/sdcard/DCIM/Camera/IMG_20221229_151654.jpg
+F|34624|1598382447|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200825-WA0035.jpg
+    F|45662|1614375278|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210226-WA0010.jpg
+        F|4965292|1672297651|/sdcard/DCIM/Camera/IMG_20221229_150730.jpgF|74414|1626119602|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210712-WA0010.jpg
+
+        F|4694560|1672297656|/sdcard/DCIM/Camera/IMG_20221229_150733.jpg
+    F|59140|1619223553|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210422-WA0005.jpgF|4635478|1672297838|/sdcard/DCIM/Camera/IMG_20221229_151035.jpg
+
+        F|58609|1637874456|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20211124-WA0070.jpgF|667250|1672191132|/sdcard/DCIM/Camera/PXL_20221228_013212145.jpg
+
+        F|56137|1624396539|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210621-WA0015.jpgF|588108|1672191133|/sdcard/DCIM/Camera/PXL_20221228_013212848.jpg
+
+        F|83114|1644175506|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp ImaF|3105317|1672191142|/sdcard/DCIM/Camera/PXL_20221228_013220895.MP.jpg
+
+        
+F|614082|1672191149|/sdcard/DCIM/Camera/PXL_20221228_013228061.jpg    
+... detail truncated after 16000 characters ...    
+F|3934990|1712826053|/sdcard/DCIM/Camera/SGCAM_20240411_170049048.jpg    ----------------
+
+    F|648901|1672191146|/sdcard/DCIM/Camera/PXL_20221228_013225820.jpg
+    F|621206|1672191147|/sdcard/DCIM/Camera/PXL_20221228_013226632.jpg
+    F|1900083|1672226819|/sdcard/DCIM/Camera/IMG_20221228_192657.jpg
+    F|2432476|1672226911|/sdcard/DCIM/Camera/IMG_20221228_192829.jpg
+    F|581860|1672191148|/sdcard/DCIM/Camera/PXL_20221228_013227219.jpg
+    F|2751815|1672226912|/sdcard/DCIM/Camera/IMG_20221228_192831_1.jpg
+    F|2673461|1672226911|/sdcard/DCIM/Camera/IMG_20221228_192830_1.jpg
+    F|2660757|1672226911|/sdcard/DCIM/Camera/IMG_20221228_192830_2.jpg
+    F|3328839|1672226914|/sdcard/DCIM/Camera/IMG_20221228_192
+    
+    ... detail truncated after 16000 characters ...
+    ----------------
+[07:54:19] [TRACE] ADB command failed
+    ----------------
+    Command:
+    adb shell -T "sh '-c' 'if [ ! -d \"$1\" ]; then
+        echo \"__NOT_DIRECTORY__\"
+        exit 11
+    fi
+    find \"$1\" -type f | while IFS= read -r item; do
+        size=\"$(stat -c %s \"$item\" 2>/dev/null)\"
+        if [ -z \"$size\" ]; then
+            size=\"$(stat -f %z \"$item\" 2>/dev/null)\"
+        fi
+        modified=\"$(stat -c %Y \"$item\" 2>/dev/null)\"
+        if [ -z \"$modified\" ]; then
+            modified=\"$(stat -f %m \"$item\" 2>/dev/null)\"
+        fi
+        printf '\''F|%s|%s|%s\n'\'' \"${size:-0}\" \"${modified:-0}\" \"$item\"
+    done' 'list-files-recursive' '/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Video'"
+    
+    Exit code: 1
+    
+    Stdout:
+    <empty>
+    
+    Stderr:
+    adb.exe: no devices/emulators found
+    ----------------
+[07:54:19] [TRACE] ADB command failed
+    ----------------
+    Command:
+    adb shell -T "sh '-c' 'if [ ! -d \"$1\" ]; then
+        echo \"__NOT_DIRECTORY__\"
+        exit 11
+    fi
+    find \"$1\" -type f | while IFS= read -r item; do
+        size=\"$(stat -c %s \"$item\" 2>/dev/null)\"
+        if [ -z \"$size\" ]; then
+            size=\"$(stat -f %z \"$item\" 2>/dev/null)\"
+        fi
+        modified=\"$(stat -c %Y \"$item\" 2>/dev/null)\"
+        if [ -z \"$modified\" ]; then
+            modified=\"$(stat -f %m \"$item\" 2>/dev/null)\"
+        fi
+        printf '\''F|%s|%s|%s\n'\'' \"${size:-0}\" \"${modified:-0}\" \"$item\"
+    done' 'list-files-recursive' '/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Documents'"
+    
+    Exit code: 1
+    
+    Stdout:
+    <empty>
+    
+    Stderr:
+    adb.exe: no devices/emulators found
+    ----------------
+[07:54:19] [TRACE] ADB command failed
+    ----------------
+    Command:
+    adb shell -T "sh '-c' 'if [ ! -d \"$1\" ]; then
+        echo \"__NOT_DIRECTORY__\"
+        exit 11
+    fi
+    find \"$1\" -type f | while IFS= read -r item; do
+        size=\"$(stat -c %s \"$item\" 2>/dev/null)\"
+        if [ -z \"$size\" ]; then
+            size=\"$(stat -f %z \"$item\" 2>/dev/null)\"
+        fi
+        modified=\"$(stat -c %Y \"$item\" 2>/dev/null)\"
+        if [ -z \"$modified\" ]; then
+            modified=\"$(stat -f %m \"$item\" 2>/dev/null)\"
+        fi
+        printf '\''F|%s|%s|%s\n'\'' \"${size:-0}\" \"${modified:-0}\" \"$item\"
+    done' 'list-files-recursive' '/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Audio'"
+    
+    Exit code: 1
+    
+    Stdout:
+    <empty>
+    
+    Stderr:
+    adb.exe: no devices/emulators found
+    ----------------
+[07:54:19] [TRACE] ADB command failed
+    ----------------
+    Command:
+    adb shell -T "sh '-c' 'if [ ! -d \"$1\" ]; then
+        echo \"__NOT_DIRECTORY__\"
+        exit 11
+    fi
+    find \"$1\" -type f | while IFS= read -r item; do
+        size=\"$(stat -c %s \"$item\" 2>/dev/null)\"
+        if [ -z \"$size\" ]; then
+            size=\"$(stat -f %z \"$item\" 2>/dev/null)\"
+        fi
+        modified=\"$(stat -c %Y \"$item\" 2>/dev/null)\"
+        if [ -z \"$modified\" ]; then
+            modified=\"$(stat -f %m \"$item\" 2>/dev/null)\"
+        fi
+        printf '\''F|%s|%s|%s\n'\'' \"${size:-0}\" \"${modified:-0}\" \"$item\"
+    done' 'list-files-recursive' '/sdcard/Download'"
+    
+    Exit code: 1
+    
+    Stdout:
+    <empty>
+    
+    Stderr:
+    adb.exe: no devices/emulators found
+    ----------------
+[07:54:19] [TRACE] ADB command failed
+    ----------------
+    Command:
+    adb shell -T "sh '-c' 'if [ ! -d \"$1\" ]; then
+        echo \"__NOT_DIRECTORY__\"
+        exit 11
+    fi
+    find \"$1\" -type f | while IFS= read -r item; do
+        size=\"$(stat -c %s \"$item\" 2>/dev/null)\"
+        if [ -z \"$size\" ]; then
+            size=\"$(stat -f %z \"$item\" 2>/dev/null)\"
+        fi
+        modified=\"$(stat -c %Y \"$item\" 2>/dev/null)\"
+        if [ -z \"$modified\" ]; then
+            modified=\"$(stat -f %m \"$item\" 2>/dev/null)\"
+        fi
+        printf '\''F|%s|%s|%s\n'\'' \"${size:-0}\" \"${modified:-0}\" \"$item\"
+    done' 'list-files-recursive' '/sdcard/DCIM/Camera'"
+    
+    Exit code: 1
+    
+    Stdout:
+    <empty>
+    
+    Stderr:
+    adb.exe: no devices/emulators found
+    ----------------
+[07:54:19] [TRACE] ADB command failed
+    ----------------
+    Command:
+    adb shell -T "sh '-c' 'if [ ! -d \"$1\" ]; then
+        echo \"__NOT_DIRECTORY__\"
+        exit 11
+    fi
+    find \"$1\" -type f | while IFS= read -r item; do
+        size=\"$(stat -c %s \"$item\" 2>/dev/null)\"
+        if [ -z \"$size\" ]; then
+            size=\"$(stat -f %z \"$item\" 2>/dev/null)\"
+        fi
+        modified=\"$(stat -c %Y \"$item\" 2>/dev/null)\"
+        if [ -z \"$modified\" ]; then
+            modified=\"$(stat -f %m \"$item\" 2>/dev/null)\"
+        fi
+        printf '\''F|%s|%s|%s\n'\'' \"${size:-0}\" \"${modified:-0}\" \"$item\"
+    done' 'list-files-recursive' '/sdcard/Telegram/Telegram Images'"
+    
+    Exit code: 1
+    
+    Stdout:
+    <empty>
+    
+    Stderr:
+    adb.exe: no devices/emulators found
+    ----------------
+[07:54:19] [TRACE] ADB command failed
+    ----------------
+    Command:
+    adb shell -T "sh '-c' 'if [ ! -d \"$1\" ]; then
+        echo \"__NOT_DIRECTORY__\"
+        exit 11
+    fi
+    find \"$1\" -type f | while IFS= read -r item; do
+        size=\"$(stat -c %s \"$item\" 2>/dev/null)\"
+        if [ -z \"$size\" ]; then
+            size=\"$(stat -f %z \"$item\" 2>/dev/null)\"
+        fi
+        modified=\"$(stat -c %Y \"$item\" 2>/dev/null)\"
+        if [ -z \"$modified\" ]; then
+            modified=\"$(stat -f %m \"$item\" 2>/dev/null)\"
+        fi
+        printf '\''F|%s|%s|%s\n'\'' \"${size:-0}\" \"${modified:-0}\" \"$item\"
+    done' 'list-files-recursive' '/sdcard/Telegram/Telegram Video'"
+    
+    Exit code: 1
+    
+    Stdout:
+    <empty>
+    
+    Stderr:
+    adb.exe: no devices/emulators found
+    ----------------

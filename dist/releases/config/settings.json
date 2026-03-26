@@ -1,0 +1,225 @@
+{
+  "adb_path": "adb",
+  "source_path": "/sdcard/DCIM/Camera",
+  "destination_path": "E:\\AndroidBackups\\Camera",
+  "validation_mode": "Size",
+  "existing_file_behavior": "Validate",
+  "auto_delete_after_success": false,
+  "dry_run": true,
+  "only_last_days": null,
+  "backup_sources": [
+    {
+      "id": "camera",
+      "label": "Camera",
+      "source_path": "/sdcard/DCIM/Camera",
+      "destination_subfolder": "Camera",
+      "enabled": true,
+      "built_in": true
+    }
+  ],
+  "presets": [
+    {
+      "name": "WhatsApp Essentials",
+      "source_path": "/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Video",
+      "destination_path": "E:\\AndroidBackups\\WhatsApp",
+      "sources": [
+        {
+          "id": "whatsapp-images",
+          "label": "WhatsApp Images",
+          "source_path": "/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images",
+          "destination_subfolder": "WhatsApp Images",
+          "enabled": true,
+          "built_in": true
+        },
+        {
+          "id": "whatsapp-videos",
+          "label": "WhatsApp Videos",
+          "source_path": "/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Video",
+          "destination_subfolder": "WhatsApp Videos",
+          "enabled": true,
+          "built_in": true
+        },
+        {
+          "id": "whatsapp-documents",
+          "label": "WhatsApp Documents",
+          "source_path": "/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Documents",
+          "destination_subfolder": "WhatsApp Documents",
+          "enabled": true,
+          "built_in": true
+        }
+      ]
+    },
+    {
+      "name": "WhatsApp Full Media",
+      "source_path": "/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Video",
+      "destination_path": "E:\\AndroidBackups\\WhatsApp",
+      "sources": [
+        {
+          "id": "whatsapp-images",
+          "label": "WhatsApp Images",
+          "source_path": "/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images",
+          "destination_subfolder": "WhatsApp Images",
+          "enabled": true,
+          "built_in": true
+        },
+        {
+          "id": "whatsapp-videos",
+          "label": "WhatsApp Videos",
+          "source_path": "/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Video",
+          "destination_subfolder": "WhatsApp Videos",
+          "enabled": true,
+          "built_in": true
+        },
+        {
+          "id": "whatsapp-documents",
+          "label": "WhatsApp Documents",
+          "source_path": "/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Documents",
+          "destination_subfolder": "WhatsApp Documents",
+          "enabled": true,
+          "built_in": true
+        },
+        {
+          "id": "whatsapp-audio",
+          "label": "WhatsApp Audio",
+          "source_path": "/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Audio",
+          "destination_subfolder": "WhatsApp Audio",
+          "enabled": true,
+          "built_in": true
+        },
+        {
+          "id": "downloads",
+          "label": "Downloads",
+          "source_path": "/sdcard/Download",
+          "destination_subfolder": "Downloads",
+          "enabled": false,
+          "built_in": true
+        },
+        {
+          "id": "camera",
+          "label": "Camera",
+          "source_path": "/sdcard/DCIM/Camera",
+          "destination_subfolder": "Camera",
+          "enabled": false,
+          "built_in": true
+        },
+        {
+          "id": "telegram-images",
+          "label": "Telegram Images",
+          "source_path": "/sdcard/Telegram/Telegram Images",
+          "destination_subfolder": "Telegram Images",
+          "enabled": false,
+          "built_in": true
+        },
+        {
+          "id": "telegram-video",
+          "label": "Telegram Video",
+          "source_path": "/sdcard/Telegram/Telegram Video",
+          "destination_subfolder": "Telegram Video",
+          "enabled": false,
+          "built_in": true
+        }
+      ]
+    },
+    {
+      "name": "Messaging Media",
+      "source_path": "/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Video",
+      "destination_path": "E:\\AndroidBackups\\Messaging",
+      "sources": [
+        {
+          "id": "whatsapp-images",
+          "label": "WhatsApp Images",
+          "source_path": "/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images",
+          "destination_subfolder": "WhatsApp Images",
+          "enabled": true,
+          "built_in": true
+        },
+        {
+          "id": "whatsapp-videos",
+          "label": "WhatsApp Videos",
+          "source_path": "/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Video",
+          "destination_subfolder": "WhatsApp Videos",
+          "enabled": true,
+          "built_in": true
+        },
+        {
+          "id": "whatsapp-documents",
+          "label": "WhatsApp Documents",
+          "source_path": "/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Documents",
+          "destination_subfolder": "WhatsApp Documents",
+          "enabled": true,
+          "built_in": true
+        },
+        {
+          "id": "whatsapp-audio",
+          "label": "WhatsApp Audio",
+          "source_path": "/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Audio",
+          "destination_subfolder": "WhatsApp Audio",
+          "enabled": false,
+          "built_in": true
+        },
+        {
+          "id": "downloads",
+          "label": "Downloads",
+          "source_path": "/sdcard/Download",
+          "destination_subfolder": "Downloads",
+          "enabled": false,
+          "built_in": true
+        },
+        {
+          "id": "camera",
+          "label": "Camera",
+          "source_path": "/sdcard/DCIM/Camera",
+          "destination_subfolder": "Camera",
+          "enabled": false,
+          "built_in": true
+        },
+        {
+          "id": "telegram-images",
+          "label": "Telegram Images",
+          "source_path": "/sdcard/Telegram/Telegram Images",
+          "destination_subfolder": "Telegram Images",
+          "enabled": true,
+          "built_in": true
+        },
+        {
+          "id": "telegram-video",
+          "label": "Telegram Video",
+          "source_path": "/sdcard/Telegram/Telegram Video",
+          "destination_subfolder": "Telegram Video",
+          "enabled": true,
+          "built_in": true
+        }
+      ]
+    },
+    {
+      "name": "Downloads",
+      "source_path": "/sdcard/Download",
+      "destination_path": "E:\\AndroidBackups\\Downloads",
+      "sources": [
+        {
+          "id": "downloads",
+          "label": "Downloads",
+          "source_path": "/sdcard/Download",
+          "destination_subfolder": "Downloads",
+          "enabled": true,
+          "built_in": true
+        }
+      ]
+    },
+    {
+      "name": "Camera Roll",
+      "source_path": "/sdcard/DCIM/Camera",
+      "destination_path": "E:\\AndroidBackups\\Camera",
+      "sources": [
+        {
+          "id": "camera",
+          "label": "Camera",
+          "source_path": "/sdcard/DCIM/Camera",
+          "destination_subfolder": "Camera",
+          "enabled": true,
+          "built_in": true
+        }
+      ]
+    }
+  ]
+}

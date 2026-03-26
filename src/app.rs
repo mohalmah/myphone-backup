@@ -2,10 +2,10 @@ use crate::core::{
     config,
     logging::{LogEntry, LogLevel},
     models::{
-        guess_destination_subfolder, legacy_source_from_path, BackupAnalysis, BackupPreset,
-        BackupSourceConfig, BackupSourceScan, DeviceConnectionState, DeviceInfo,
-        ExistingFileBehavior, FileRecord, RemoteDirectory, RemoteFile, RemoteFolderEntryKind,
-        RemoteFolderPreview, RunSummary, Settings, SyncProgress, ValidationMode,
+        BackupAnalysis, BackupPreset, BackupSourceConfig, BackupSourceScan, DeviceConnectionState,
+        DeviceInfo, ExistingFileBehavior, FileRecord, RemoteDirectory, RemoteFile,
+        RemoteFolderEntryKind, RemoteFolderPreview, RunSummary, Settings, SyncProgress,
+        ValidationMode, guess_destination_subfolder, legacy_source_from_path,
     },
     sync::{self, SyncEvent, SyncHandle, SyncPlan},
 };
@@ -16,9 +16,9 @@ use eframe::egui::{
     Layout, Margin, RichText, ScrollArea, Stroke,
 };
 use rfd::FileDialog;
-use std::{collections::BTreeSet, path::PathBuf};
 use std::sync::mpsc::{Receiver, Sender, TryRecvError, channel};
 use std::time::Duration;
+use std::{collections::BTreeSet, path::PathBuf};
 use unicode_bidi::BidiInfo;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -96,7 +96,7 @@ pub struct BackupApp {
     show_detailed_logs: bool,
     analysis_file_filter: String,
     last_summary: Option<RunSummary>,
-    selected_preset_name: String,
+    selected_preset_names: Vec<String>,
     preset_name_input: String,
     status_banner: String,
     error_banner: Option<String>,
@@ -115,15 +115,15 @@ impl BackupApp {
         }
         let initial_cleanup_folder = settings.source_path.clone();
         let (background_log_sender, background_log_receiver) = channel();
-        let selected_preset_name = settings
+        let preset_name_input = settings
             .presets
             .first()
             .map(|preset| preset.name.clone())
             .unwrap_or_else(|| "WhatsApp Videos".to_string());
 
         let mut app = Self {
-            preset_name_input: selected_preset_name.clone(),
-            selected_preset_name,
+            preset_name_input,
+            selected_preset_names: Vec::new(),
             settings,
             device_info: DeviceInfo::default(),
             device_probe_receiver: None,
@@ -309,6 +309,140 @@ impl BackupApp {
         self.analysis_file_filter.clear();
     }
 
+    fn clear_selected_preset_chips(&mut self) {
+        self.selected_preset_names.clear();
+    }
+
+    fn selected_preset_count(&self) -> usize {
+        self.selected_preset_names.len()
+    }
+
+    fn preset_by_name(&self, name: &str) -> Option<BackupPreset> {
+        self.settings
+            .presets
+            .iter()
+            .find(|preset| preset.name == name)
+            .cloned()
+    }
+
+    fn preset_sources_for_loading(&self, preset: &BackupPreset) -> Vec<BackupSourceConfig> {
+        if preset.sources.is_empty() {
+            vec![legacy_source_from_path(
+                &preset.source_path,
+                &guess_destination_subfolder(&preset.source_path),
+            )]
+        } else {
+            preset.sources.clone()
+        }
+    }
+
+    fn apply_selected_preset_chips(&mut self) {
+        let selected_presets = self
+            .selected_preset_names
+            .iter()
+            .filter_map(|name| self.preset_by_name(name))
+            .collect::<Vec<_>>();
+
+        if selected_presets.is_empty() {
+            return;
+        }
+
+        let mut merged_sources = Vec::new();
+        let mut seen_paths = BTreeSet::new();
+
+        for preset in &selected_presets {
+            for mut source in self
+                .preset_sources_for_loading(preset)
+                .into_iter()
+                .filter(|source| source.enabled && !source.source_path.trim().is_empty())
+            {
+                source.enabled = true;
+                let dedupe_key = source.source_path.trim().to_lowercase();
+                if seen_paths.insert(dedupe_key) {
+                    merged_sources.push(source);
+                }
+            }
+        }
+
+        if merged_sources.is_empty() {
+            self.status_banner =
+                "The selected preset chips did not include any enabled source folders.".to_string();
+            return;
+        }
+
+        let destination_source = selected_presets
+            .first()
+            .map(|preset| preset.destination_path.clone())
+            .unwrap_or_default();
+        let multiple_destinations = selected_presets
+            .iter()
+            .map(|preset| preset.destination_path.trim().to_lowercase())
+            .collect::<BTreeSet<_>>()
+            .len()
+            > 1;
+
+        self.settings.backup_sources = merged_sources;
+        self.settings.destination_path = destination_source;
+        self.sync_legacy_source_path_from_sources();
+        self.backup_source_library.scan_results.clear();
+        self.invalidate_backup_analysis();
+        self.refresh_backup_source_scan();
+        self.preset_name_input = if selected_presets.len() == 1 {
+            selected_presets[0].name.clone()
+        } else {
+            format!("{} preset mix", selected_presets.len())
+        };
+
+        let status = if selected_presets.len() == 1 {
+            format!("Loaded preset \"{}\".", selected_presets[0].name)
+        } else if multiple_destinations {
+            format!(
+                "Loaded {} preset chips and merged their source folders. The destination root came from \"{}\".",
+                selected_presets.len(),
+                selected_presets[0].name
+            )
+        } else {
+            format!(
+                "Loaded {} preset chips and merged their source folders.",
+                selected_presets.len()
+            )
+        };
+
+        self.status_banner = status.clone();
+        self.push_log(format!("[INFO] {status}"));
+    }
+
+    fn toggle_preset_chip_selection(&mut self, preset_name: &str) {
+        if let Some(index) = self
+            .selected_preset_names
+            .iter()
+            .position(|name| name == preset_name)
+        {
+            self.selected_preset_names.remove(index);
+            if self.selected_preset_names.is_empty() {
+                self.status_banner =
+                    "Preset chip selection cleared. Current source library stays editable."
+                        .to_string();
+                self.push_log(format!("[INFO] Deselected preset chip \"{preset_name}\""));
+                return;
+            }
+        } else {
+            self.selected_preset_names.push(preset_name.to_string());
+        }
+
+        self.apply_selected_preset_chips();
+    }
+
+    fn detach_selected_presets_after_manual_changes(&mut self) {
+        if !self.selected_preset_names.is_empty() {
+            self.selected_preset_names.clear();
+            self.push_log("[INFO] Detached preset chip selection after manual source changes");
+            self.status_banner =
+                "Preset chips were detached because the source library was edited manually."
+                    .to_string();
+        }
+    }
+
     fn trigger_backup_analysis_if_ready(&mut self) {
         if self.has_active_adb_job() {
             return;
@@ -394,8 +528,56 @@ impl BackupApp {
             self.invalidate_backup_analysis();
             self.trigger_backup_analysis_if_ready();
             self.status_banner = format!("Selected local destination folder: {selected}");
-            self.push_log(format!("[INFO] Local destination folder selected: {selected}"));
+            self.push_log(format!(
+                "[INFO] Local destination folder selected: {selected}"
+            ));
         }
+    }
+
+    fn pick_backup_source_destination_folder(&mut self, index: usize) -> bool {
+        if index >= self.settings.backup_sources.len() {
+            return false;
+        }
+
+        let current_subfolder = self.settings.backup_sources[index]
+            .destination_subfolder
+            .clone();
+
+        let initial_directory = if self.settings.destination_path.trim().is_empty() {
+            std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."))
+        } else {
+            let candidate = PathBuf::from(&self.settings.destination_path).join(&current_subfolder);
+            if candidate.is_dir() {
+                candidate
+            } else {
+                initial_local_directory(&self.settings.destination_path)
+            }
+        };
+
+        let Some(folder) = FileDialog::new()
+            .set_directory(initial_directory)
+            .pick_folder()
+        else {
+            return false;
+        };
+
+        let destination_subfolder = derive_destination_subfolder(
+            &folder,
+            &self.settings.destination_path,
+            &current_subfolder,
+        );
+
+        if let Some(source) = self.settings.backup_sources.get_mut(index) {
+            source.destination_subfolder = destination_subfolder.clone();
+        }
+
+        self.status_banner = format!("Selected destination subfolder: {destination_subfolder}");
+        self.push_log(format!(
+            "[INFO] Source destination subfolder selected: {destination_subfolder}"
+        ));
+        self.invalidate_backup_analysis();
+        self.backup_source_library.scan_results.clear();
+        true
     }
 
     fn open_cleanup_folder_picker(&mut self) {
@@ -408,11 +590,7 @@ impl BackupApp {
         self.open_remote_folder_picker(RemoteFolderPickerTarget::CleanupFolder, start_path);
     }
 
-    fn open_remote_folder_picker(
-        &mut self,
-        target: RemoteFolderPickerTarget,
-        start_path: String,
-    ) {
+    fn open_remote_folder_picker(&mut self, target: RemoteFolderPickerTarget, start_path: String) {
         self.remote_folder_picker.target = target;
         self.remote_folder_picker.is_open = true;
         self.request_remote_directory_listing(start_path);
@@ -504,7 +682,11 @@ impl BackupApp {
         let mut entries = preview
             .entries
             .iter()
-            .filter(|entry| self.folder_cleanup.selected_paths.contains(&entry.full_path))
+            .filter(|entry| {
+                self.folder_cleanup
+                    .selected_paths
+                    .contains(&entry.full_path)
+            })
             .cloned()
             .collect::<Vec<_>>();
 
@@ -517,10 +699,15 @@ impl BackupApp {
 
         let mut filtered = Vec::new();
         for entry in entries {
-            let covered_by_parent = filtered.iter().any(|selected: &crate::core::models::RemoteFolderEntry| {
-                matches!(selected.kind, RemoteFolderEntryKind::Directory)
-                    && entry.full_path.starts_with(&(selected.full_path.clone() + "/"))
-            });
+            let covered_by_parent =
+                filtered
+                    .iter()
+                    .any(|selected: &crate::core::models::RemoteFolderEntry| {
+                        matches!(selected.kind, RemoteFolderEntryKind::Directory)
+                            && entry
+                                .full_path
+                                .starts_with(&(selected.full_path.clone() + "/"))
+                    });
             if !covered_by_parent {
                 filtered.push(entry);
             }
@@ -539,9 +726,8 @@ impl BackupApp {
         }
 
         if !self.folder_cleanup.delete_armed {
-            self.folder_cleanup.delete_error = Some(
-                "Arm deletion first by checking the confirmation box.".to_string(),
-            );
+            self.folder_cleanup.delete_error =
+                Some("Arm deletion first by checking the confirmation box.".to_string());
             return None;
         }
 
@@ -770,38 +956,10 @@ impl BackupApp {
                 .sort_by(|left, right| left.name.to_lowercase().cmp(&right.name.to_lowercase()));
         }
 
-        self.selected_preset_name = name.clone();
+        self.selected_preset_names = vec![name.clone()];
         self.preset_name_input = name.clone();
         self.save_settings();
         self.status_banner = format!("Preset \"{name}\" saved.");
-    }
-
-    fn load_selected_preset(&mut self) {
-        let selected = self.selected_preset_name.clone();
-        if let Some(preset) = self
-            .settings
-            .presets
-            .iter()
-            .find(|candidate| candidate.name == selected)
-            .cloned()
-        {
-            let legacy_source_path = preset.source_path.clone();
-            self.settings.source_path = legacy_source_path.clone();
-            self.settings.destination_path = preset.destination_path;
-            self.settings.backup_sources = if preset.sources.is_empty() {
-                vec![legacy_source_from_path(
-                    &legacy_source_path,
-                    &guess_destination_subfolder(&legacy_source_path),
-                )]
-            } else {
-                preset.sources
-            };
-            self.sync_legacy_source_path_from_sources();
-            self.refresh_backup_source_scan();
-            self.preset_name_input = preset.name.clone();
-            self.status_banner = format!("Loaded preset \"{}\".", preset.name);
-            self.push_log(format!("[INFO] Loaded preset \"{}\"", preset.name));
-        }
     }
 
     fn start_sync(&mut self, plan: SyncPlan, reset_state: bool) {
@@ -972,65 +1130,65 @@ impl BackupApp {
             RemoteFolderPickerTarget::CleanupFolder => "Select Folder For Cleanup",
             RemoteFolderPickerTarget::BackupSource(_) => "Select Backup Library Folder",
         })
-            .open(&mut window_open)
-            .collapsible(false)
-            .resizable(true)
-            .default_size([620.0, 420.0])
-            .show(ctx, |ui| {
-                ui.label("Browse directories on the connected Android device");
-                ui.add_space(6.0);
-                wrapped_path_text(ui, &current_path);
-                ui.add_space(10.0);
+        .open(&mut window_open)
+        .collapsible(false)
+        .resizable(true)
+        .default_size([620.0, 420.0])
+        .show(ctx, |ui| {
+            ui.label("Browse directories on the connected Android device");
+            ui.add_space(6.0);
+            wrapped_path_text(ui, &current_path);
+            ui.add_space(10.0);
 
-                ui.horizontal(|ui| {
-                    if ui
-                        .add_enabled(can_go_up && !is_loading, egui::Button::new("Up"))
-                        .clicked()
-                    {
-                        go_up = true;
-                    }
-
-                    if ui
-                        .add_enabled(!is_loading, egui::Button::new("Refresh"))
-                        .clicked()
-                    {
-                        refresh_listing = true;
-                    }
-
-                    if ui.button("Use This Folder").clicked() {
-                        select_current = true;
-                    }
-                });
-
-                ui.add_space(10.0);
-
-                if is_loading {
-                    ui.spinner();
-                    ui.label("Loading folders from device...");
-                } else if let Some(error) = &error {
-                    ui.colored_label(Color32::from_rgb(168, 52, 33), error);
-                } else if entries.is_empty() {
-                    ui.label("No subfolders found here. You can still use the current folder.");
+            ui.horizontal(|ui| {
+                if ui
+                    .add_enabled(can_go_up && !is_loading, egui::Button::new("Up"))
+                    .clicked()
+                {
+                    go_up = true;
                 }
 
-                ScrollArea::vertical()
-                    .id_salt("remote_folder_picker_scroll")
-                    .max_height(260.0)
-                    .auto_shrink([false; 2])
-                    .show(ui, |ui| {
-                        for directory in &entries {
-                            let label = format!("[Dir] {}", directory.name);
-                            if ui
-                                .add_enabled(!is_loading, egui::Button::new(label))
-                                .clicked()
-                            {
-                                navigate_to = Some(directory.full_path.clone());
-                            }
-                            wrapped_path_text(ui, &directory.full_path);
-                            ui.add_space(6.0);
-                        }
-                    });
+                if ui
+                    .add_enabled(!is_loading, egui::Button::new("Refresh"))
+                    .clicked()
+                {
+                    refresh_listing = true;
+                }
+
+                if ui.button("Use This Folder").clicked() {
+                    select_current = true;
+                }
             });
+
+            ui.add_space(10.0);
+
+            if is_loading {
+                ui.spinner();
+                ui.label("Loading folders from device...");
+            } else if let Some(error) = &error {
+                ui.colored_label(Color32::from_rgb(168, 52, 33), error);
+            } else if entries.is_empty() {
+                ui.label("No subfolders found here. You can still use the current folder.");
+            }
+
+            ScrollArea::vertical()
+                .id_salt("remote_folder_picker_scroll")
+                .max_height(260.0)
+                .auto_shrink([false; 2])
+                .show(ui, |ui| {
+                    for directory in &entries {
+                        let label = format!("[Dir] {}", directory.name);
+                        if ui
+                            .add_enabled(!is_loading, egui::Button::new(label))
+                            .clicked()
+                        {
+                            navigate_to = Some(directory.full_path.clone());
+                        }
+                        wrapped_path_text(ui, &directory.full_path);
+                        ui.add_space(6.0);
+                    }
+                });
+        });
 
         self.remote_folder_picker.is_open = window_open;
 
@@ -1049,7 +1207,9 @@ impl BackupApp {
                     self.invalidate_backup_analysis();
                     self.trigger_backup_analysis_if_ready();
                     self.status_banner = format!("Selected phone source folder: {current_path}");
-                    self.push_log(format!("[INFO] Phone source folder selected: {current_path}"));
+                    self.push_log(format!(
+                        "[INFO] Phone source folder selected: {current_path}"
+                    ));
                 }
                 RemoteFolderPickerTarget::CleanupFolder => {
                     self.set_cleanup_folder_path(current_path.clone());
@@ -1175,6 +1335,61 @@ impl eframe::App for BackupApp {
                     .id_salt("settings_panel_scroll")
                     .auto_shrink([false; 2])
                     .show(ui, |ui| {
+                        if self.active_tab == AppTab::Backup {
+                            // ── Quick Presets (always visible at the top) ──
+                            ui.add_space(4.0);
+                            ui.label(RichText::new("Quick Presets").strong().size(14.0));
+                            ui.add_space(4.0);
+
+                            let presets = self.settings.presets.clone();
+                            ui.horizontal_wrapped(|ui| {
+                                for preset in &presets {
+                                    let is_selected = self
+                                        .selected_preset_names
+                                        .iter()
+                                        .any(|name| name == &preset.name);
+                                    let response = render_preset_chip(ui, preset, is_selected);
+                                    if response.clicked() {
+                                        self.toggle_preset_chip_selection(&preset.name);
+                                    }
+                                }
+                            });
+
+                            ui.add_space(4.0);
+                            if self.selected_preset_count() > 0 {
+                                ui.horizontal_wrapped(|ui| {
+                                    ui.small(format!(
+                                        "{} active: {}",
+                                        self.selected_preset_count(),
+                                        self.selected_preset_names.join(", ")
+                                    ));
+                                    if ui.small_button("Clear").clicked() {
+                                        self.clear_selected_preset_chips();
+                                        self.status_banner =
+                                            "Preset chip selection cleared. The current source library stays loaded."
+                                                .to_string();
+                                    }
+                                });
+                            }
+
+                            ui.add_space(4.0);
+                            ui.horizontal_wrapped(|ui| {
+                                if ui.small_button("Save Settings").clicked() {
+                                    self.save_settings();
+                                }
+                                if ui.small_button("Save as Preset").clicked() {
+                                    self.save_current_preset();
+                                }
+                                ui.add(
+                                    egui::TextEdit::singleline(&mut self.preset_name_input)
+                                        .desired_width(140.0)
+                                        .hint_text("Preset name"),
+                                );
+                            });
+                            ui.add_space(6.0);
+                            ui.separator();
+                        }
+
                         settings_card(ui, "Connection", |ui| {
                             ui.label("ADB executable");
                             ui.add(
@@ -1490,37 +1705,6 @@ impl eframe::App for BackupApp {
                             }
                         });
 
-                        settings_card(ui, "Presets", |ui| {
-                            ui.label("Preset name");
-                            ui.text_edit_singleline(&mut self.preset_name_input);
-                            ui.horizontal(|ui| {
-                                if ui.button("Save Current Preset").clicked() {
-                                    self.save_current_preset();
-                                }
-                                if ui.button("Load Selected").clicked() {
-                                    self.load_selected_preset();
-                                }
-                            });
-                            egui::ComboBox::from_label("Saved presets")
-                                .selected_text(if self.selected_preset_name.is_empty() {
-                                    "Select a preset".to_string()
-                                } else {
-                                    self.selected_preset_name.clone()
-                                })
-                                .show_ui(ui, |ui| {
-                                    for preset in &self.settings.presets {
-                                        ui.selectable_value(
-                                            &mut self.selected_preset_name,
-                                            preset.name.clone(),
-                                            preset.name.clone(),
-                                        );
-                                    }
-                                });
-                            if ui.button("Save Settings").clicked() {
-                                self.save_settings();
-                            }
-                        });
-
                         settings_card(ui, "Run Controls", |ui| {
                             ui.horizontal(|ui| {
                                 if ui
@@ -1592,7 +1776,7 @@ impl eframe::App for BackupApp {
                                 visible_log_count,
                                 self.log_entries.len()
                             ))
-                                .color(Color32::from_rgb(118, 104, 85)),
+                            .color(Color32::from_rgb(118, 104, 85)),
                         );
                     });
                 });
@@ -1624,6 +1808,7 @@ impl eframe::App for BackupApp {
             };
             let mut backup_source_to_remove = None;
             let mut backup_source_to_pick = None;
+            let mut backup_source_destination_to_pick = None;
             let mut backup_sources_changed = false;
 
             if self.active_tab == AppTab::Backup {
@@ -1660,6 +1845,30 @@ impl eframe::App for BackupApp {
                             if self.backup_source_library.is_scanning {
                                 ui.spinner();
                                 ui.label("Scanning...");
+                            }
+                        });
+                        ui.add_space(6.0);
+
+                        // ── Destination folder row with folder selector ──
+                        ui.horizontal(|ui| {
+                            ui.label("Destination:");
+                            if ui
+                                .add(
+                                    egui::TextEdit::singleline(&mut self.settings.destination_path)
+                                        .desired_width(ui.available_width() - 120.0),
+                                )
+                                .changed()
+                            {
+                                self.invalidate_backup_analysis();
+                            }
+                            if ui
+                                .add_enabled(
+                                    !self.has_active_adb_job(),
+                                    egui::Button::new("Browse..."),
+                                )
+                                .clicked()
+                            {
+                                self.pick_local_destination_folder();
                             }
                         });
                         ui.add_space(8.0);
@@ -1751,6 +1960,15 @@ impl eframe::App for BackupApp {
                                                 {
                                                     backup_sources_changed = true;
                                                 }
+                                                if ui
+                                                    .add_enabled(
+                                                        source_actions_enabled,
+                                                        egui::Button::new("Pick Destination"),
+                                                    )
+                                                    .clicked()
+                                                {
+                                                    backup_source_destination_to_pick = Some(index);
+                                                }
                                             });
                                             ui.add_space(6.0);
 
@@ -1790,7 +2008,12 @@ impl eframe::App for BackupApp {
                 if let Some(index) = backup_source_to_pick {
                     self.open_backup_source_folder_picker(index);
                 }
+                if let Some(index) = backup_source_destination_to_pick {
+                    backup_sources_changed =
+                        self.pick_backup_source_destination_folder(index) || backup_sources_changed;
+                }
                 if backup_sources_changed {
+                    self.detach_selected_presets_after_manual_changes();
                     self.sync_legacy_source_path_from_sources();
                     self.backup_source_library.scan_results.clear();
                     self.invalidate_backup_analysis();
@@ -2187,8 +2410,10 @@ fn wrapped_text(ui: &mut egui::Ui, text: &str) {
 
 fn wrapped_path_text(ui: &mut egui::Ui, text: &str) {
     ui.add(
-        egui::Label::new(RichText::new(display_text_for_ui(text)).color(Color32::from_rgb(86, 74, 60)))
-            .wrap(),
+        egui::Label::new(
+            RichText::new(display_text_for_ui(text)).color(Color32::from_rgb(86, 74, 60)),
+        )
+        .wrap(),
     );
 }
 
@@ -2204,6 +2429,164 @@ fn settings_card(ui: &mut egui::Ui, title: &str, add_contents: impl FnOnce(&mut 
             add_contents(ui);
         });
     ui.add_space(12.0);
+}
+
+#[derive(Clone, Copy)]
+struct PresetBadge {
+    icon: &'static str,
+    color: Color32,
+}
+
+fn render_preset_chip(ui: &mut egui::Ui, preset: &BackupPreset, selected: bool) -> egui::Response {
+    let badges = preset_badges(preset);
+    let primary_badge = badges.first().cloned();
+
+    let (fill, stroke_color, text_color) = if selected {
+        let badge_color = primary_badge
+            .as_ref()
+            .map(|b| b.color)
+            .unwrap_or(Color32::from_rgb(73, 121, 92));
+        (
+            badge_color.gamma_multiply(0.14),
+            badge_color.gamma_multiply(0.55),
+            badge_color,
+        )
+    } else {
+        (
+            Color32::from_rgb(255, 252, 246),
+            Color32::from_rgb(221, 211, 190),
+            Color32::from_rgb(90, 78, 64),
+        )
+    };
+
+    let stroke_width = if selected { 2.0 } else { 1.0 };
+
+    let inner = Frame::new()
+        .fill(fill)
+        .stroke(Stroke::new(stroke_width, stroke_color))
+        .corner_radius(CornerRadius::same(255))
+        .inner_margin(Margin::symmetric(10, 6))
+        .show(ui, |ui| {
+            ui.horizontal(|ui| {
+                // Show icon inline (larger, from the primary badge)
+                if let Some(badge) = &primary_badge {
+                    ui.label(
+                        RichText::new(badge.icon)
+                            .size(14.0)
+                            .color(badge.color),
+                    );
+                }
+                // Show additional badges if multiple apps
+                for badge in badges.iter().skip(1) {
+                    ui.label(
+                        RichText::new(badge.icon)
+                            .size(12.0)
+                            .color(badge.color),
+                    );
+                }
+                ui.label(
+                    RichText::new(display_text_for_ui(&preset.name))
+                        .strong()
+                        .color(text_color),
+                );
+                if selected {
+                    ui.label(
+                        RichText::new("✓")
+                            .strong()
+                            .size(12.0)
+                            .color(text_color),
+                    );
+                }
+            });
+        });
+
+    let response = ui.interact(
+        inner.response.rect,
+        ui.make_persistent_id(("preset_chip", &preset.name)),
+        egui::Sense::click(),
+    );
+    if response.hovered() {
+        ui.output_mut(|output| output.cursor_icon = egui::CursorIcon::PointingHand);
+    }
+
+    response.on_hover_text(preset_chip_hover_text(preset))
+}
+
+
+
+fn preset_badges(preset: &BackupPreset) -> Vec<PresetBadge> {
+    let mut badges = Vec::new();
+    let name = preset.name.to_lowercase();
+    let sources = if preset.sources.is_empty() {
+        preset.source_path.to_lowercase()
+    } else {
+        preset
+            .sources
+            .iter()
+            .map(|source| format!("{} {}", source.id, source.source_path))
+            .collect::<Vec<_>>()
+            .join(" ")
+            .to_lowercase()
+    };
+    let combined = format!("{name} {sources}");
+
+    if combined.contains("whatsapp") {
+        badges.push(PresetBadge {
+            icon: "💬",
+            color: Color32::from_rgb(42, 157, 93),
+        });
+    }
+    if combined.contains("telegram") {
+        badges.push(PresetBadge {
+            icon: "✈",
+            color: Color32::from_rgb(44, 127, 184),
+        });
+    }
+    if combined.contains("download") {
+        badges.push(PresetBadge {
+            icon: "⬇",
+            color: Color32::from_rgb(198, 106, 44),
+        });
+    }
+    if combined.contains("camera") || combined.contains("/dcim/") {
+        badges.push(PresetBadge {
+            icon: "📷",
+            color: Color32::from_rgb(129, 92, 51),
+        });
+    }
+
+    if badges.is_empty() {
+        badges.push(PresetBadge {
+            icon: "📁",
+            color: Color32::from_rgb(118, 104, 85),
+        });
+    }
+
+    badges
+}
+
+fn preset_chip_hover_text(preset: &BackupPreset) -> String {
+    let source_labels = if preset.sources.is_empty() {
+        vec![guess_destination_subfolder(&preset.source_path)]
+    } else {
+        preset
+            .sources
+            .iter()
+            .filter(|source| source.enabled)
+            .map(|source| source.label.clone())
+            .collect::<Vec<_>>()
+    };
+
+    let source_summary = if source_labels.is_empty() {
+        "No enabled sources".to_string()
+    } else {
+        source_labels.join(", ")
+    };
+
+    format!(
+        "{}\nDestination root: {}\nEnabled sources: {}",
+        preset.name, preset.destination_path, source_summary
+    )
 }
 
 fn status_pill(ui: &mut egui::Ui, text: &str, color: Color32) {
@@ -2374,11 +2757,7 @@ fn cleanup_summary(preview: &RemoteFolderPreview) -> String {
     )
 }
 
-fn render_backup_analysis(
-    ui: &mut egui::Ui,
-    analysis: &BackupAnalysis,
-    file_filter: &mut String,
-) {
+fn render_backup_analysis(ui: &mut egui::Ui, analysis: &BackupAnalysis, file_filter: &mut String) {
     let normalized_filter = file_filter.trim().to_lowercase();
     let filtered_files = analysis
         .files
@@ -2530,10 +2909,7 @@ fn render_backup_analysis(
                             for file in &filtered_files {
                                 Frame::new()
                                     .fill(Color32::from_rgb(250, 247, 240))
-                                    .stroke(Stroke::new(
-                                        1.0,
-                                        Color32::from_rgb(228, 219, 203),
-                                    ))
+                                    .stroke(Stroke::new(1.0, Color32::from_rgb(228, 219, 203)))
                                     .corner_radius(CornerRadius::same(12))
                                     .inner_margin(Margin::same(10))
                                     .show(ui, |ui| {
@@ -2630,6 +3006,37 @@ fn initial_local_directory(path: &str) -> PathBuf {
     }
 
     std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."))
+}
+
+fn derive_destination_subfolder(selected_folder: &PathBuf, destination_root: &str, fallback: &str) -> String {
+    let selected = selected_folder.to_string_lossy().to_string();
+    let root = destination_root.trim();
+
+    if root.is_empty() {
+        if let Some(name) = selected_folder.file_name() {
+            return name.to_string_lossy().to_string();
+        }
+        return fallback.to_string();
+    }
+
+    let root_path = PathBuf::from(root);
+    if let Ok(relative) = selected_folder.strip_prefix(&root_path) {
+        let relative_text = relative.to_string_lossy().replace('\\', "/");
+        let trimmed = relative_text.trim_matches('/').to_string();
+        if !trimmed.is_empty() {
+            return trimmed;
+        }
+    }
+
+    if let Some(name) = selected_folder.file_name() {
+        return name.to_string_lossy().to_string();
+    }
+
+    if !selected.trim().is_empty() {
+        return selected;
+    }
+
+    fallback.to_string()
 }
 
 fn normalize_remote_path(path: &str) -> String {

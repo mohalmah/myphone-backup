@@ -6,8 +6,8 @@ use super::{
     },
 };
 use anyhow::{Context, Result, anyhow, bail};
-use std::{path::Path, sync::Arc};
 use std::process::Command;
+use std::{path::Path, sync::Arc};
 
 pub struct AdbController {
     executable: String,
@@ -135,8 +135,10 @@ find "$1" -type f | while IFS= read -r item; do
     fi
     printf 'F|%s|%s|%s\n' "${size:-0}" "${modified:-0}" "$item"
 done"#;
-        let output =
-            self.run_shell_command("sh", &["-c", script, "list-files-recursive", source_directory])?;
+        let output = self.run_shell_command(
+            "sh",
+            &["-c", script, "list-files-recursive", source_directory],
+        )?;
 
         let mut files = Vec::new();
         let normalized_root = normalize_remote_root(source_directory);
@@ -161,12 +163,7 @@ done"#;
                 .trim()
                 .parse::<u64>()
                 .unwrap_or(0);
-            let modified_epoch_seconds = parts
-                .next()
-                .unwrap_or("0")
-                .trim()
-                .parse::<i64>()
-                .ok();
+            let modified_epoch_seconds = parts.next().unwrap_or("0").trim().parse::<i64>().ok();
             let remote_path = parts.next().unwrap_or_default().trim().to_string();
             if remote_path.is_empty() {
                 continue;
@@ -272,8 +269,12 @@ find "$1" -mindepth 1 | while IFS= read -r item; do
     fi
 done"#;
 
-        let output = self.run_shell_command("sh", &["-c", script, "preview-folder", folder_path])?;
-        if output.lines().any(|line| line.trim() == "__NOT_DIRECTORY__") {
+        let output =
+            self.run_shell_command("sh", &["-c", script, "preview-folder", folder_path])?;
+        if output
+            .lines()
+            .any(|line| line.trim() == "__NOT_DIRECTORY__")
+        {
             bail!("Remote folder does not exist: {folder_path}");
         }
 
@@ -282,7 +283,11 @@ done"#;
         let mut directory_count = 0usize;
         let mut total_file_bytes = 0u64;
 
-        for line in output.lines().map(str::trim).filter(|line| !line.is_empty()) {
+        for line in output
+            .lines()
+            .map(str::trim)
+            .filter(|line| !line.is_empty())
+        {
             if let Some(path) = line.strip_prefix("D|") {
                 directory_count += 1;
                 entries.push(RemoteFolderEntry {
@@ -312,13 +317,21 @@ done"#;
         }
 
         entries.sort_by(|left, right| match (&left.kind, &right.kind) {
-            (RemoteFolderEntryKind::File, RemoteFolderEntryKind::Directory) => std::cmp::Ordering::Less,
-            (RemoteFolderEntryKind::Directory, RemoteFolderEntryKind::File) => std::cmp::Ordering::Greater,
+            (RemoteFolderEntryKind::File, RemoteFolderEntryKind::Directory) => {
+                std::cmp::Ordering::Less
+            }
+            (RemoteFolderEntryKind::Directory, RemoteFolderEntryKind::File) => {
+                std::cmp::Ordering::Greater
+            }
             (RemoteFolderEntryKind::File, RemoteFolderEntryKind::File) => right
                 .size_bytes
                 .unwrap_or(0)
                 .cmp(&left.size_bytes.unwrap_or(0))
-                .then_with(|| left.full_path.to_lowercase().cmp(&right.full_path.to_lowercase())),
+                .then_with(|| {
+                    left.full_path
+                        .to_lowercase()
+                        .cmp(&right.full_path.to_lowercase())
+                }),
             (RemoteFolderEntryKind::Directory, RemoteFolderEntryKind::Directory) => left
                 .full_path
                 .to_lowercase()
@@ -349,7 +362,10 @@ find "$1" -mindepth 1 -maxdepth 1 | while IFS= read -r item; do
 done"#;
         let output =
             self.run_shell_command("sh", &["-c", script, "delete-folder-contents", folder_path])?;
-        if output.lines().any(|line| line.trim() == "__NOT_DIRECTORY__") {
+        if output
+            .lines()
+            .any(|line| line.trim() == "__NOT_DIRECTORY__")
+        {
             bail!("Remote folder does not exist: {folder_path}");
         }
         Ok(())
@@ -374,9 +390,10 @@ done"#;
         let command_line = build_shell_command(command, args);
         let output = match self.run_command(&["shell", "-T", &command_line]) {
             Ok(output) => output,
-            Err(error) if error
-                .to_string()
-                .contains("target doesn't support PTY args -Tt") =>
+            Err(error)
+                if error
+                    .to_string()
+                    .contains("target doesn't support PTY args -Tt") =>
             {
                 self.run_command(&["shell", &command_line])?
             }
@@ -490,7 +507,11 @@ fn render_command_part(part: &str) -> String {
     }
 }
 
-fn format_command_result(command_line: &str, exit_code: Option<i32>, result: &CommandResult) -> String {
+fn format_command_result(
+    command_line: &str,
+    exit_code: Option<i32>,
+    result: &CommandResult,
+) -> String {
     let stdout = if result.stdout.trim().is_empty() {
         "<empty>".to_string()
     } else {
@@ -524,7 +545,11 @@ mod tests {
     fn builds_shell_command_with_quoted_spaces() {
         let command = build_shell_command(
             "ls",
-            &["-1", "-p", "/sdcard/Android/media/com.whatsapp/WhatsApp Documents"],
+            &[
+                "-1",
+                "-p",
+                "/sdcard/Android/media/com.whatsapp/WhatsApp Documents",
+            ],
         );
         assert_eq!(
             command,
@@ -536,7 +561,10 @@ mod tests {
     fn builds_shell_command_for_rm_recursive() {
         let command = build_shell_command(
             "rm",
-            &["-rf", "/sdcard/Android/media/com.whatsapp/WhatsApp Documents"],
+            &[
+                "-rf",
+                "/sdcard/Android/media/com.whatsapp/WhatsApp Documents",
+            ],
         );
         assert_eq!(
             command,

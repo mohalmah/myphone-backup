@@ -1,0 +1,281 @@
+[20:41:58] [TRACE] ADB command completed
+    ----------------
+    Command:
+    adb devices -l
+    
+    Exit code: 0
+    
+    Stdout:
+    List of devices attached
+    
+    Stderr:
+    <empty>
+    ----------------
+[20:42:09] [TRACE] ADB command completed
+    ----------------
+    Command:
+    adb devices -l
+    
+    Exit code: 0
+    
+    Stdout:
+    List of devices attached
+    d2524e0c               device product:ditingp_global model:22081212UG device:diting transport_id:20
+    
+    Stderr:
+    <empty>
+    ----------------
+[20:42:16] [TRACE] ADB command completed
+    ----------------
+    Command:
+    adb shell -T "sh '-c' 'if [ ! -d \"$1\" ]; then
+        echo \"__NOT_DIRECTORY__\"
+        exit 11
+    fi
+    find \"$1\" -mindepth 1 -maxdepth 1 -type d | while IFS= read -r item; do
+        printf '\''D|%s\n'\'' \"$item\"
+    done' 'list-directories' '/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Documents'"
+    
+    Exit code: 0
+    
+    Stdout:
+    D|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Documents/Sent
+    D|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Documents/Private
+    
+    Stderr:
+    <empty>
+    ----------------
+[20:42:19] [TRACE] ADB command completed
+    ----------------
+    Command:
+    adb shell -T "sh '-c' 'if [ ! -d \"$1\" ]; then
+        echo \"__NOT_DIRECTORY__\"
+        exit 11
+    fi
+    find \"$1\" -mindepth 1 -maxdepth 1 -type d | while IFS= read -r item; do
+        printf '\''D|%s\n'\'' \"$item\"
+    done' 'list-directories' '/sdcard/Android/media/com.whatsapp/WhatsApp/Media'"
+    
+    Exit code: 0
+    
+    Stdout:
+    D|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Audio
+    D|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Animated Gifs
+    D|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Voice Notes
+    D|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Video
+    D|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images
+    D|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Documents
+    D|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WallPaper
+    D|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Profile Photos
+    D|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/.Links
+    D|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/.Statuses
+    D|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Stickers
+    D|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Video Notes
+    D|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/.Wamo
+    D|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Sticker Packs
+    D|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Backup Excluded Stickers
+    D|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/.udDHFY8K4Eqg
+    D|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/ AI Media
+    D|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp AI Media
+    D|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Bug Report Attachments
+    D|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/.wamocache
+    
+    Stderr:
+    <empty>
+    ----------------
+[20:42:43] [TRACE] ADB command completed
+    ----------------
+    Command:
+    adb shell -T "sh '-c' 'if [ ! -d \"$1\" ]; then
+        echo \"__NOT_DIRECTORY__\"
+        exit 11
+    fi
+    find \"$1\" -mindepth 1 -maxdepth 1 -type d | while IFS= read -r item; do
+        printf '\''D|%s\n'\'' \"$item\"
+    done' 'list-directories' '/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images'"
+    
+    Exit code: 0
+    
+    Stdout:
+    D|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent
+    D|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Private
+    
+    Stderr:
+    <empty>
+    ----------------
+[20:57:33] [TRACE] ADB command failed
+    ----------------
+    Command:
+    adb shell -T "sh '-c' 'if [ ! -d \"$1\" ]; then
+        echo \"__NOT_DIRECTORY__\"
+        exit 11
+    fi
+    find \"$1\" -mindepth 1 | while IFS= read -r item; do
+        if [ -d \"$item\" ]; then
+            printf '\''D|%s\n'\'' \"$item\"
+        else
+            size=\"$(stat -c %s \"$item\" 2>/dev/null)\"
+            if [ -z \"$size\" ]; then
+                size=\"$(stat -f %z \"$item\" 2>/dev/null)\"
+            fi
+            printf '\''F|%s|%s\n'\'' \"${size:-0}\" \"$item\"
+        fi
+    done' 'preview-folder' '/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images'"
+    
+    Exit code: 255
+    
+    Stdout:
+    D|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent
+    F|82|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/.nomedia
+    F|197715|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200919-WA0080.jpg
+    F|45501|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200424-WA0026.jpg
+    F|83096|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200913-WA0028.jpg
+    F|62516|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210227-WA0014.jpg
+    F|56987|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210716-WA0016.jpg
+    F|108613|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200526-WA0001.jpg
+    F|95571|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20220326-WA0058.jpg
+    F|30499|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20191216-WA0030.jpg
+    F|89911|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210818-WA0038.jpg
+    F|74159|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20211203-WA0033.jpg
+    F|36548|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200811-WA0006.jpg
+    F|98555|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200501-WA0040.jpg
+    F|136362|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20221025-WA0050.jpg
+    F|58497|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20220122-WA0014.jpg
+    F|108157|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20191224-WA0055.jpg
+    F|108302|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20220703-WA0039.jpg
+    F|69799|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200528-WA0069.jpg
+    F|64399|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210709-WA0043.jpg
+    F|60487|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200130-WA0063.jpg
+    F|66142|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20221217-WA0038.jpg
+    F|42768|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200804-WA0033.jpg
+    F|121388|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210408-WA0071.jpg
+    F|41996|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200425-WA0031.jpg
+    F|124108|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200618-WA0024.jpg
+    F|41247|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20191030-WA0010.jpg
+    F|27216|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20221114-WA0000.jpg
+    F|59053|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20220206-WA0012.jpg
+    F|55784|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20220402-WA0020.jpg
+    F|79577|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20221006-WA0021.jpg
+    F|49294|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20220914-WA0009.jpg
+    F|114101|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20190822-WA0077.jpg
+    F|135221|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20220113-WA0020.jpg
+    F|145541|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20221114-WA0047.jpg
+    F|37839|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210302-WA0054.jpg
+    F|68841|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200120-WA0028.jpg
+    F|66351|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20191120-WA0012.jpg
+    F|37942|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200426-WA0000.jpg
+    F|176234|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200711-WA0041.jpg
+    F|64737|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210305-WA0080.jpg
+    F|37510|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210929-WA0007.jpg
+    F|158752|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20211212-WA0063.jpg
+    F|26668|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20191207-WA0000.jpg
+    F|54163|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200404-WA0028.jpg
+    F|73833|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210509-WA0041.jpg
+    F|41622|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20191003-WA0003.jpg
+    F|78284|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20220404-WA0041.jpg
+    F|25683|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210226-WA0009.jpg
+    F|56623|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210430-WA0031.jpg
+    F|72406|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20201218-WA0031.jpg
+    F|57172|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200324-WA0025.jpg
+    F|58691|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210524-WA0039.jpg
+    F|29171|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200823-WA0026.jpg
+    F|42399|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20211124-WA0082.jpg
+    F|136855|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20220918-WA0004.jpg
+    F|49152|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210127-WA0096.jpg
+    F|30588|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200127-WA0048.jpg
+    F|44207|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210320-WA0031.jpg
+    F|59932|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200912-WA0059.jpg
+    F|92398|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20220530-WA0044.jpg
+    F|14894|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20191022-WA0032.jpg
+    F|57386|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20201011-WA0008.jpg
+    F|19159|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20211230-WA0040.jpg
+    F|86988|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200914-WA0033.jpg
+    F|39361|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210808-WA0039.jpg
+    F|42695|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20191129-WA0017.jpg
+    F|58274|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200925-WA0001.jpg
+    F|30965|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20220609-WA0006.jpg
+    F|55001|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20201109-WA0083.jpg
+    F|75298|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20201203-WA0021.jpg
+    F|148864|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210318-WA0021.jpg
+    F|45572|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200504-WA0030.jpg
+    F|27093|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20220820-WA0001.jpg
+    F|65216|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20221204-WA0002.jpg
+    F|68297|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20220523-WA0035.jpg
+    F|80450|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20220213-WA0021.jpg
+    F|51598|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20220111-WA0046.jpg
+    F|84534|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20220625-WA0009.jpg
+    F|50782|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210128-WA0029.jpg
+    F|56045|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200603-WA0026.jpg
+    F|28686|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200524-WA0151.jpg
+    F|36764|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200606-WA0052.jpg
+    F|21621|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210417-WA0017.jpg
+    F|36487|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200420-WA0032.jpg
+    F|49830|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200917-WA0023.jpg
+    F|53484|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210530-WA0032.jpg
+    F|38637|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200928-WA0026.jpg
+    F|82765|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210226-WA0045.jpg
+    F|59101|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200724-WA0030.jpg
+    F|29774|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200920-WA0037.jpg
+    F|21533|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20211124-WA0170.jpg
+    F|66382|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210113-WA0020.jpg
+    F|73192|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200423-WA0109.jpg
+    F|175304|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20220223-WA0020.jpg
+    F|32341|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20201027-WA0011.jpg
+    F|41272|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200802-WA0059.jpg
+    F|41658|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20211125-WA0051.jpg
+    F|20952|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200107-WA0003.jpg
+    F|29626|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210114-WA0072.jpg
+    F|43649|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20220505-WA0011.jpg
+    F|63156|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20221103-WA0044.jpg
+    F|23312|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20220711-WA0065.jpg
+    F|122072|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20221130-WA0003.jpg
+    F|55995|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20190924-WA0052.jpg
+    F|45737|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200703-WA0063.jpg
+    F|39388|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210509-WA0005.jpg
+    F|61312|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210808-WA0040.jpg
+    F|43698|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200802-WA0060.jpg
+    F|8079|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20191005-WA0024.jpg
+    F|37180|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200707-WA0057.jpg
+    F|32083|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20220117-WA0026.jpg
+    F|23320|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200406-WA0085.jpg
+    F|29817|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20191206-WA0031.jpg
+    F|97080|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200810-WA0037.jpg
+    F|75190|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200113-WA0007.jpg
+    F|55366|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210128-WA0017.jpg
+    F|156239|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20220904-WA0011.jpg
+    F|28194|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200912-WA0060.jpg
+    F|40785|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20211004-WA0035.jpg
+    F|26139|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200524-WA0163.jpg
+    F|47306|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210205-WA0078.jpg
+    F|57534|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20220911-WA0119.jpg
+    F|147847|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20220710-WA0013.jpg
+    F|25634|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20211102-WA0015.jpg
+    F|53380|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20220914-WA0010.jpg
+    F|64105|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20201203-WA0033.jpg
+    F|133854|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210512-WA0067.jpg
+    F|110921|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210318-WA0033.jpg
+    F|34624|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200825-WA0035.jpg
+    F|45662|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210226-WA0010.jpg
+    F|74414|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210712-WA0010.jpg
+    F|59140|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210422-WA0005.jpg
+    F|58609|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20211124-WA0070.jpg
+    F|56137|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210621-WA0015.jpg
+    F|83114|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20220201-WA0001.jpg
+    F|75033|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20220715-WA0000.jpg
+    F|73496|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200423-WA0110.jpg
+    F|33532|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20190807-WA0031.jpg
+    F|54574|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20221210-WA0018.jpg
+    F|19087|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210426-WA0000.jpg
+    F|69905|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200524-WA0075.jpg
+    F|31210|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200831-WA0052.jpg
+    F|45559|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210127-WA0048.jpg
+    F|89809|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200709-WA0007.jpg
+    F|31198|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210121-WA0009.jpg
+    F|22271|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200107-WA0015.jpg
+    F|49413|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20200817-WA0010.jpg
+    F|51531|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20220828-WA0049.jpg
+    F|33007|/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Sent/IMG-20210112-WA0015.jpg
+    F|2982
+    
+    ... detail truncated after 16000 characters ...
+    ----------------

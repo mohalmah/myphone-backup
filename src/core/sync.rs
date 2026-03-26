@@ -188,11 +188,12 @@ pub fn start_backup_analysis(
             settings.adb_path.clone(),
             make_background_log_observer(log_tx, logger),
         );
-        let result: Result<BackupAnalysis, String> = collect_remote_files_for_settings(&adb, &settings)
-            .and_then(|(remote_files, source_summaries)| {
-                build_backup_analysis(&settings, remote_files, source_summaries)
-            })
-            .map_err(|error| error.to_string());
+        let result: Result<BackupAnalysis, String> =
+            collect_remote_files_for_settings(&adb, &settings)
+                .and_then(|(remote_files, source_summaries)| {
+                    build_backup_analysis(&settings, remote_files, source_summaries)
+                })
+                .map_err(|error| error.to_string());
         let _ = tx.send(result);
     });
     rx
@@ -209,11 +210,9 @@ pub fn start_backup_source_scan(
             settings.adb_path.clone(),
             make_background_log_observer(log_tx, logger),
         );
-        let result: Result<Vec<BackupSourceScan>, String> = scan_backup_sources(
-            &adb,
-            &settings.effective_backup_sources(),
-        )
-        .map_err(|error| error.to_string());
+        let result: Result<Vec<BackupSourceScan>, String> =
+            scan_backup_sources(&adb, &settings.effective_backup_sources())
+                .map_err(|error| error.to_string());
         let _ = tx.send(result);
     });
     rx
@@ -404,7 +403,11 @@ fn run_sync_worker(settings: Settings, plan: SyncPlan, tx: Sender<SyncEvent>, ha
     let mut scanned_source_summaries = Vec::new();
     let mut remote_files = match plan {
         SyncPlan::FullScan => {
-            emit_info(&tx, &logger, "Scanning selected backup folders for files...");
+            emit_info(
+                &tx,
+                &logger,
+                "Scanning selected backup folders for files...",
+            );
             match collect_remote_files_for_settings(&adb, &settings) {
                 Ok((files, source_summaries)) => {
                     scanned_source_summaries = source_summaries;
@@ -1021,7 +1024,10 @@ fn build_backup_analysis(
     source_summaries: Vec<BackupSourceScan>,
 ) -> anyhow::Result<BackupAnalysis> {
     let destination_root = PathBuf::from(&settings.destination_path);
-    let selected_source_count = source_summaries.iter().filter(|source| source.enabled).count();
+    let selected_source_count = source_summaries
+        .iter()
+        .filter(|source| source.enabled)
+        .count();
     let mut preflight = BackupPreflight {
         source_path: match selected_source_count {
             0 => settings.source_path.clone(),
@@ -1049,8 +1055,9 @@ fn build_backup_analysis(
             }
             Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
                 preflight.files_to_copy += 1;
-                preflight.bytes_to_copy =
-                    preflight.bytes_to_copy.saturating_add(remote_file.size_bytes);
+                preflight.bytes_to_copy = preflight
+                    .bytes_to_copy
+                    .saturating_add(remote_file.size_bytes);
             }
             Err(error) => {
                 preflight.destination_space_error = Some(format!(
