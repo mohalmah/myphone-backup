@@ -1331,9 +1331,14 @@ impl eframe::App for BackupApp {
 
         egui::SidePanel::left("settings_panel")
             .resizable(true)
+            .show_separator_line(false)
             .min_width(320.0)
             .default_width(420.0)
             .max_width(520.0)
+            .frame(Frame::new()
+                .fill(Color32::from_rgb(247, 241, 230))
+                .inner_margin(Margin::same(10))
+                .stroke(Stroke::new(1.0, Color32::from_rgb(221, 211, 190))))
             .show(ctx, |ui| {
                 let adb_job_active = self.has_active_adb_job();
                 ScrollArea::vertical()
@@ -2347,6 +2352,7 @@ fn apply_theme(ctx: &Context) {
     style.spacing.item_spacing = egui::vec2(10.0, 10.0);
     style.spacing.button_padding = egui::vec2(12.0, 8.0);
     style.spacing.interact_size = egui::vec2(44.0, 28.0);
+    style.interaction.resize_grab_radius_side = 3.0;
     ctx.set_style(style);
 }
 
