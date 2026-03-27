@@ -10,10 +10,7 @@ use crate::core::{
     sync::{self, SyncEvent, SyncHandle, SyncPlan},
 };
 use chrono::Local;
-use eframe::egui::{
-    self, Align, Color32, Context, CornerRadius, Frame,
-    Layout, Margin, RichText, ScrollArea, Stroke,
-};
+use eframe::egui::{self, Context};
 use rfd::FileDialog;
 use std::sync::mpsc::{Receiver, Sender, TryRecvError, channel};
 use std::time::Duration;
@@ -194,7 +191,7 @@ impl BackupApp {
             || self.backup_source_library.is_scanning
     }
 
-    fn sync_legacy_source_path_from_sources(&mut self) {
+    pub(crate) fn sync_legacy_source_path_from_sources(&mut self) {
         if let Some(source) = self
             .settings
             .backup_sources
@@ -212,7 +209,7 @@ impl BackupApp {
         }
     }
 
-    fn add_custom_backup_source(&mut self) {
+    pub(crate) fn add_custom_backup_source(&mut self) {
         let next_index = self.settings.backup_sources.len() + 1;
         self.settings.backup_sources.push(BackupSourceConfig {
             id: format!("custom-{next_index}"),
@@ -226,7 +223,7 @@ impl BackupApp {
         self.invalidate_backup_analysis();
     }
 
-    fn remove_backup_source(&mut self, index: usize) {
+    pub(crate) fn remove_backup_source(&mut self, index: usize) {
         if index >= self.settings.backup_sources.len() {
             return;
         }
@@ -235,7 +232,7 @@ impl BackupApp {
         self.invalidate_backup_analysis();
     }
 
-    fn open_backup_source_folder_picker(&mut self, index: usize) {
+    pub(crate) fn open_backup_source_folder_picker(&mut self, index: usize) {
         let start_path = self
             .settings
             .backup_sources
@@ -433,7 +430,7 @@ impl BackupApp {
         self.apply_selected_preset_chips();
     }
 
-    fn detach_selected_presets_after_manual_changes(&mut self) {
+    pub(crate) fn detach_selected_presets_after_manual_changes(&mut self) {
         if !self.selected_preset_names.is_empty() {
             self.selected_preset_names.clear();
             self.push_log("[INFO] Detached preset chip selection after manual source changes");
@@ -534,7 +531,7 @@ impl BackupApp {
         }
     }
 
-    fn pick_backup_source_destination_folder(&mut self, index: usize) -> bool {
+    pub(crate) fn pick_backup_source_destination_folder(&mut self, index: usize) -> bool {
         if index >= self.settings.backup_sources.len() {
             return false;
         }
@@ -596,7 +593,7 @@ impl BackupApp {
         self.request_remote_directory_listing(start_path);
     }
 
-    fn request_remote_directory_listing(&mut self, path: String) {
+    pub(crate) fn request_remote_directory_listing(&mut self, path: String) {
         let normalized_path = normalize_remote_path(&path);
         self.remote_folder_picker.current_path = normalized_path.clone();
         self.remote_folder_picker.entries.clear();
@@ -988,7 +985,7 @@ impl BackupApp {
         self.start_sync(SyncPlan::FullScan, true);
     }
 
-    fn start_retry(&mut self, file: RemoteFile) {
+    pub(crate) fn start_retry(&mut self, file: RemoteFile) {
         self.push_log(format!("[INFO] Retrying {}", file.name));
         self.start_sync(SyncPlan::RetrySingle(file), false);
     }
@@ -1108,136 +1105,47 @@ impl BackupApp {
         }
     }
 
-    fn show_remote_folder_picker(&mut self, ctx: &Context) {
-        if !self.remote_folder_picker.is_open {
-            return;
-        }
-
-        let current_path = self.remote_folder_picker.current_path.clone();
-        let picker_target = self.remote_folder_picker.target;
-        let entries = self.remote_folder_picker.entries.clone();
-        let error = self.remote_folder_picker.error.clone();
-        let is_loading = self.remote_folder_picker.is_loading;
-        let can_go_up = parent_remote_path(&current_path).is_some();
-        let mut window_open = self.remote_folder_picker.is_open;
-        let mut navigate_to = None;
-        let mut select_current = false;
-        let mut refresh_listing = false;
-        let mut go_up = false;
-
-        egui::Window::new(match picker_target {
-            RemoteFolderPickerTarget::SourceFolder => "Select Backup Source Folder",
-            RemoteFolderPickerTarget::CleanupFolder => "Select Folder For Cleanup",
-            RemoteFolderPickerTarget::BackupSource(_) => "Select Backup Library Folder",
-        })
-        .open(&mut window_open)
-        .collapsible(false)
-        .resizable(true)
-        .default_size([620.0, 420.0])
-        .show(ctx, |ui| {
-            ui.label("Browse directories on the connected Android device");
-            ui.add_space(6.0);
-            wrapped_path_text(ui, &current_path);
-            ui.add_space(10.0);
-
-            ui.horizontal(|ui| {
-                if ui
-                    .add_enabled(can_go_up && !is_loading, egui::Button::new("Up"))
-                    .clicked()
-                {
-                    go_up = true;
-                }
-
-                if ui
-                    .add_enabled(!is_loading, egui::Button::new("Refresh"))
-                    .clicked()
-                {
-                    refresh_listing = true;
-                }
-
-                if ui.button("Use This Folder").clicked() {
-                    select_current = true;
-                }
-            });
-
-            ui.add_space(10.0);
-
-            if is_loading {
-                ui.spinner();
-                ui.label("Loading folders from device...");
-            } else if let Some(error) = &error {
-                ui.colored_label(Color32::from_rgb(168, 52, 33), error);
-            } else if entries.is_empty() {
-                ui.label("No subfolders found here. You can still use the current folder.");
+    pub(crate) fn apply_remote_folder_picker_selection(
+        &mut self,
+        current_path: String,
+        picker_target: RemoteFolderPickerTarget,
+    ) {
+        match picker_target {
+            RemoteFolderPickerTarget::SourceFolder => {
+                self.settings.source_path = current_path.clone();
+                self.invalidate_backup_analysis();
+                self.trigger_backup_analysis_if_ready();
+                self.status_banner = format!("Selected phone source folder: {current_path}");
+                self.push_log(format!(
+                    "[INFO] Phone source folder selected: {current_path}"
+                ));
             }
-
-            ScrollArea::vertical()
-                .id_salt("remote_folder_picker_scroll")
-                .max_height(260.0)
-                .auto_shrink([false; 2])
-                .show(ui, |ui| {
-                    for directory in &entries {
-                        let label = format!("[Dir] {}", directory.name);
-                        if ui
-                            .add_enabled(!is_loading, egui::Button::new(label))
-                            .clicked()
-                        {
-                            navigate_to = Some(directory.full_path.clone());
-                        }
-                        wrapped_path_text(ui, &directory.full_path);
-                        ui.add_space(6.0);
+            RemoteFolderPickerTarget::CleanupFolder => {
+                self.set_cleanup_folder_path(current_path.clone());
+                self.status_banner = format!("Selected cleanup folder: {current_path}");
+                self.push_log(format!("[INFO] Cleanup folder selected: {current_path}"));
+            }
+            RemoteFolderPickerTarget::BackupSource(index) => {
+                if let Some(source) = self.settings.backup_sources.get_mut(index) {
+                    source.source_path = current_path.clone();
+                    if source.destination_subfolder.trim().is_empty() {
+                        source.destination_subfolder =
+                            guess_destination_subfolder(&current_path);
                     }
-                });
-        });
-
-        self.remote_folder_picker.is_open = window_open;
-
-        if let Some(path) = navigate_to {
-            self.request_remote_directory_listing(path);
-        } else if go_up {
-            if let Some(parent) = parent_remote_path(&current_path) {
-                self.request_remote_directory_listing(parent);
-            }
-        } else if refresh_listing {
-            self.request_remote_directory_listing(current_path.clone());
-        } else if select_current {
-            match picker_target {
-                RemoteFolderPickerTarget::SourceFolder => {
-                    self.settings.source_path = current_path.clone();
+                    let source_label = source.label.clone();
+                    let _ = source;
+                    self.sync_legacy_source_path_from_sources();
                     self.invalidate_backup_analysis();
-                    self.trigger_backup_analysis_if_ready();
-                    self.status_banner = format!("Selected phone source folder: {current_path}");
+                    self.status_banner =
+                        format!("Selected backup source folder: {current_path}");
                     self.push_log(format!(
-                        "[INFO] Phone source folder selected: {current_path}"
+                        "[INFO] Backup source folder selected for {}: {current_path}",
+                        source_label
                     ));
                 }
-                RemoteFolderPickerTarget::CleanupFolder => {
-                    self.set_cleanup_folder_path(current_path.clone());
-                    self.status_banner = format!("Selected cleanup folder: {current_path}");
-                    self.push_log(format!("[INFO] Cleanup folder selected: {current_path}"));
-                }
-                RemoteFolderPickerTarget::BackupSource(index) => {
-                    if let Some(source) = self.settings.backup_sources.get_mut(index) {
-                        source.source_path = current_path.clone();
-                        if source.destination_subfolder.trim().is_empty() {
-                            source.destination_subfolder =
-                                guess_destination_subfolder(&current_path);
-                        }
-                        let source_label = source.label.clone();
-                        let _ = source;
-                        self.sync_legacy_source_path_from_sources();
-                        self.invalidate_backup_analysis();
-                        self.status_banner =
-                            format!("Selected backup source folder: {current_path}");
-                        self.push_log(format!(
-                            "[INFO] Backup source folder selected for {}: {current_path}",
-                            source_label
-                        ));
-                    }
-                }
             }
-            self.remote_folder_picker.is_open = false;
         }
+        self.remote_folder_picker.is_open = false;
     }
 }
 
@@ -1267,634 +1175,11 @@ impl eframe::App for BackupApp {
             ctx.request_repaint_after(Duration::from_millis(200));
         }
 
-        egui::TopBottomPanel::top("hero").show(ctx, |ui| {
-            Frame::new()
-                .fill(Color32::from_rgb(241, 234, 218))
-                .inner_margin(Margin::same(14))
-                .show(ui, |ui| {
-                    ui.horizontal_wrapped(|ui| {
-                        ui.vertical(|ui| {
-                            ui.label(
-                                RichText::new("ADB Smart Backup & Cleanup")
-                                    .heading()
-                                    .strong()
-                                    .color(Color32::from_rgb(50, 43, 34)),
-                            );
-                            ui.label(
-                                RichText::new(
-                                    "Safe per-file backup, validation, and optional cleanup for Android media folders.",
-                                )
-                                .color(Color32::from_rgb(93, 81, 66)),
-                            );
-                        });
-
-                        ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                            status_pill(
-                                ui,
-                                if self.is_running() { "RUNNING" } else { "IDLE" },
-                                if self.is_running() {
-                                    Color32::from_rgb(198, 106, 44)
-                                } else {
-                                    Color32::from_rgb(73, 121, 92)
-                                },
-                            );
-                            status_pill(
-                                ui,
-                                self.device_info.state.label(),
-                                self.device_info.state.color(),
-                            );
-                        });
-                    });
-                    ui.add_space(10.0);
-                    ui.label(RichText::new(&self.status_banner).color(Color32::from_rgb(72, 62, 50)));
-                    if let Some(error) = &self.error_banner {
-                        ui.add_space(8.0);
-                        ui.colored_label(Color32::from_rgb(168, 52, 33), error);
-                    }
-                    ui.add_space(10.0);
-                    ui.horizontal(|ui| {
-                        if ui
-                            .selectable_label(self.active_tab == AppTab::Backup, "Backup")
-                            .clicked()
-                        {
-                            self.active_tab = AppTab::Backup;
-                        }
-                        if ui
-                            .selectable_label(self.active_tab == AppTab::Cleanup, "Cleanup")
-                            .clicked()
-                        {
-                            self.active_tab = AppTab::Cleanup;
-                        }
-                    });
-                });
-        });
-
+        crate::ui::central_panel::render_header(ctx, self);
         crate::ui::side_panel::render_side_panel(ctx, self);
-
-        egui::TopBottomPanel::bottom("log_panel")
-            .resizable(true)
-            .default_height(230.0)
-            .show(ctx, |ui| {
-                let visible_log_count = self
-                    .log_entries
-                    .iter()
-                    .filter(|entry| self.show_detailed_logs || !entry.detailed_only)
-                    .count();
-
-                ui.horizontal(|ui| {
-                    ui.label(RichText::new("Activity Log").strong());
-                    ui.checkbox(&mut self.show_detailed_logs, "Show very detailed logs");
-                    if ui.button("Clear").clicked() {
-                        self.log_entries.clear();
-                    }
-                    ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                        ui.label(
-                            RichText::new(format!(
-                                "{} shown / {} total",
-                                visible_log_count,
-                                self.log_entries.len()
-                            ))
-                            .color(Color32::from_rgb(118, 104, 85)),
-                        );
-                    });
-                });
-                ui.add_space(6.0);
-                ScrollArea::vertical()
-                    .id_salt("activity_log_scroll")
-                    .auto_shrink([false; 2])
-                    .show(ui, |ui| {
-                        for entry in self.log_entries.iter().rev() {
-                            if !self.show_detailed_logs && entry.detailed_only {
-                                continue;
-                            }
-
-                            if self.show_detailed_logs {
-                                render_detailed_log_entry(ui, entry);
-                                ui.add_space(8.0);
-                            } else {
-                                ui.monospace(entry.compact_line());
-                            }
-                        }
-                    });
-            });
-
-        egui::CentralPanel::default().show(ctx, |ui| {
-            let total_progress = if self.progress.total_files == 0 {
-                0.0
-            } else {
-                self.progress.completed_files as f32 / self.progress.total_files as f32
-            };
-            let mut backup_source_to_remove = None;
-            let mut backup_source_to_pick = None;
-            let mut backup_source_destination_to_pick = None;
-            let mut backup_sources_changed = false;
-
-            if self.active_tab == AppTab::Backup {
-                summary_strip(ui, &self.progress, self.last_summary.as_ref());
-                ui.add_space(10.0);
-
-                Frame::new()
-                    .fill(Color32::WHITE)
-                    .stroke(Stroke::new(1.0, Color32::from_rgb(221, 211, 190)))
-                    .corner_radius(CornerRadius::same(14))
-                    .inner_margin(Margin::same(14))
-                    .show(ui, |ui| {
-                        ui.horizontal_wrapped(|ui| {
-                            ui.label(RichText::new("Backup Source Library").strong());
-                            if ui
-                                .add_enabled(
-                                    !self.has_active_adb_job(),
-                                    egui::Button::new("Add Custom Source"),
-                                )
-                                .clicked()
-                            {
-                                self.add_custom_backup_source();
-                                backup_sources_changed = true;
-                            }
-                            if ui
-                                .add_enabled(
-                                    !self.has_active_adb_job(),
-                                    egui::Button::new("Scan Sources"),
-                                )
-                                .clicked()
-                            {
-                                self.refresh_backup_source_scan();
-                            }
-                            if self.backup_source_library.is_scanning {
-                                ui.spinner();
-                                ui.label("Scanning...");
-                            }
-                        });
-                        ui.add_space(6.0);
-
-                        // ── Destination folder row with folder selector ──
-                        ui.horizontal(|ui| {
-                            ui.label("Destination:");
-                            if ui
-                                .add(
-                                    egui::TextEdit::singleline(&mut self.settings.destination_path)
-                                        .desired_width(ui.available_width() - 120.0),
-                                )
-                                .changed()
-                            {
-                                self.invalidate_backup_analysis();
-                            }
-                            if ui
-                                .add_enabled(
-                                    !self.has_active_adb_job(),
-                                    egui::Button::new("Browse..."),
-                                )
-                                .clicked()
-                            {
-                                self.pick_local_destination_folder();
-                            }
-                        });
-                        ui.add_space(8.0);
-
-                        if let Some(error) = &self.backup_source_library.scan_error {
-                            ui.colored_label(Color32::from_rgb(168, 52, 33), error);
-                            ui.add_space(8.0);
-                        }
-
-                        ScrollArea::vertical()
-                            .id_salt("backup_source_library_scroll")
-                            .max_height(320.0)
-                            .auto_shrink([false; 2])
-                            .show(ui, |ui| {
-                                let source_actions_enabled = !self.has_active_adb_job();
-                                for (index, source) in self.settings.backup_sources.iter_mut().enumerate() {
-                                    let scan = self
-                                        .backup_source_library
-                                        .scan_results
-                                        .iter()
-                                        .find(|scan| scan.id == source.id);
-
-                                    Frame::new()
-                                        .fill(Color32::from_rgb(250, 247, 240))
-                                        .stroke(Stroke::new(
-                                            1.0,
-                                            Color32::from_rgb(228, 219, 203),
-                                        ))
-                                        .corner_radius(CornerRadius::same(12))
-                                        .inner_margin(Margin::same(12))
-                                        .show(ui, |ui| {
-                                            ui.horizontal_wrapped(|ui| {
-                                                if ui.checkbox(&mut source.enabled, "").changed() {
-                                                    backup_sources_changed = true;
-                                                }
-                                                if ui
-                                                    .add(
-                                                        egui::TextEdit::singleline(&mut source.label)
-                                                            .desired_width(180.0),
-                                                    )
-                                                    .changed()
-                                                {
-                                                    backup_sources_changed = true;
-                                                }
-                                                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                                                    if ui
-                                                        .add_enabled(
-                                                            source_actions_enabled,
-                                                            egui::Button::new("Remove"),
-                                                        )
-                                                        .clicked()
-                                                    {
-                                                        backup_source_to_remove = Some(index);
-                                                    }
-                                                    if ui
-                                                        .add_enabled(
-                                                            source_actions_enabled,
-                                                            egui::Button::new("Pick Folder"),
-                                                        )
-                                                        .clicked()
-                                                    {
-                                                        backup_source_to_pick = Some(index);
-                                                    }
-                                                });
-                                            });
-                                            ui.add_space(6.0);
-
-                                            if ui
-                                                .add(
-                                                    egui::TextEdit::singleline(&mut source.source_path)
-                                                        .hint_text("/sdcard/...")
-                                                        .desired_width(f32::INFINITY),
-                                                )
-                                                .changed()
-                                            {
-                                                backup_sources_changed = true;
-                                            }
-                                            ui.add_space(6.0);
-                                            ui.horizontal_wrapped(|ui| {
-                                                ui.label("Destination subfolder");
-                                                if ui
-                                                    .add(
-                                                        egui::TextEdit::singleline(
-                                                            &mut source.destination_subfolder,
-                                                        )
-                                                        .desired_width(220.0),
-                                                    )
-                                                    .changed()
-                                                {
-                                                    backup_sources_changed = true;
-                                                }
-                                                if ui
-                                                    .add_enabled(
-                                                        source_actions_enabled,
-                                                        egui::Button::new("Pick Destination"),
-                                                    )
-                                                    .clicked()
-                                                {
-                                                    backup_source_destination_to_pick = Some(index);
-                                                }
-                                            });
-                                            ui.add_space(6.0);
-
-                                            if let Some(scan) = scan {
-                                                if scan.exists {
-                                                    wrapped_text(
-                                                        ui,
-                                                        &format!(
-                                                            "{} file(s) | {} | copies into {}",
-                                                            scan.file_count,
-                                                            format_bytes(scan.total_bytes),
-                                                            if source.destination_subfolder.trim().is_empty() {
-                                                                "root".to_string()
-                                                            } else {
-                                                                source.destination_subfolder.clone()
-                                                            }
-                                                        ),
-                                                    );
-                                                } else if let Some(error) = &scan.error {
-                                                    ui.colored_label(
-                                                        Color32::from_rgb(168, 52, 33),
-                                                        error,
-                                                    );
-                                                }
-                                            } else {
-                                                ui.small("Not scanned yet.");
-                                            }
-                                        });
-                                    ui.add_space(10.0);
-                                }
-                            });
-                    });
-
-                if let Some(index) = backup_source_to_remove {
-                    self.remove_backup_source(index);
-                }
-                if let Some(index) = backup_source_to_pick {
-                    self.open_backup_source_folder_picker(index);
-                }
-                if let Some(index) = backup_source_destination_to_pick {
-                    backup_sources_changed =
-                        self.pick_backup_source_destination_folder(index) || backup_sources_changed;
-                }
-                if backup_sources_changed {
-                    self.detach_selected_presets_after_manual_changes();
-                    self.sync_legacy_source_path_from_sources();
-                    self.backup_source_library.scan_results.clear();
-                    self.invalidate_backup_analysis();
-                }
-                ui.add_space(14.0);
-            }
-
-            if self.active_tab == AppTab::Backup {
-            Frame::new()
-                .fill(Color32::from_rgb(250, 247, 240))
-                .stroke(Stroke::new(1.0, Color32::from_rgb(221, 211, 190)))
-                .corner_radius(CornerRadius::same(14))
-                .inner_margin(Margin::same(14))
-                .show(ui, |ui| {
-                    ui.label(RichText::new("Progress").strong());
-                    ui.add_space(8.0);
-                    ui.add(
-                        egui::ProgressBar::new(total_progress)
-                            .text(format!(
-                                "{} / {} files complete",
-                                self.progress.completed_files, self.progress.total_files
-                            ))
-                            .fill(Color32::from_rgb(73, 121, 92)),
-                    );
-                    ui.add_space(6.0);
-                    ui.add(
-                        egui::ProgressBar::new(self.progress.current_file_progress)
-                            .text(match &self.progress.current_file {
-                                Some(current_file) => format!(
-                                    "Current file: {}",
-                                    display_text_for_ui(current_file)
-                                ),
-                                None => "Waiting to start".to_string(),
-                            })
-                            .fill(Color32::from_rgb(198, 106, 44)),
-                    );
-                    ui.add_space(8.0);
-                    ui.label(progress_detail(&self.progress));
-                });
-
-            ui.add_space(14.0);
-            }
-            let mut retry_target = None;
-
-            if self.active_tab == AppTab::Backup {
-                if let Some(analysis) = &self.backup_analysis.analysis {
-                    render_backup_analysis(ui, analysis, &mut self.analysis_file_filter);
-                    ui.add_space(14.0);
-                }
-
-                ui.horizontal(|ui| {
-                    ui.label(RichText::new("File Queue").strong());
-                    ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                        ui.label(
-                            RichText::new(format!("{} files tracked", self.files.len()))
-                                .color(Color32::from_rgb(118, 104, 85)),
-                        );
-                    });
-                });
-                ui.add_space(8.0);
-
-                Frame::new()
-                    .fill(Color32::WHITE)
-                    .stroke(Stroke::new(1.0, Color32::from_rgb(221, 211, 190)))
-                    .corner_radius(CornerRadius::same(14))
-                    .inner_margin(Margin::same(14))
-                    .show(ui, |ui| {
-                        ScrollArea::vertical()
-                            .id_salt("backup_file_queue_scroll")
-                            .auto_shrink([false; 2])
-                            .show(ui, |ui| {
-                                egui::Grid::new("file_grid")
-                                    .striped(true)
-                                    .num_columns(5)
-                                    .min_col_width(110.0)
-                                    .spacing([12.0, 8.0])
-                                    .show(ui, |ui| {
-                                        ui.label(RichText::new("File Name").strong());
-                                        ui.label(RichText::new("Size").strong());
-                                        ui.label(RichText::new("Status").strong());
-                                        ui.label(RichText::new("Details").strong());
-                                        ui.label(RichText::new("Action").strong());
-                                        ui.end_row();
-
-                                        for record in &self.files {
-                                            ui.label(display_text_for_ui(&record.name));
-                                            ui.label(format_bytes(record.size_bytes));
-                                            ui.colored_label(
-                                                record.status.color(),
-                                                record.status.label(),
-                                            );
-                                            ui.label(display_text_for_ui(&record.detail));
-
-                                            if record.status.is_retryable() && !self.is_running() {
-                                                if ui.button("Retry").clicked() {
-                                                    retry_target = Some(RemoteFile {
-                                                        name: record.name.clone(),
-                                                        remote_path: record.remote_path.clone(),
-                                                        size_bytes: record.size_bytes,
-                                                        modified_epoch_seconds: record
-                                                            .modified_epoch_seconds,
-                                                        source_root: record.source_root.clone(),
-                                                        source_label: record.source_label.clone(),
-                                                        destination_subfolder: record
-                                                            .destination_subfolder
-                                                            .clone(),
-                                                        relative_path: record.relative_path.clone(),
-                                                    });
-                                                }
-                                            } else {
-                                                ui.label("-");
-                                            }
-                                            ui.end_row();
-                                        }
-                                    });
-
-                                if self.files.is_empty() {
-                                    ui.add_space(12.0);
-                                    ui.label(
-                                        "No files scanned yet. Start a run to populate the queue.",
-                                    );
-                                }
-                            });
-                    });
-            }
-
-            if self.active_tab == AppTab::Cleanup {
-                ui.add_space(14.0);
-                ui.horizontal(|ui| {
-                    ui.label(RichText::new("Folder Cleanup Preview").strong());
-                    ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                        if let Some(preview) = &self.folder_cleanup.preview {
-                            ui.label(
-                                RichText::new(format!("{} entries", preview.entries.len()))
-                                    .color(Color32::from_rgb(118, 104, 85)),
-                            );
-                        }
-                    });
-                });
-                ui.add_space(8.0);
-
-                Frame::new()
-                    .fill(Color32::WHITE)
-                    .stroke(Stroke::new(1.0, Color32::from_rgb(221, 211, 190)))
-                    .corner_radius(CornerRadius::same(14))
-                    .inner_margin(Margin::same(14))
-                    .show(ui, |ui| {
-                        ui.label(RichText::new("Selected folder").strong());
-                        wrapped_path_text(ui, &self.folder_cleanup.folder_path);
-                        ui.add_space(8.0);
-
-                        if self.folder_cleanup.is_fetching_preview {
-                            ui.horizontal(|ui| {
-                                ui.spinner();
-                                ui.label("Fetching cleanup preview...");
-                            });
-                        }
-
-                        if let Some(error) = &self.folder_cleanup.preview_error {
-                            ui.colored_label(Color32::from_rgb(168, 52, 33), error);
-                        }
-                        if let Some(error) = &self.folder_cleanup.delete_error {
-                            ui.colored_label(Color32::from_rgb(168, 52, 33), error);
-                        }
-
-                        if let Some(preview) = self.folder_cleanup.preview.clone() {
-                            wrapped_text(ui, &cleanup_summary(&preview));
-                            ui.small("Preview is ordered by size, with the largest files first.");
-                            ui.add_space(8.0);
-
-                            ui.horizontal_wrapped(|ui| {
-                                if ui
-                                    .add_enabled(
-                                        !self.folder_cleanup.is_deleting,
-                                        egui::Button::new("Select All"),
-                                    )
-                                    .clicked()
-                                {
-                                    self.folder_cleanup.selected_paths = preview
-                                        .entries
-                                        .iter()
-                                        .map(|entry| entry.full_path.clone())
-                                        .collect();
-                                }
-                                if ui
-                                    .add_enabled(
-                                        !self.folder_cleanup.is_deleting,
-                                        egui::Button::new("Select Files Only"),
-                                    )
-                                    .clicked()
-                                {
-                                    self.folder_cleanup.selected_paths = preview
-                                        .entries
-                                        .iter()
-                                        .filter(|entry| entry.kind == RemoteFolderEntryKind::File)
-                                        .map(|entry| entry.full_path.clone())
-                                        .collect();
-                                }
-                                if ui
-                                    .add_enabled(
-                                        !self.folder_cleanup.is_deleting,
-                                        egui::Button::new("Clear Selection"),
-                                    )
-                                    .clicked()
-                                {
-                                    self.folder_cleanup.selected_paths.clear();
-                                }
-                                ui.label(format!(
-                                    "{} checked",
-                                    self.folder_cleanup.selected_paths.len()
-                                ));
-                            });
-                            ui.add_space(8.0);
-
-                            ScrollArea::vertical()
-                                .id_salt("cleanup_preview_scroll")
-                                .max_height(360.0)
-                                .auto_shrink([false; 2])
-                                .show(ui, |ui| {
-                                    for entry in &preview.entries {
-                                        Frame::new()
-                                            .fill(Color32::from_rgb(250, 247, 240))
-                                            .stroke(Stroke::new(
-                                                1.0,
-                                                Color32::from_rgb(228, 219, 203),
-                                            ))
-                                            .corner_radius(CornerRadius::same(12))
-                                            .inner_margin(Margin::same(10))
-                                            .show(ui, |ui| {
-                                                ui.horizontal_wrapped(|ui| {
-                                                    let mut selected = self
-                                                        .folder_cleanup
-                                                        .selected_paths
-                                                        .contains(&entry.full_path);
-                                                    if ui
-                                                        .add_enabled(
-                                                            !self.folder_cleanup.is_deleting,
-                                                            egui::Checkbox::without_text(
-                                                                &mut selected,
-                                                            ),
-                                                        )
-                                                        .changed()
-                                                    {
-                                                        if selected {
-                                                            self.folder_cleanup
-                                                                .selected_paths
-                                                                .insert(entry.full_path.clone());
-                                                        } else {
-                                                            self.folder_cleanup
-                                                                .selected_paths
-                                                                .remove(&entry.full_path);
-                                                        }
-                                                    }
-
-                                                    ui.colored_label(
-                                                        Color32::from_rgb(67, 102, 153),
-                                                        entry.kind.label(),
-                                                    );
-                                                    ui.label(format!(
-                                                        "Size: {}",
-                                                        match entry.kind {
-                                                            RemoteFolderEntryKind::Directory => {
-                                                                "folder".to_string()
-                                                            }
-                                                            RemoteFolderEntryKind::File => {
-                                                                format_bytes(
-                                                                    entry.size_bytes.unwrap_or(0),
-                                                                )
-                                                            }
-                                                        }
-                                                    ));
-                                                });
-                                                ui.add_space(4.0);
-                                                wrapped_text(
-                                                    ui,
-                                                    entry
-                                                        .full_path
-                                                        .rsplit('/')
-                                                        .next()
-                                                        .unwrap_or(&entry.full_path),
-                                                );
-                                                ui.add_space(2.0);
-                                                wrapped_path_text(ui, &entry.full_path);
-                                            });
-                                        ui.add_space(8.0);
-                                    }
-                                });
-                        } else if self.folder_cleanup.preview_error.is_none()
-                            && self.folder_cleanup.delete_error.is_none()
-                        {
-                            ui.label(
-                                "Click Fetch Contents to inspect the selected phone folder before deleting anything.",
-                            );
-                        }
-                    });
-            }
-
-            if let Some(remote_file) = retry_target {
-                self.start_retry(remote_file);
-            }
-        });
-
-        self.show_remote_folder_picker(ctx);
+        crate::ui::central_panel::render_log_panel(ctx, self);
+        crate::ui::central_panel::render_central_panel(ctx, self);
+        crate::ui::central_panel::render_remote_folder_picker(ctx, self);
     }
 }
 
