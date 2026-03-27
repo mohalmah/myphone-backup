@@ -138,7 +138,40 @@ pub(crate) fn render_central_panel(ctx: &egui::Context, app: &mut BackupApp) {
 
         if app.active_tab == AppTab::Backup {
             summary_strip(ui, &app.progress, app.last_summary.as_ref());
-            ui.add_space(10.0);
+            ui.add_space(8.0);
+
+            // Progress bars (at the top, always visible)
+            Frame::new()
+                .fill(Color32::from_rgb(250, 247, 240))
+                .stroke(Stroke::new(1.0, Color32::from_rgb(221, 211, 190)))
+                .corner_radius(CornerRadius::same(14))
+                .inner_margin(Margin::same(14))
+                .show(ui, |ui| {
+                    ui.label(RichText::new("Progress").strong());
+                    ui.add_space(6.0);
+                    let progress_response = ui.add(
+                        egui::ProgressBar::new(total_progress)
+                            .text(format!(
+                                "{} / {} files",
+                                app.progress.completed_files, app.progress.total_files
+                            ))
+                            .fill(Color32::from_rgb(73, 121, 92)),
+                    );
+                    progress_response.on_hover_text(progress_detail(&app.progress));
+                    ui.add_space(4.0);
+                    ui.add(
+                        egui::ProgressBar::new(app.progress.current_file_progress)
+                            .text(match &app.progress.current_file {
+                                Some(current_file) => format!(
+                                    "Current file: {}",
+                                    display_text_for_ui(current_file)
+                                ),
+                                None => "Waiting to start".to_string(),
+                            })
+                            .fill(Color32::from_rgb(198, 106, 44)),
+                    );
+                });
+            ui.add_space(8.0);
 
             Frame::new()
                 .fill(Color32::WHITE)
@@ -295,38 +328,7 @@ pub(crate) fn render_central_panel(ctx: &egui::Context, app: &mut BackupApp) {
         }
 
         if app.active_tab == AppTab::Backup {
-        Frame::new()
-            .fill(Color32::from_rgb(250, 247, 240))
-            .stroke(Stroke::new(1.0, Color32::from_rgb(221, 211, 190)))
-            .corner_radius(CornerRadius::same(14))
-            .inner_margin(Margin::same(14))
-            .show(ui, |ui| {
-                ui.label(RichText::new("Progress").strong());
-                ui.add_space(8.0);
-                let progress_response = ui.add(
-                    egui::ProgressBar::new(total_progress)
-                        .text(format!(
-                            "{} / {} files",
-                            app.progress.completed_files, app.progress.total_files
-                        ))
-                        .fill(Color32::from_rgb(73, 121, 92)),
-                );
-                progress_response.on_hover_text(progress_detail(&app.progress));
-                ui.add_space(6.0);
-                ui.add(
-                    egui::ProgressBar::new(app.progress.current_file_progress)
-                        .text(match &app.progress.current_file {
-                            Some(current_file) => format!(
-                                "Current file: {}",
-                                display_text_for_ui(current_file)
-                            ),
-                            None => "Waiting to start".to_string(),
-                        })
-                        .fill(Color32::from_rgb(198, 106, 44)),
-                );
-            });
-
-        ui.add_space(14.0);
+            ui.add_space(8.0);
         }
         let mut retry_target = None;
 

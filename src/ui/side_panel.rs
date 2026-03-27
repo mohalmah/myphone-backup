@@ -1,4 +1,4 @@
-use eframe::egui::{self, Color32, Frame, Margin, RichText, ScrollArea, Stroke, UiBuilder};
+use eframe::egui::{self, Color32, Frame, Margin, RichText, ScrollArea, UiBuilder};
 
 use crate::core::models::{ExistingFileBehavior, ValidationMode};
 use crate::app::AppTab;
@@ -14,8 +14,7 @@ pub(crate) fn render_side_panel(ctx: &egui::Context, app: &mut crate::app::Backu
         .show_separator_line(false)
         .frame(Frame::new()
             .fill(Color32::from_rgb(247, 241, 230))
-            .inner_margin(Margin::same(10))
-            .stroke(Stroke::new(1.0, Color32::from_rgb(221, 211, 190))))
+            .inner_margin(Margin::same(10)))
         .show(ctx, |ui| {
             let adb_job_active = app.has_active_adb_job();
             let panel_rect = ui.available_rect_before_wrap();
