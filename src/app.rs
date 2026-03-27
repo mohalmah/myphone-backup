@@ -12,7 +12,7 @@ use crate::core::{
 use arabic_reshaper::arabic_reshape;
 use chrono::Local;
 use eframe::egui::{
-    self, Align, Color32, Context, CornerRadius, FontData, FontDefinitions, FontFamily, Frame,
+    self, Align, Color32, Context, CornerRadius, Frame,
     Layout, Margin, RichText, ScrollArea, Stroke,
 };
 use rfd::FileDialog;
@@ -22,7 +22,7 @@ use std::{collections::BTreeSet, path::PathBuf};
 use unicode_bidi::BidiInfo;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-enum RemoteFolderPickerTarget {
+pub(crate) enum RemoteFolderPickerTarget {
     #[default]
     SourceFolder,
     CleanupFolder,
@@ -30,81 +30,81 @@ enum RemoteFolderPickerTarget {
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-enum AppTab {
+pub(crate) enum AppTab {
     #[default]
     Backup,
     Cleanup,
 }
 
 #[derive(Default)]
-struct RemoteFolderPicker {
-    is_open: bool,
-    is_loading: bool,
-    current_path: String,
-    target: RemoteFolderPickerTarget,
-    entries: Vec<RemoteDirectory>,
-    receiver: Option<Receiver<Result<Vec<RemoteDirectory>, String>>>,
-    error: Option<String>,
+pub(crate) struct RemoteFolderPicker {
+    pub(crate) is_open: bool,
+    pub(crate) is_loading: bool,
+    pub(crate) current_path: String,
+    pub(crate) target: RemoteFolderPickerTarget,
+    pub(crate) entries: Vec<RemoteDirectory>,
+    pub(crate) receiver: Option<Receiver<Result<Vec<RemoteDirectory>, String>>>,
+    pub(crate) error: Option<String>,
 }
 
 #[derive(Default)]
-struct FolderCleanupState {
-    folder_path: String,
-    preview: Option<RemoteFolderPreview>,
-    preview_receiver: Option<Receiver<Result<RemoteFolderPreview, String>>>,
-    delete_receiver: Option<Receiver<Result<String, String>>>,
-    is_fetching_preview: bool,
-    is_deleting: bool,
-    preview_error: Option<String>,
-    delete_error: Option<String>,
-    delete_armed: bool,
-    selected_paths: BTreeSet<String>,
+pub(crate) struct FolderCleanupState {
+    pub(crate) folder_path: String,
+    pub(crate) preview: Option<RemoteFolderPreview>,
+    pub(crate) preview_receiver: Option<Receiver<Result<RemoteFolderPreview, String>>>,
+    pub(crate) delete_receiver: Option<Receiver<Result<String, String>>>,
+    pub(crate) is_fetching_preview: bool,
+    pub(crate) is_deleting: bool,
+    pub(crate) preview_error: Option<String>,
+    pub(crate) delete_error: Option<String>,
+    pub(crate) delete_armed: bool,
+    pub(crate) selected_paths: BTreeSet<String>,
 }
 
 #[derive(Default)]
-struct BackupAnalysisState {
-    analysis: Option<BackupAnalysis>,
-    receiver: Option<Receiver<Result<BackupAnalysis, String>>>,
-    is_loading: bool,
-    error: Option<String>,
+pub(crate) struct BackupAnalysisState {
+    pub(crate) analysis: Option<BackupAnalysis>,
+    pub(crate) receiver: Option<Receiver<Result<BackupAnalysis, String>>>,
+    pub(crate) is_loading: bool,
+    pub(crate) error: Option<String>,
 }
 
 #[derive(Default)]
-struct BackupSourceLibraryState {
-    scan_receiver: Option<Receiver<Result<Vec<BackupSourceScan>, String>>>,
-    is_scanning: bool,
-    scan_results: Vec<BackupSourceScan>,
-    scan_error: Option<String>,
+pub(crate) struct BackupSourceLibraryState {
+    pub(crate) scan_receiver: Option<Receiver<Result<Vec<BackupSourceScan>, String>>>,
+    pub(crate) is_scanning: bool,
+    pub(crate) scan_results: Vec<BackupSourceScan>,
+    pub(crate) scan_error: Option<String>,
 }
 
 pub struct BackupApp {
-    settings: Settings,
-    device_info: DeviceInfo,
-    device_probe_receiver: Option<Receiver<Result<DeviceInfo, String>>>,
-    background_log_sender: Sender<LogEntry>,
-    background_log_receiver: Receiver<LogEntry>,
-    sync_receiver: Option<Receiver<SyncEvent>>,
-    sync_handle: Option<SyncHandle>,
-    remote_folder_picker: RemoteFolderPicker,
-    folder_cleanup: FolderCleanupState,
-    backup_analysis: BackupAnalysisState,
-    backup_source_library: BackupSourceLibraryState,
-    active_tab: AppTab,
-    files: Vec<FileRecord>,
-    progress: SyncProgress,
-    log_entries: Vec<LogEntry>,
-    show_detailed_logs: bool,
-    analysis_file_filter: String,
-    last_summary: Option<RunSummary>,
-    selected_preset_names: Vec<String>,
-    preset_name_input: String,
-    status_banner: String,
-    error_banner: Option<String>,
+    pub(crate) settings: Settings,
+    pub(crate) device_info: DeviceInfo,
+    pub(crate) device_probe_receiver: Option<Receiver<Result<DeviceInfo, String>>>,
+    pub(crate) background_log_sender: Sender<LogEntry>,
+    pub(crate) background_log_receiver: Receiver<LogEntry>,
+    pub(crate) sync_receiver: Option<Receiver<SyncEvent>>,
+    pub(crate) sync_handle: Option<SyncHandle>,
+    pub(crate) remote_folder_picker: RemoteFolderPicker,
+    pub(crate) folder_cleanup: FolderCleanupState,
+    pub(crate) backup_analysis: BackupAnalysisState,
+    pub(crate) backup_source_library: BackupSourceLibraryState,
+    pub(crate) active_tab: AppTab,
+    pub(crate) files: Vec<FileRecord>,
+    pub(crate) progress: SyncProgress,
+    pub(crate) log_entries: Vec<LogEntry>,
+    pub(crate) show_detailed_logs: bool,
+    pub(crate) analysis_file_filter: String,
+    pub(crate) last_summary: Option<RunSummary>,
+    pub(crate) selected_preset_names: Vec<String>,
+    pub(crate) preset_name_input: String,
+    pub(crate) status_banner: String,
+    pub(crate) error_banner: Option<String>,
 }
 
 impl BackupApp {
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        apply_theme(&cc.egui_ctx);
+        crate::ui::theme::apply_theme(&cc.egui_ctx);
 
         let mut settings = config::load_settings().unwrap_or_default();
         if settings.backup_sources.is_empty() && !settings.source_path.trim().is_empty() {
@@ -2328,61 +2328,6 @@ impl eframe::App for BackupApp {
 
         self.show_remote_folder_picker(ctx);
     }
-}
-
-fn apply_theme(ctx: &Context) {
-    install_text_fonts(ctx);
-
-    let mut visuals = egui::Visuals::light();
-    visuals.panel_fill = Color32::from_rgb(247, 241, 230);
-    visuals.extreme_bg_color = Color32::from_rgb(255, 252, 246);
-    visuals.faint_bg_color = Color32::from_rgb(247, 241, 230);
-    visuals.override_text_color = Some(Color32::from_rgb(51, 43, 35));
-    visuals.widgets.noninteractive.bg_fill = Color32::from_rgb(248, 243, 236);
-    visuals.widgets.noninteractive.bg_stroke = Stroke::new(1.0, Color32::from_rgb(221, 211, 190));
-    visuals.widgets.inactive.bg_fill = Color32::from_rgb(244, 238, 227);
-    visuals.widgets.hovered.bg_fill = Color32::from_rgb(234, 225, 207);
-    visuals.widgets.active.bg_fill = Color32::from_rgb(225, 213, 188);
-    visuals.widgets.inactive.fg_stroke = Stroke::new(1.0, Color32::from_rgb(66, 56, 45));
-    visuals.window_fill = Color32::from_rgb(247, 241, 230);
-    visuals.selection.bg_fill = Color32::from_rgb(198, 106, 44);
-    ctx.set_visuals(visuals);
-
-    let mut style = (*ctx.style()).clone();
-    style.spacing.item_spacing = egui::vec2(10.0, 10.0);
-    style.spacing.button_padding = egui::vec2(12.0, 8.0);
-    style.spacing.interact_size = egui::vec2(44.0, 28.0);
-    style.interaction.resize_grab_radius_side = 3.0;
-    ctx.set_style(style);
-}
-
-fn install_text_fonts(ctx: &Context) {
-    let mut fonts = FontDefinitions::default();
-    let fallback_fonts = [
-        ("windows_tahoma", "C:\\Windows\\Fonts\\tahoma.ttf"),
-        ("windows_arial", "C:\\Windows\\Fonts\\arial.ttf"),
-        ("windows_segoe_ui", "C:\\Windows\\Fonts\\segoeui.ttf"),
-    ];
-
-    for (font_name, path) in fallback_fonts.into_iter().rev() {
-        if let Ok(bytes) = std::fs::read(path) {
-            fonts
-                .font_data
-                .insert(font_name.to_string(), FontData::from_owned(bytes).into());
-            fonts
-                .families
-                .entry(FontFamily::Proportional)
-                .or_default()
-                .insert(0, font_name.to_string());
-            fonts
-                .families
-                .entry(FontFamily::Monospace)
-                .or_default()
-                .insert(0, font_name.to_string());
-        }
-    }
-
-    ctx.set_fonts(fonts);
 }
 
 fn contains_arabic(text: &str) -> bool {
