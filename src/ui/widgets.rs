@@ -8,7 +8,7 @@ use unicode_bidi::BidiInfo;
 use crate::core::{
     logging::{LogEntry, LogLevel},
     models::{
-        BackupAnalysis, BackupPreset, DeviceConnectionState, DeviceInfo, RemoteFolderPreview,
+        BackupAnalysis, BackupPreset, RemoteFolderPreview,
         RunSummary, SyncProgress, guess_destination_subfolder,
     },
 };
@@ -110,7 +110,7 @@ pub(crate) fn render_preset_chip(ui: &mut egui::Ui, preset: &BackupPreset, selec
         .fill(fill)
         .stroke(Stroke::new(stroke_width, stroke_color))
         .corner_radius(CornerRadius::same(255))
-        .inner_margin(Margin::symmetric(10, 6))
+        .inner_margin(Margin::symmetric(8, 5))
         .show(ui, |ui| {
             ui.horizontal(|ui| {
                 // Show icon inline (larger, from the primary badge)
@@ -243,18 +243,6 @@ pub(crate) fn status_pill(ui: &mut egui::Ui, text: &str, color: Color32) {
         .show(ui, |ui| {
             ui.colored_label(color, RichText::new(text).strong());
         });
-}
-
-pub(crate) fn device_summary(info: &DeviceInfo) -> String {
-    match info.state {
-        DeviceConnectionState::Connected => match &info.model {
-            Some(model) => format!("{model}\nSerial: {}\n{}", info.serial, info.message),
-            None => format!("Serial: {}\n{}", info.serial, info.message),
-        },
-        DeviceConnectionState::Unauthorized
-        | DeviceConnectionState::Offline
-        | DeviceConnectionState::Disconnected => info.message.clone(),
-    }
 }
 
 pub(crate) fn summary_strip(ui: &mut egui::Ui, progress: &SyncProgress, summary: Option<&RunSummary>) {

@@ -101,16 +101,16 @@ pub(crate) fn render_side_panel(ctx: &egui::Context, app: &mut crate::app::Backu
                         }
 
                         ui.add_space(4.0);
-                        ui.horizontal_wrapped(|ui| {
-                            if ui.small_button("Save Settings").clicked() {
-                                app.save_settings();
-                            }
-                            if ui.small_button("Save as Preset").clicked() {
+                        ui.horizontal(|ui| {
+                            if ui.button(icon_or_text("💾", "Save"))
+                                .on_hover_text("Save current layout as preset")
+                                .clicked()
+                            {
                                 app.save_current_preset();
                             }
                             ui.add(
                                 egui::TextEdit::singleline(&mut app.preset_name_input)
-                                    .desired_width(140.0)
+                                    .desired_width(ui.available_width())
                                     .hint_text("Preset name"),
                             );
                         });

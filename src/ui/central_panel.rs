@@ -46,13 +46,13 @@ pub(crate) fn render_header(ctx: &egui::Context, app: &mut BackupApp) {
                         );
                     });
                 });
-                ui.add_space(10.0);
+                ui.add_space(8.0);
                 ui.label(RichText::new(&app.status_banner).color(Color32::from_rgb(72, 62, 50)));
                 if let Some(error) = &app.error_banner {
-                    ui.add_space(8.0);
+                    ui.add_space(6.0);
                     ui.colored_label(Color32::from_rgb(168, 52, 33), error);
                 }
-                ui.add_space(10.0);
+                ui.add_space(8.0);
                 ui.horizontal(|ui| {
                     if ui
                         .selectable_label(app.active_tab == AppTab::Backup, "Backup")
