@@ -118,181 +118,104 @@ pub(crate) fn render_side_panel(ctx: &egui::Context, app: &mut crate::app::Backu
                         ui.separator();
                     }
 
-                    settings_card(ui, "Connection", |ui| {
-                        ui.label("ADB executable");
-                        ui.add(
-                            egui::TextEdit::singleline(&mut app.settings.adb_path)
-                                .desired_width(f32::INFINITY),
-                        );
-                        ui.add_space(8.0);
-                        if ui
-                            .add_sized(
-                                [ui.available_width(), 32.0],
-                                egui::Button::new("Refresh Device"),
-                            )
-                            .clicked()
-                        {
+                    // Device row (no card frame)
+                    ui.add_space(6.0);
+                    ui.horizontal(|ui| {
+                        status_pill(ui, app.device_info.state.label(), app.device_info.state.color());
+                        if let Some(model) = &app.device_info.model {
+                            ui.label(RichText::new(model).small());
+                        }
+                        if ui.button(icon_or_text("↻", "Refresh")).clicked() {
                             app.refresh_device_info();
                         }
-
-                        ui.add_space(10.0);
-                        ui.label(RichText::new("Current Device").strong());
-                        wrapped_text(ui, &device_summary(&app.device_info));
-                    });
+                    })
+                    .response
+                    .on_hover_text(format!(
+                        "Serial: {}\nADB: {}\n{}",
+                        app.device_info.serial,
+                        app.settings.adb_path,
+                        app.device_info.message
+                    ));
+                    ui.add_space(4.0);
 
                     if app.active_tab == AppTab::Backup {
-                    settings_card(ui, "Backup Destination", |ui| {
-                        ui.label("Local destination folder");
-                        if ui
-                            .add(
-                                egui::TextEdit::singleline(&mut app.settings.destination_path)
-                                    .desired_width(f32::INFINITY),
-                            )
-                            .changed()
-                        {
+                    ui.horizontal(|ui| {
+                        let response = ui.add(
+                            egui::TextEdit::singleline(&mut app.settings.destination_path)
+                                .desired_width(ui.available_width() - 40.0)
+                                .hint_text("Destination folder..."),
+                        );
+                        if response.changed() {
                             app.invalidate_backup_analysis();
                         }
                         if ui
-                            .add_enabled_ui(!adb_job_active, |ui| {
-                                ui.add_sized(
-                                    [ui.available_width(), 32.0],
-                                    egui::Button::new("Select Windows Folder..."),
-                                )
-                            })
-                            .inner
+                            .add_enabled(!adb_job_active, egui::Button::new("..."))
+                            .on_hover_text("Browse for destination folder")
                             .clicked()
                         {
                             app.pick_local_destination_folder();
                         }
-                        ui.small("This is the root backup folder. Each selected source can keep its own subfolder inside it.");
-                        ui.add_space(8.0);
-                        wrapped_text(
-                            ui,
-                            &format!(
-                                "{} source folder(s) selected for backup",
-                                app.settings
-                                    .effective_backup_sources()
-                                    .iter()
-                                    .filter(|source| source.enabled)
-                                    .count()
-                            ),
-                        );
-                        ui.add_space(8.0);
-                        if ui
-                            .add_enabled_ui(!adb_job_active, |ui| {
-                                ui.add_sized(
-                                    [ui.available_width(), 32.0],
-                                    egui::Button::new("Scan Configured Sources"),
-                                )
-                            })
-                            .inner
-                            .clicked()
-                        {
-                            app.refresh_backup_source_scan();
-                        }
-                        if ui
-                            .add_enabled_ui(!adb_job_active, |ui| {
-                                ui.add_sized(
-                                    [ui.available_width(), 32.0],
-                                    egui::Button::new("Analyze Selected Sources"),
-                                )
-                            })
-                            .inner
-                            .clicked()
-                        {
-                            app.request_backup_analysis();
-                        }
-                        if app.backup_analysis.is_loading {
-                            ui.horizontal(|ui| {
-                                ui.spinner();
-                                ui.label("Analyzing...");
-                            });
-                        }
-                        if let Some(error) = &app.backup_analysis.error {
-                            ui.colored_label(Color32::from_rgb(168, 52, 33), error);
-                        }
                     });
+                    let enabled_count = app.settings.effective_backup_sources().iter().filter(|s| s.enabled).count();
+                    ui.small(format!("{enabled_count} sources enabled"));
+                    ui.add_space(4.0);
                     }
 
                     if app.active_tab == AppTab::Cleanup {
-                    settings_card(ui, "Cleanup Folder", |ui| {
-                        ui.label("Phone folder to clean up");
+                    ui.add_space(6.0);
+                    ui.horizontal(|ui| {
                         let mut cleanup_path = app.folder_cleanup.folder_path.clone();
-                        if ui
-                            .add(
-                                egui::TextEdit::singleline(&mut cleanup_path)
-                                    .desired_width(f32::INFINITY),
-                            )
-                            .changed()
-                        {
+                        if ui.add(
+                            egui::TextEdit::singleline(&mut cleanup_path)
+                                .desired_width(ui.available_width() - 40.0)
+                                .hint_text("Phone folder to clean up..."),
+                        ).changed() {
                             app.set_cleanup_folder_path(cleanup_path);
                         }
-                        if ui
-                            .add_enabled_ui(!adb_job_active, |ui| {
-                                ui.add_sized(
-                                    [ui.available_width(), 32.0],
-                                    egui::Button::new("Select Phone Folder..."),
-                                )
-                            })
-                            .inner
+                        if ui.add_enabled(!adb_job_active, egui::Button::new("..."))
+                            .on_hover_text("Select phone folder")
                             .clicked()
                         {
                             app.open_cleanup_folder_picker();
                         }
-                        ui.small(
-                            "Fetch contents first, then choose whether to delete the full folder, keep the folder and delete only its contents, or delete only checked files and subfolders.",
-                        );
-                        ui.add_space(8.0);
-                        ui.columns(2, |columns| {
-                            if columns[0]
-                                .add_enabled_ui(!adb_job_active, |ui| {
-                                    ui.add_sized(
-                                        [ui.available_width(), 32.0],
-                                        egui::Button::new("Fetch Contents"),
-                                    )
-                                })
-                                .inner
-                                .clicked()
-                            {
-                                app.request_cleanup_preview();
-                            }
-                            if columns[1]
-                                .add_enabled_ui(!app.folder_cleanup.is_deleting, |ui| {
-                                    ui.add_sized(
-                                        [ui.available_width(), 32.0],
-                                        egui::Button::new("Clear Preview"),
-                                    )
-                                })
-                                .inner
-                                .clicked()
-                            {
-                                app.clear_cleanup_preview();
-                            }
-                        });
-
-                        if let Some(reason) =
-                            protected_cleanup_folder_reason(&app.folder_cleanup.folder_path)
+                    });
+                    ui.horizontal(|ui| {
+                        if ui.add_enabled(!adb_job_active, egui::Button::new("Fetch"))
+                            .on_hover_text("Fetch folder contents from device")
+                            .clicked()
                         {
-                            ui.colored_label(Color32::from_rgb(168, 52, 33), reason);
+                            app.request_cleanup_preview();
                         }
-
-                        if app.folder_cleanup.is_fetching_preview {
-                            ui.horizontal(|ui| {
-                                ui.spinner();
-                                ui.label("Fetching folder contents from device...");
-                            });
-                        }
-
-                        if let Some(preview) = &app.folder_cleanup.preview {
-                            wrapped_text(ui, &cleanup_summary(preview));
-                        }
-                        if let Some(error) = &app.folder_cleanup.preview_error {
-                            ui.colored_label(Color32::from_rgb(168, 52, 33), error);
-                        }
-                        if let Some(error) = &app.folder_cleanup.delete_error {
-                            ui.colored_label(Color32::from_rgb(168, 52, 33), error);
+                        if ui.add_enabled(!app.folder_cleanup.is_deleting, egui::Button::new("Clear"))
+                            .on_hover_text("Clear preview")
+                            .clicked()
+                        {
+                            app.clear_cleanup_preview();
                         }
                     });
+
+                    if let Some(reason) =
+                        protected_cleanup_folder_reason(&app.folder_cleanup.folder_path)
+                    {
+                        ui.colored_label(Color32::from_rgb(168, 52, 33), reason);
+                    }
+
+                    if app.folder_cleanup.is_fetching_preview {
+                        ui.horizontal(|ui| {
+                            ui.spinner();
+                            ui.label("Fetching folder contents from device...");
+                        });
+                    }
+
+                    if let Some(preview) = &app.folder_cleanup.preview {
+                        wrapped_text(ui, &cleanup_summary(preview));
+                    }
+                    if let Some(error) = &app.folder_cleanup.preview_error {
+                        ui.colored_label(Color32::from_rgb(168, 52, 33), error);
+                    }
+                    if let Some(error) = &app.folder_cleanup.delete_error {
+                        ui.colored_label(Color32::from_rgb(168, 52, 33), error);
+                    }
 
                     settings_card(ui, "Delete Actions", |ui| {
                         ui.checkbox(
@@ -380,58 +303,68 @@ pub(crate) fn render_side_panel(ctx: &egui::Context, app: &mut crate::app::Backu
                     }
 
                     if app.active_tab == AppTab::Backup {
-                    settings_card(ui, "Validation", |ui| {
-                        egui::ComboBox::from_label("Validation mode")
-                            .selected_text(app.settings.validation_mode.label())
-                            .show_ui(ui, |ui| {
-                                ui.selectable_value(
-                                    &mut app.settings.validation_mode,
-                                    ValidationMode::Size,
-                                    ValidationMode::Size.label(),
-                                );
-                                ui.selectable_value(
-                                    &mut app.settings.validation_mode,
-                                    ValidationMode::Md5,
-                                    ValidationMode::Md5.label(),
-                                );
-                            });
+                    egui::CollapsingHeader::new("Validation")
+                        .default_open(false)
+                        .show(ui, |ui| {
+                            ui.label("ADB path");
+                            ui.add(
+                                egui::TextEdit::singleline(&mut app.settings.adb_path)
+                                    .desired_width(f32::INFINITY)
+                                    .hint_text("adb"),
+                            );
+                            ui.add_space(4.0);
 
-                        egui::ComboBox::from_label("Existing local files")
-                            .selected_text(app.settings.existing_file_behavior.label())
-                            .show_ui(ui, |ui| {
-                                ui.selectable_value(
-                                    &mut app.settings.existing_file_behavior,
-                                    ExistingFileBehavior::Skip,
-                                    ExistingFileBehavior::Skip.label(),
-                                );
-                                ui.selectable_value(
-                                    &mut app.settings.existing_file_behavior,
-                                    ExistingFileBehavior::Validate,
-                                    ExistingFileBehavior::Validate.label(),
-                                );
-                            });
+                            egui::ComboBox::from_label("Validation mode")
+                                .selected_text(app.settings.validation_mode.label())
+                                .show_ui(ui, |ui| {
+                                    ui.selectable_value(
+                                        &mut app.settings.validation_mode,
+                                        ValidationMode::Size,
+                                        ValidationMode::Size.label(),
+                                    );
+                                    ui.selectable_value(
+                                        &mut app.settings.validation_mode,
+                                        ValidationMode::Md5,
+                                        ValidationMode::Md5.label(),
+                                    );
+                                });
 
-                        ui.checkbox(
-                            &mut app.settings.auto_delete_after_success,
-                            "Auto delete on device after successful validation",
-                        );
-                        ui.checkbox(&mut app.settings.dry_run, "Dry-run mode (simulate only)");
+                            egui::ComboBox::from_label("Existing local files")
+                                .selected_text(app.settings.existing_file_behavior.label())
+                                .show_ui(ui, |ui| {
+                                    ui.selectable_value(
+                                        &mut app.settings.existing_file_behavior,
+                                        ExistingFileBehavior::Skip,
+                                        ExistingFileBehavior::Skip.label(),
+                                    );
+                                    ui.selectable_value(
+                                        &mut app.settings.existing_file_behavior,
+                                        ExistingFileBehavior::Validate,
+                                        ExistingFileBehavior::Validate.label(),
+                                    );
+                                });
 
-                        let mut filter_recent = app.settings.only_last_days.is_some();
-                        if ui
-                            .checkbox(&mut filter_recent, "Copy only recent files")
-                            .changed()
-                        {
-                            app.settings.only_last_days =
-                                if filter_recent { Some(7) } else { None };
-                        }
-                        if let Some(days) = &mut app.settings.only_last_days {
-                            ui.horizontal(|ui| {
-                                ui.label("Days");
-                                ui.add(egui::DragValue::new(days).range(1..=365));
-                            });
-                        }
-                    });
+                            ui.checkbox(
+                                &mut app.settings.auto_delete_after_success,
+                                "Auto delete on device after successful validation",
+                            );
+                            ui.checkbox(&mut app.settings.dry_run, "Dry-run mode (simulate only)");
+
+                            let mut filter_recent = app.settings.only_last_days.is_some();
+                            if ui
+                                .checkbox(&mut filter_recent, "Copy only recent files")
+                                .changed()
+                            {
+                                app.settings.only_last_days =
+                                    if filter_recent { Some(7) } else { None };
+                            }
+                            if let Some(days) = &mut app.settings.only_last_days {
+                                ui.horizontal(|ui| {
+                                    ui.label("Days");
+                                    ui.add(egui::DragValue::new(days).range(1..=365));
+                                });
+                            }
+                        });
 
                     }
                 });
