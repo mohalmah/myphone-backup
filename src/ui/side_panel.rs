@@ -1,4 +1,4 @@
-use eframe::egui::{self, Color32, Frame, Margin, RichText, ScrollArea, UiBuilder};
+use eframe::egui::{self, Color32, Frame, Margin, RichText, ScrollArea};
 
 use crate::core::models::{ExistingFileBehavior, ValidationMode};
 use crate::app::AppTab;
@@ -12,56 +12,15 @@ pub(crate) fn render_side_panel(ctx: &egui::Context, app: &mut crate::app::Backu
         .resizable(false)
         .exact_width(panel_width)
         .show_separator_line(false)
-        .frame(Frame::new()
-            .fill(Color32::from_rgb(247, 241, 230))
+        .frame(Frame::NONE
             .inner_margin(Margin::same(10)))
         .show(ctx, |ui| {
             let adb_job_active = app.has_active_adb_job();
-            let panel_rect = ui.available_rect_before_wrap();
 
-            // Reserve bottom strip for Run Controls
-            let controls_height = 52.0;
-            let controls_rect = egui::Rect::from_min_max(
-                egui::pos2(panel_rect.min.x, panel_rect.max.y - controls_height),
-                panel_rect.max,
-            );
-            let scroll_rect = egui::Rect::from_min_max(
-                panel_rect.min,
-                egui::pos2(panel_rect.max.x, controls_rect.min.y),
-            );
-
-            // Run Controls at bottom (always visible, not scrolled)
-            if app.active_tab == AppTab::Backup {
-                ui.allocate_new_ui(UiBuilder::new().max_rect(controls_rect), |ui| {
-                    ui.separator();
-                    ui.add_space(4.0);
-                    ui.horizontal(|ui| {
-                        let running = app.is_running();
-                        let paused = app.sync_handle.as_ref().map(|h| h.is_paused()).unwrap_or(false);
-
-                        if ui.add_enabled(!adb_job_active, egui::Button::new("▶ Start")).clicked() {
-                            app.start_full_backup();
-                        }
-                        if ui.add_enabled(running, egui::Button::new(if paused { "▶ Resume" } else { "⏸ Pause" })).clicked() {
-                            if let Some(handle) = &app.sync_handle {
-                                handle.toggle_pause();
-                            }
-                        }
-                        if ui.add_enabled(running, egui::Button::new("⏹ Stop")).clicked() {
-                            if let Some(handle) = &app.sync_handle {
-                                handle.request_stop();
-                            }
-                        }
-                    });
-                });
-            }
-
-            // Scrollable content above
-            ui.allocate_new_ui(UiBuilder::new().max_rect(scroll_rect), |ui| {
-                ScrollArea::vertical()
-                    .id_salt("side_panel_scroll")
-                    .auto_shrink([false; 2])
-                    .show(ui, |ui| {
+            ScrollArea::vertical()
+                .id_salt("side_panel_scroll")
+                .auto_shrink([false; 2])
+                .show(ui, |ui| {
                     if app.active_tab == AppTab::Backup {
                         // ── Quick Presets (always visible at the top) ──
                         ui.add_space(4.0);
@@ -366,7 +325,31 @@ pub(crate) fn render_side_panel(ctx: &egui::Context, app: &mut crate::app::Backu
                         });
 
                     }
+
+                    // Run Controls (at bottom of scroll)
+                    if app.active_tab == AppTab::Backup {
+                        ui.add_space(8.0);
+                        ui.separator();
+                        ui.add_space(4.0);
+                        ui.horizontal(|ui| {
+                            let running = app.is_running();
+                            let paused = app.sync_handle.as_ref().map(|h| h.is_paused()).unwrap_or(false);
+
+                            if ui.add_enabled(!adb_job_active, egui::Button::new("▶ Start")).clicked() {
+                                app.start_full_backup();
+                            }
+                            if ui.add_enabled(running, egui::Button::new(if paused { "▶ Resume" } else { "⏸ Pause" })).clicked() {
+                                if let Some(handle) = &app.sync_handle {
+                                    handle.toggle_pause();
+                                }
+                            }
+                            if ui.add_enabled(running, egui::Button::new("⏹ Stop")).clicked() {
+                                if let Some(handle) = &app.sync_handle {
+                                    handle.request_stop();
+                                }
+                            }
+                        });
+                    }
                 });
-            });
         });
 }
