@@ -4,7 +4,7 @@ pub(crate) fn apply_theme(ctx: &Context) {
     install_text_fonts(ctx);
 
     let mut visuals = egui::Visuals::light();
-    visuals.panel_fill = Color32::from_rgb(247, 241, 230);
+    visuals.panel_fill = Color32::TRANSPARENT;
     visuals.extreme_bg_color = Color32::from_rgb(255, 252, 246);
     visuals.faint_bg_color = Color32::from_rgb(247, 241, 230);
     visuals.override_text_color = Some(Color32::from_rgb(51, 43, 35));
