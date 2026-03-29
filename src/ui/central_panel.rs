@@ -140,7 +140,7 @@ pub(crate) fn render_log_panel(ctx: &egui::Context, app: &mut BackupApp) {
 }
 
 pub(crate) fn render_central_panel(ctx: &egui::Context, app: &mut BackupApp) {
-    egui::CentralPanel::default()
+    let central_response = egui::CentralPanel::default()
         .frame(Frame::new()
             .fill(Color32::from_rgb(247, 241, 230))
             .inner_margin(Margin::same(8)))
@@ -575,6 +575,22 @@ pub(crate) fn render_central_panel(ctx: &egui::Context, app: &mut BackupApp) {
         }
             }); // end ScrollArea
     });
+
+    // DEBUG: Draw central panel boundary
+    let panel_rect = central_response.response.rect;
+    ctx.debug_painter().rect_stroke(
+        panel_rect,
+        0.0,
+        egui::Stroke::new(3.0, Color32::BLUE),
+        egui::StrokeKind::Outside,
+    );
+    ctx.debug_painter().text(
+        panel_rect.left_top() + egui::vec2(5.0, 5.0),
+        egui::Align2::LEFT_TOP,
+        format!("CentralPanel: left={:.0} width={:.0}", panel_rect.left(), panel_rect.width()),
+        egui::FontId::proportional(12.0),
+        Color32::BLUE,
+    );
 }
 
 pub(crate) fn render_remote_folder_picker(ctx: &egui::Context, app: &mut BackupApp) {
