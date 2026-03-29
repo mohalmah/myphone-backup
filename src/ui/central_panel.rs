@@ -140,7 +140,11 @@ pub(crate) fn render_log_panel(ctx: &egui::Context, app: &mut BackupApp) {
 }
 
 pub(crate) fn render_central_panel(ctx: &egui::Context, app: &mut BackupApp) {
-    egui::CentralPanel::default().show(ctx, |ui| {
+    egui::CentralPanel::default()
+        .frame(Frame::new()
+            .fill(Color32::from_rgb(247, 241, 230))
+            .inner_margin(Margin::same(8)))
+        .show(ctx, |ui| {
         ScrollArea::vertical()
             .id_salt("central_panel_scroll")
             .auto_shrink([false; 2])

@@ -4,7 +4,7 @@ pub(crate) fn apply_theme(ctx: &Context) {
     install_text_fonts(ctx);
 
     let mut visuals = egui::Visuals::light();
-    visuals.panel_fill = Color32::TRANSPARENT;
+    visuals.panel_fill = Color32::from_rgb(247, 241, 230);
     visuals.extreme_bg_color = Color32::from_rgb(255, 252, 246);
     visuals.faint_bg_color = Color32::from_rgb(247, 241, 230);
     visuals.override_text_color = Some(Color32::from_rgb(51, 43, 35));
@@ -21,7 +21,7 @@ pub(crate) fn apply_theme(ctx: &Context) {
     let mut style = (*ctx.style()).clone();
     style.spacing.item_spacing = egui::vec2(10.0, 10.0);
     style.spacing.button_padding = egui::vec2(12.0, 8.0);
-    style.spacing.interact_size = egui::vec2(44.0, 28.0);
+    style.spacing.interact_size = egui::vec2(20.0, 28.0);
     style.interaction.resize_grab_radius_side = 3.0;
     ctx.set_style(style);
 }

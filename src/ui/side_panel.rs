@@ -12,7 +12,8 @@ pub(crate) fn render_side_panel(ctx: &egui::Context, app: &mut crate::app::Backu
         .resizable(false)
         .exact_width(panel_width)
         .show_separator_line(false)
-        .frame(Frame::NONE
+        .frame(Frame::new()
+            .fill(Color32::from_rgb(247, 241, 230))
             .inner_margin(Margin::same(10)))
         .show(ctx, |ui| {
             let adb_job_active = app.has_active_adb_job();
