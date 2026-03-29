@@ -8,7 +8,7 @@ pub(crate) fn render_side_panel(ctx: &egui::Context, app: &mut crate::app::Backu
     let window_width = ctx.screen_rect().width();
     let panel_width = (window_width * 0.28).clamp(300.0, 420.0);
 
-    let side_response = egui::SidePanel::left("settings_panel")
+    egui::SidePanel::left("settings_v2")
         .resizable(false)
         .exact_width(panel_width)
         .show_separator_line(false)
@@ -354,20 +354,4 @@ pub(crate) fn render_side_panel(ctx: &egui::Context, app: &mut crate::app::Backu
                 });
         });
 
-    // DEBUG: Draw side panel boundary
-    let panel_rect = side_response.response.rect;
-    ctx.debug_painter().rect_stroke(
-        panel_rect,
-        0.0,
-        egui::Stroke::new(3.0, Color32::RED),
-        egui::StrokeKind::Outside,
-    );
-    // Show debug info
-    ctx.debug_painter().text(
-        panel_rect.right_top() + egui::vec2(5.0, 5.0),
-        egui::Align2::LEFT_TOP,
-        format!("SidePanel: {:.0}x{:.0} right={:.0}", panel_rect.width(), panel_rect.height(), panel_rect.right()),
-        egui::FontId::proportional(12.0),
-        Color32::RED,
-    );
 }
