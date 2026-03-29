@@ -63,17 +63,18 @@ pub(crate) fn wrapped_path_text(ui: &mut egui::Ui, text: &str) {
 }
 
 pub(crate) fn settings_card(ui: &mut egui::Ui, title: &str, add_contents: impl FnOnce(&mut egui::Ui)) {
+    use crate::ui::theme::*;
     Frame::new()
-        .fill(Color32::from_rgb(250, 247, 240))
-        .stroke(Stroke::new(1.0, Color32::from_rgb(221, 211, 190)))
-        .corner_radius(CornerRadius::same(14))
-        .inner_margin(Margin::same(14))
+        .fill(BG_CARD)
+        .stroke(Stroke::new(1.0, BORDER_CARD))
+        .corner_radius(CornerRadius::same(8))
+        .inner_margin(Margin::same(12))
         .show(ui, |ui| {
-            ui.label(RichText::new(title).strong());
-            ui.add_space(8.0);
+            ui.label(RichText::new(title).size(13.0).strong().color(TEXT_PRIMARY));
+            ui.add_space(6.0);
             add_contents(ui);
         });
-    ui.add_space(12.0);
+    ui.add_space(8.0);
 }
 
 #[derive(Clone, Copy)]
@@ -83,64 +84,37 @@ pub(crate) struct PresetBadge {
 }
 
 pub(crate) fn render_preset_chip(ui: &mut egui::Ui, preset: &BackupPreset, selected: bool) -> egui::Response {
+    use crate::ui::theme::*;
     let badges = preset_badges(preset);
     let primary_badge = badges.first().cloned();
 
     let (fill, stroke_color, text_color) = if selected {
-        let badge_color = primary_badge
-            .as_ref()
-            .map(|b| b.color)
-            .unwrap_or(Color32::from_rgb(73, 121, 92));
-        (
-            badge_color.gamma_multiply(0.14),
-            badge_color.gamma_multiply(0.55),
-            badge_color,
-        )
+        (ACCENT.gamma_multiply(0.12), ACCENT, ACCENT)
     } else {
-        (
-            Color32::from_rgb(255, 252, 246),
-            Color32::from_rgb(221, 211, 190),
-            Color32::from_rgb(90, 78, 64),
-        )
+        (BG_CARD, BORDER_CARD, TEXT_PRIMARY)
     };
-
-    let stroke_width = if selected { 2.0 } else { 1.0 };
 
     let inner = Frame::new()
         .fill(fill)
-        .stroke(Stroke::new(stroke_width, stroke_color))
-        .corner_radius(CornerRadius::same(255))
-        .inner_margin(Margin::symmetric(8, 5))
+        .stroke(Stroke::new(if selected { 1.5 } else { 1.0 }, stroke_color))
+        .corner_radius(CornerRadius::same(4))
+        .inner_margin(Margin::symmetric(8, 4))
         .show(ui, |ui| {
             ui.horizontal(|ui| {
-                // Show icon inline (larger, from the primary badge)
+                ui.spacing_mut().item_spacing.x = 3.0;
                 if let Some(badge) = &primary_badge {
-                    ui.label(
-                        RichText::new(badge.icon)
-                            .size(14.0)
-                            .color(badge.color),
-                    );
+                    ui.label(RichText::new(badge.icon).size(12.0).color(badge.color));
                 }
-                // Show additional badges if multiple apps
                 for badge in badges.iter().skip(1) {
-                    ui.label(
-                        RichText::new(badge.icon)
-                            .size(12.0)
-                            .color(badge.color),
-                    );
+                    ui.label(RichText::new(badge.icon).size(11.0).color(badge.color));
                 }
                 ui.label(
                     RichText::new(display_text_for_ui(&preset.name))
-                        .strong()
+                        .size(12.0)
                         .color(text_color),
                 );
                 if selected {
-                    ui.label(
-                        RichText::new("✓")
-                            .strong()
-                            .size(12.0)
-                            .color(text_color),
-                    );
+                    ui.label(RichText::new("✓").size(11.0).strong().color(ACCENT));
                 }
             });
         });
@@ -236,12 +210,12 @@ pub(crate) fn preset_chip_hover_text(preset: &BackupPreset) -> String {
 
 pub(crate) fn status_pill(ui: &mut egui::Ui, text: &str, color: Color32) {
     Frame::new()
-        .fill(color.gamma_multiply(0.16))
-        .stroke(Stroke::new(1.0, color.gamma_multiply(0.45)))
-        .corner_radius(CornerRadius::same(255))
-        .inner_margin(Margin::symmetric(10, 6))
+        .fill(color.gamma_multiply(0.10))
+        .stroke(Stroke::new(1.0, color.gamma_multiply(0.30)))
+        .corner_radius(CornerRadius::same(4))
+        .inner_margin(Margin::symmetric(8, 3))
         .show(ui, |ui| {
-            ui.colored_label(color, RichText::new(text).strong());
+            ui.colored_label(color, RichText::new(text).size(11.0).strong());
         });
 }
 
@@ -317,15 +291,16 @@ pub(crate) fn summary_strip(ui: &mut egui::Ui, progress: &SyncProgress, summary:
 }
 
 pub(crate) fn metric_chip(ui: &mut egui::Ui, label: &str, value: String, color: Color32) {
+    use crate::ui::theme::*;
     Frame::new()
-        .fill(color.gamma_multiply(0.12))
-        .stroke(Stroke::new(1.0, color.gamma_multiply(0.45)))
-        .corner_radius(CornerRadius::same(255))
-        .inner_margin(Margin::symmetric(12, 8))
+        .fill(BG_CARD)
+        .stroke(Stroke::new(1.0, BORDER_CARD))
+        .corner_radius(CornerRadius::same(4))
+        .inner_margin(Margin::symmetric(8, 4))
         .show(ui, |ui| {
             ui.horizontal(|ui| {
-                ui.colored_label(color, RichText::new(label).strong());
-                ui.label(value);
+                ui.label(RichText::new(label).size(11.0).color(TEXT_SECONDARY));
+                ui.label(RichText::new(value).size(12.0).strong().color(color));
             });
         });
 }

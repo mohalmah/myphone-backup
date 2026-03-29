@@ -22,10 +22,10 @@ impl DeviceConnectionState {
 
     pub fn color(&self) -> eframe::egui::Color32 {
         match self {
-            Self::Disconnected => eframe::egui::Color32::from_rgb(145, 92, 39),
-            Self::Connected => eframe::egui::Color32::from_rgb(73, 121, 92),
-            Self::Unauthorized => eframe::egui::Color32::from_rgb(168, 52, 33),
-            Self::Offline => eframe::egui::Color32::from_rgb(124, 92, 161),
+            Self::Disconnected => eframe::egui::Color32::from_rgb(157, 93, 0),
+            Self::Connected => eframe::egui::Color32::from_rgb(16, 124, 16),
+            Self::Unauthorized => eframe::egui::Color32::from_rgb(196, 43, 28),
+            Self::Offline => eframe::egui::Color32::from_rgb(96, 96, 96),
         }
     }
 }

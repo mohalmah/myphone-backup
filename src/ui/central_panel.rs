@@ -5,39 +5,31 @@ use eframe::egui::{
 
 use crate::app::{AppTab, BackupApp, RemoteFolderPickerTarget};
 use crate::core::models::{RemoteFolderEntryKind, RemoteFile};
+use crate::ui::theme::*;
 use crate::ui::widgets::*;
 
 pub(crate) fn render_header(ctx: &egui::Context, app: &mut BackupApp) {
+    use crate::ui::theme::*;
+
     egui::TopBottomPanel::top("hero").show(ctx, |ui| {
         Frame::new()
-            .fill(Color32::from_rgb(241, 234, 218))
-            .inner_margin(Margin::same(14))
+            .fill(BG_CARD)
+            .inner_margin(Margin::symmetric(16, 12))
+            .stroke(Stroke::new(1.0, BORDER_CARD))
             .show(ui, |ui| {
-                ui.horizontal_wrapped(|ui| {
-                    ui.vertical(|ui| {
-                        ui.label(
-                            RichText::new("ADB Smart Backup & Cleanup")
-                                .heading()
-                                .strong()
-                                .color(Color32::from_rgb(50, 43, 34)),
-                        );
-                        ui.label(
-                            RichText::new(
-                                "Safe per-file backup, validation, and optional cleanup for Android media folders.",
-                            )
-                            .color(Color32::from_rgb(93, 81, 66)),
-                        );
-                    });
-
+                // Title row with status pills
+                ui.horizontal(|ui| {
+                    ui.label(
+                        RichText::new("Phone Backup")
+                            .size(20.0)
+                            .strong()
+                            .color(TEXT_PRIMARY),
+                    );
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                         status_pill(
                             ui,
                             if app.is_running() { "RUNNING" } else { "IDLE" },
-                            if app.is_running() {
-                                Color32::from_rgb(198, 106, 44)
-                            } else {
-                                Color32::from_rgb(73, 121, 92)
-                            },
+                            if app.is_running() { ACCENT } else { SUCCESS },
                         );
                         status_pill(
                             ui,
@@ -46,28 +38,30 @@ pub(crate) fn render_header(ctx: &egui::Context, app: &mut BackupApp) {
                         );
                     });
                 });
-                ui.add_space(8.0);
-                ui.label(RichText::new(&app.status_banner).color(Color32::from_rgb(72, 62, 50)));
+
+                // Status message
+                ui.label(RichText::new(&app.status_banner).size(12.0).color(TEXT_SECONDARY));
                 if let Some(error) = &app.error_banner {
-                    ui.add_space(6.0);
-                    ui.colored_label(Color32::from_rgb(168, 52, 33), error);
+                    ui.colored_label(ERROR, RichText::new(error).size(12.0));
                 }
-                ui.add_space(8.0);
+
+                ui.add_space(4.0);
+
+                // Tabs + progress bar
                 ui.horizontal(|ui| {
                     if ui
-                        .selectable_label(app.active_tab == AppTab::Backup, "Backup")
+                        .selectable_label(app.active_tab == AppTab::Backup, RichText::new("Backup").size(14.0))
                         .clicked()
                     {
                         app.active_tab = AppTab::Backup;
                     }
                     if ui
-                        .selectable_label(app.active_tab == AppTab::Cleanup, "Cleanup")
+                        .selectable_label(app.active_tab == AppTab::Cleanup, RichText::new("Cleanup").size(14.0))
                         .clicked()
                     {
                         app.active_tab = AppTab::Cleanup;
                     }
-                    ui.add_space(16.0);
-                    // Inline progress bar next to tabs
+                    ui.add_space(12.0);
                     if app.active_tab == AppTab::Backup {
                         let total_progress = if app.progress.total_files == 0 {
                             0.0
@@ -80,8 +74,9 @@ pub(crate) fn render_header(ctx: &egui::Context, app: &mut BackupApp) {
                                     "{} / {} files",
                                     app.progress.completed_files, app.progress.total_files
                                 ))
-                                .fill(Color32::from_rgb(73, 121, 92))
-                                .desired_width(ui.available_width() - 10.0),
+                                .fill(ACCENT)
+                                .desired_width(ui.available_width() - 4.0)
+                                .corner_radius(2),
                         );
                         progress_response.on_hover_text(progress_detail(&app.progress));
                     }
@@ -114,7 +109,7 @@ pub(crate) fn render_log_panel(ctx: &egui::Context, app: &mut BackupApp) {
                             visible_log_count,
                             app.log_entries.len()
                         ))
-                        .color(Color32::from_rgb(118, 104, 85)),
+                        .color(TEXT_SECONDARY),
                     );
                 });
             });
@@ -142,8 +137,8 @@ pub(crate) fn render_log_panel(ctx: &egui::Context, app: &mut BackupApp) {
 pub(crate) fn render_central_panel(ctx: &egui::Context, app: &mut BackupApp) {
     egui::CentralPanel::default()
         .frame(Frame::new()
-            .fill(Color32::from_rgb(247, 241, 230))
-            .inner_margin(Margin::same(8)))
+            .fill(BG_BASE)
+            .inner_margin(Margin::same(12)))
         .show(ctx, |ui| {
         ScrollArea::vertical()
             .id_salt("central_panel_scroll")
@@ -160,8 +155,8 @@ pub(crate) fn render_central_panel(ctx: &egui::Context, app: &mut BackupApp) {
 
             Frame::new()
                 .fill(Color32::WHITE)
-                .stroke(Stroke::new(1.0, Color32::from_rgb(221, 211, 190)))
-                .corner_radius(CornerRadius::same(14))
+                .stroke(Stroke::new(1.0, BORDER_CARD))
+                .corner_radius(CornerRadius::same(8))
                 .inner_margin(Margin::same(14))
                 .show(ui, |ui| {
                     ui.horizontal_wrapped(|ui| {
@@ -215,7 +210,7 @@ pub(crate) fn render_central_panel(ctx: &egui::Context, app: &mut BackupApp) {
                     ui.add_space(4.0);
 
                     if let Some(error) = &app.backup_source_library.scan_error {
-                        ui.colored_label(Color32::from_rgb(168, 52, 33), error);
+                        ui.colored_label(ERROR, error);
                         ui.add_space(8.0);
                     }
 
@@ -233,9 +228,9 @@ pub(crate) fn render_central_panel(ctx: &egui::Context, app: &mut BackupApp) {
                                     .find(|scan| scan.id == source.id);
 
                                 Frame::new()
-                                    .fill(Color32::from_rgb(250, 247, 240))
-                                    .stroke(Stroke::new(1.0, Color32::from_rgb(228, 219, 203)))
-                                    .corner_radius(CornerRadius::same(10))
+                                    .fill(BG_LAYER)
+                                    .stroke(Stroke::new(1.0, BORDER_CARD))
+                                    .corner_radius(CornerRadius::same(6))
                                     .inner_margin(Margin::same(8))
                                     .show(ui, |ui| {
                                         ui.horizontal_wrapped(|ui| {
@@ -263,7 +258,7 @@ pub(crate) fn render_central_panel(ctx: &egui::Context, app: &mut BackupApp) {
 
                                         // Source path (truncated, full on hover)
                                         ui.add(egui::Label::new(
-                                            RichText::new(&source.source_path).small().color(Color32::from_rgb(118, 104, 85))
+                                            RichText::new(&source.source_path).small().color(TEXT_SECONDARY)
                                         ).wrap().truncate())
                                         .on_hover_text(format!("Source: {}", source.source_path));
 
@@ -284,7 +279,7 @@ pub(crate) fn render_central_panel(ctx: &egui::Context, app: &mut BackupApp) {
                                             if scan.exists {
                                                 ui.small(format!("{} files | {}", scan.file_count, format_bytes(scan.total_bytes)));
                                             } else if let Some(error) = &scan.error {
-                                                ui.colored_label(Color32::from_rgb(168, 52, 33), error);
+                                                ui.colored_label(ERROR, error);
                                             }
                                         }
                                     });
@@ -328,7 +323,7 @@ pub(crate) fn render_central_panel(ctx: &egui::Context, app: &mut BackupApp) {
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                     ui.label(
                         RichText::new(format!("{} files tracked", app.files.len()))
-                            .color(Color32::from_rgb(118, 104, 85)),
+                            .color(TEXT_SECONDARY),
                     );
                 });
             });
@@ -336,8 +331,8 @@ pub(crate) fn render_central_panel(ctx: &egui::Context, app: &mut BackupApp) {
 
             Frame::new()
                 .fill(Color32::WHITE)
-                .stroke(Stroke::new(1.0, Color32::from_rgb(221, 211, 190)))
-                .corner_radius(CornerRadius::same(14))
+                .stroke(Stroke::new(1.0, BORDER_CARD))
+                .corner_radius(CornerRadius::same(8))
                 .inner_margin(Margin::same(14))
                 .show(ui, |ui| {
                     ScrollArea::vertical()
@@ -407,7 +402,7 @@ pub(crate) fn render_central_panel(ctx: &egui::Context, app: &mut BackupApp) {
                     if let Some(preview) = &app.folder_cleanup.preview {
                         ui.label(
                             RichText::new(format!("{} entries", preview.entries.len()))
-                                .color(Color32::from_rgb(118, 104, 85)),
+                                .color(TEXT_SECONDARY),
                         );
                     }
                 });
@@ -416,8 +411,8 @@ pub(crate) fn render_central_panel(ctx: &egui::Context, app: &mut BackupApp) {
 
             Frame::new()
                 .fill(Color32::WHITE)
-                .stroke(Stroke::new(1.0, Color32::from_rgb(221, 211, 190)))
-                .corner_radius(CornerRadius::same(14))
+                .stroke(Stroke::new(1.0, BORDER_CARD))
+                .corner_radius(CornerRadius::same(8))
                 .inner_margin(Margin::same(14))
                 .show(ui, |ui| {
                     ui.label(RichText::new("Selected folder").strong());
@@ -432,10 +427,10 @@ pub(crate) fn render_central_panel(ctx: &egui::Context, app: &mut BackupApp) {
                     }
 
                     if let Some(error) = &app.folder_cleanup.preview_error {
-                        ui.colored_label(Color32::from_rgb(168, 52, 33), error);
+                        ui.colored_label(ERROR, error);
                     }
                     if let Some(error) = &app.folder_cleanup.delete_error {
-                        ui.colored_label(Color32::from_rgb(168, 52, 33), error);
+                        ui.colored_label(ERROR, error);
                     }
 
                     if let Some(preview) = app.folder_cleanup.preview.clone() {
@@ -494,10 +489,10 @@ pub(crate) fn render_central_panel(ctx: &egui::Context, app: &mut BackupApp) {
                             .show(ui, |ui| {
                                 for entry in &preview.entries {
                                     Frame::new()
-                                        .fill(Color32::from_rgb(250, 247, 240))
+                                        .fill(BG_LAYER)
                                         .stroke(Stroke::new(
                                             1.0,
-                                            Color32::from_rgb(228, 219, 203),
+                                            BORDER_CARD,
                                         ))
                                         .corner_radius(CornerRadius::same(12))
                                         .inner_margin(Margin::same(10))
@@ -636,7 +631,7 @@ pub(crate) fn render_remote_folder_picker(ctx: &egui::Context, app: &mut BackupA
             ui.spinner();
             ui.label("Loading folders from device...");
         } else if let Some(error) = &error {
-            ui.colored_label(Color32::from_rgb(168, 52, 33), error);
+            ui.colored_label(ERROR, error);
         } else if entries.is_empty() {
             ui.label("No subfolders found here. You can still use the current folder.");
         }
