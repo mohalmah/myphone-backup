@@ -1183,11 +1183,55 @@ impl eframe::App for BackupApp {
             ctx.request_repaint_after(Duration::from_millis(200));
         }
 
-        crate::ui::central_panel::render_header(ctx, self);
-        crate::ui::side_panel::render_side_panel(ctx, self);
-        crate::ui::central_panel::render_log_panel(ctx, self);
-        crate::ui::central_panel::render_central_panel(ctx, self);
-        crate::ui::central_panel::render_remote_folder_picker(ctx, self);
+        crate::ui::nav_rail::render_nav_rail(ctx, self);
+
+        if self.nerd_mode {
+            egui::TopBottomPanel::bottom("nerd_log")
+                .resizable(true)
+                .default_height(200.0)
+                .min_height(80.0)
+                .show(ctx, |ui| {
+                    ui.horizontal(|ui| {
+                        ui.label(
+                            eframe::egui::RichText::new("Raw Log")
+                                .strong()
+                                .color(crate::ui::theme::TEXT_SECONDARY),
+                        );
+                        if ui.button("Clear").clicked() {
+                            self.log_entries.clear();
+                        }
+                    });
+                    ui.add_space(4.0);
+                    eframe::egui::ScrollArea::vertical()
+                        .id_salt("nerd_log_scroll")
+                        .auto_shrink([false; 2])
+                        .show(ui, |ui| {
+                            for entry in self.log_entries.iter().rev() {
+                                ui.monospace(entry.compact_line());
+                            }
+                        });
+                });
+        }
+
+        match self.active_tab {
+            crate::app::AppTab::Dashboard => {
+                crate::ui::dashboard_page::render_dashboard_page(ctx, self);
+            }
+            crate::app::AppTab::Backup => {
+                crate::ui::backup_page::render_backup_page(ctx, self);
+            }
+            crate::app::AppTab::Cleanup => {
+                crate::ui::cleanup_page::render_cleanup_page(ctx, self);
+            }
+            crate::app::AppTab::Devices => {
+                crate::ui::coming_soon::render_coming_soon_page(ctx, self, "Devices");
+            }
+            crate::app::AppTab::Settings => {
+                crate::ui::coming_soon::render_coming_soon_page(ctx, self, "Settings");
+            }
+        }
+
+        crate::ui::backup_page::render_remote_folder_picker(ctx, self);
     }
 }
 
