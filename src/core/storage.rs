@@ -8,6 +8,13 @@ pub fn available_space_for_path(path: &Path) -> Result<u64> {
         .with_context(|| format!("Failed to read free space for {}", lookup_path.display()))
 }
 
+pub fn total_space_for_path(path: &Path) -> Result<u64> {
+    let lookup_path = existing_ancestor(path)
+        .with_context(|| format!("No existing parent found for {}", path.display()))?;
+    fs2::total_space(&lookup_path)
+        .with_context(|| format!("Failed to read total space for {}", lookup_path.display()))
+}
+
 pub fn system_drive_root() -> Option<PathBuf> {
     std::env::var("SystemDrive")
         .ok()
