@@ -58,8 +58,6 @@ fn breadcrumb_bar(ui: &mut egui::Ui, app: &mut BackupApp, adb_job_active: bool) 
                         app.request_cleanup_preview();
                     }
                 }
-                if ui.add_enabled(false, egui::Button::new("›")).clicked() {}
-
                 // Current path
                 ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
                     let mut path = app.folder_cleanup.folder_path.clone();
