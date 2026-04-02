@@ -29,8 +29,11 @@ pub(crate) enum RemoteFolderPickerTarget {
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub(crate) enum AppTab {
     #[default]
+    Dashboard,
     Backup,
     Cleanup,
+    Devices,
+    Settings,
 }
 
 #[derive(Default)]
@@ -97,6 +100,8 @@ pub struct BackupApp {
     pub(crate) preset_name_input: String,
     pub(crate) status_banner: String,
     pub(crate) error_banner: Option<String>,
+    pub(crate) nerd_mode: bool,
+    pub(crate) last_backup_time: Option<String>,
 }
 
 impl BackupApp {
@@ -135,7 +140,7 @@ impl BackupApp {
             },
             backup_analysis: BackupAnalysisState::default(),
             backup_source_library: BackupSourceLibraryState::default(),
-            active_tab: AppTab::Backup,
+            active_tab: AppTab::Dashboard,
             files: Vec::new(),
             progress: SyncProgress::default(),
             log_entries: Vec::new(),
@@ -144,6 +149,8 @@ impl BackupApp {
             last_summary: None,
             status_banner: "Ready to scan your Android device.".to_string(),
             error_banner: None,
+            nerd_mode: false,
+            last_backup_time: None,
         };
 
         if config::settings_path().exists() {
@@ -1020,6 +1027,7 @@ impl BackupApp {
             }
             SyncEvent::Finished(summary) => {
                 self.last_summary = Some(summary.clone());
+                self.last_backup_time = Some(chrono::Local::now().format("%A at %I:%M %p").to_string());
                 if summary.cancelled {
                     self.status_banner = "Run stopped.".to_string();
                 } else if summary.failed > 0 || summary.conflicts > 0 {
