@@ -2,7 +2,7 @@ use eframe::egui::{
     self, Align, Color32, CornerRadius, Frame, Layout, Margin, RichText, ScrollArea, Stroke,
 };
 use crate::app::{BackupApp, RemoteFolderPickerTarget};
-use crate::core::models::{ExistingFileBehavior, RemoteFile, ValidationMode};
+use crate::core::models::{ExistingFileBehavior, ValidationMode};
 use crate::ui::theme::*;
 use crate::ui::widgets::*;
 
@@ -479,7 +479,7 @@ pub(crate) fn render_remote_folder_picker(ctx: &egui::Context, app: &mut BackupA
             if ui.add_enabled(!is_loading, egui::Button::new("Refresh")).clicked() {
                 refresh_listing = true;
             }
-            if ui.button("Use This Folder").clicked() {
+            if ui.add_enabled(!is_loading, egui::Button::new("Use This Folder")).clicked() {
                 select_current = true;
             }
         });
