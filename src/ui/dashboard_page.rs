@@ -87,52 +87,29 @@ fn device_card(ui: &mut egui::Ui, app: &mut BackupApp) {
 }
 
 fn storage_row(ui: &mut egui::Ui, app: &BackupApp) {
-    ui.horizontal(|ui| {
-        let half_w = (ui.available_width() - 10.0) / 2.0;
+    let dest = std::path::PathBuf::from(&app.settings.destination_path);
+    let (pc_free, pc_total) = {
+        let free = crate::core::storage::available_space_for_path(&dest).unwrap_or(0);
+        let total = crate::core::storage::total_space_for_path(&dest).unwrap_or(0);
+        (free, total)
+    };
+    let pc_used_frac = if pc_total > 0 { 1.0 - (pc_free as f32 / pc_total as f32) } else { 0.0 };
 
+    ui.columns(2, |cols| {
         // PC Storage
-        let dest = std::path::PathBuf::from(&app.settings.destination_path);
-        let (pc_free, pc_total) = {
-            let free = crate::core::storage::available_space_for_path(&dest)
-                .unwrap_or(0);
-            let total = crate::core::storage::total_space_for_path(&dest)
-                .unwrap_or(0);
-            (free, total)
-        };
-        let pc_used_frac = if pc_total > 0 {
-            1.0 - (pc_free as f32 / pc_total as f32)
-        } else {
-            0.0
-        };
-
         Frame::new()
             .fill(BG_CARD)
             .stroke(Stroke::new(1.0, BORDER_CARD))
             .corner_radius(CornerRadius::same(8))
             .inner_margin(Margin::same(14))
-            .show(ui, |ui| {
-                ui.set_min_width(half_w);
-                ui.label(
-                    RichText::new("PC STORAGE")
-                        .size(10.0)
-                        .strong()
-                        .color(TEXT_SECONDARY),
-                );
+            .show(&mut cols[0], |ui| {
+                ui.label(RichText::new("PC STORAGE").size(10.0).strong().color(TEXT_SECONDARY));
                 ui.add_space(4.0);
-                ui.add(
-                    egui::ProgressBar::new(pc_used_frac)
-                        .fill(ACCENT)
-                        .desired_width(ui.available_width())
-                        .corner_radius(3),
-                );
+                ui.add(egui::ProgressBar::new(pc_used_frac).fill(ACCENT).desired_width(ui.available_width()).corner_radius(3));
                 ui.add_space(4.0);
                 ui.label(
                     RichText::new(if pc_total > 0 {
-                        format!(
-                            "{} free / {} total",
-                            format_bytes(pc_free),
-                            format_bytes(pc_total)
-                        )
+                        format!("{} free / {} total", format_bytes(pc_free), format_bytes(pc_total))
                     } else {
                         "Set destination to see storage".to_string()
                     })
@@ -141,70 +118,45 @@ fn storage_row(ui: &mut egui::Ui, app: &BackupApp) {
                 );
             });
 
-        ui.add_space(10.0);
-
-        // Phone Storage (not available via ADB yet — placeholder)
+        // Phone Storage (placeholder)
         Frame::new()
             .fill(BG_CARD)
             .stroke(Stroke::new(1.0, BORDER_CARD))
             .corner_radius(CornerRadius::same(8))
             .inner_margin(Margin::same(14))
-            .show(ui, |ui| {
-                ui.set_min_width(half_w);
-                ui.label(
-                    RichText::new("PHONE STORAGE")
-                        .size(10.0)
-                        .strong()
-                        .color(TEXT_SECONDARY),
-                );
+            .show(&mut cols[1], |ui| {
+                ui.label(RichText::new("PHONE STORAGE").size(10.0).strong().color(TEXT_SECONDARY));
                 ui.add_space(4.0);
-                ui.add(
-                    egui::ProgressBar::new(0.0)
-                        .fill(ACCENT)
-                        .desired_width(ui.available_width())
-                        .corner_radius(3),
-                );
+                ui.add(egui::ProgressBar::new(0.0).fill(ACCENT).desired_width(ui.available_width()).corner_radius(3));
                 ui.add_space(4.0);
-                ui.label(
-                    RichText::new("Connect device to see storage")
-                        .size(11.0)
-                        .color(TEXT_TERTIARY),
-                );
+                ui.label(RichText::new("Connect device to see storage").size(11.0).color(TEXT_TERTIARY));
             });
     });
 }
 
 fn action_buttons(ui: &mut egui::Ui, app: &mut BackupApp) {
-    ui.horizontal(|ui| {
-        let btn_w = (ui.available_width() - 10.0) / 2.0;
-
+    let adb_active = app.has_active_adb_job();
+    ui.columns(2, |cols| {
+        let w0 = cols[0].available_width();
         let start_btn = egui::Button::new(
-            RichText::new("↺  Start New Backup")
-                .size(13.0)
-                .color(Color32::WHITE),
+            RichText::new("↺  Start New Backup").size(13.0).color(Color32::WHITE),
         )
         .fill(ACCENT)
         .corner_radius(CornerRadius::same(6))
-        .min_size(egui::vec2(btn_w, 36.0));
-
-        if ui
-            .add_enabled(!app.has_active_adb_job(), start_btn)
-            .clicked()
-        {
+        .min_size(egui::vec2(w0, 36.0));
+        if cols[0].add_enabled(!adb_active, start_btn).clicked() {
             app.active_tab = AppTab::Backup;
         }
 
-        ui.add_space(10.0);
-
+        let w1 = cols[1].available_width();
         let cleanup_btn = egui::Button::new(
             RichText::new("🧹  Cleanup Phone").size(13.0).color(TEXT_PRIMARY),
         )
         .fill(BG_CARD)
         .stroke(Stroke::new(1.0, BORDER_CARD))
         .corner_radius(CornerRadius::same(6))
-        .min_size(egui::vec2(btn_w, 36.0));
-
-        if ui.add(cleanup_btn).clicked() {
+        .min_size(egui::vec2(w1, 36.0));
+        if cols[1].add(cleanup_btn).clicked() {
             app.active_tab = AppTab::Cleanup;
         }
     });

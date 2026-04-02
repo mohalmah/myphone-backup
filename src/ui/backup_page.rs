@@ -25,6 +25,13 @@ pub(crate) fn render_backup_page(ctx: &egui::Context, app: &mut BackupApp) {
             let mut backup_source_to_pick: Option<usize> = None;
             let mut backup_sources_changed = false;
 
+            ScrollArea::both()
+                .id_salt("backup_main_scroll")
+                .auto_shrink([false; 2])
+                .show(ui, |ui| {
+            // Enforce a minimum width so columns don't squish on small windows
+            ui.set_min_width(860.0);
+
             ui.columns(3, |cols| {
                 // ── Column 1: Step 1 — Source Folders ──
                 {
@@ -421,6 +428,8 @@ pub(crate) fn render_backup_page(ctx: &egui::Context, app: &mut BackupApp) {
                         });
                     });
             }
+
+            }); // end ScrollArea::both
 
             // ── Handle deferred mutations ──
             if let Some(index) = backup_source_to_remove {
