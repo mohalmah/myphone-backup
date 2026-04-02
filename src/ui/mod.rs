@@ -5,3 +5,4 @@ pub mod central_panel;
 pub mod coming_soon;
 pub mod nav_rail;
 pub mod dashboard_page;
+pub mod backup_page;
