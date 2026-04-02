@@ -46,8 +46,13 @@ fn device_card(ui: &mut egui::Ui, app: &mut BackupApp) {
                     app.device_info.state.color(),
                 );
                 if let Some(model) = &app.device_info.model {
+                    let label = if app.device_info.serial.is_empty() {
+                        model.clone()
+                    } else {
+                        format!("{model} ({})", app.device_info.serial)
+                    };
                     ui.label(
-                        RichText::new(format!("{model} ({})", app.device_info.serial))
+                        RichText::new(label)
                             .size(13.0)
                             .strong()
                             .color(TEXT_PRIMARY),
