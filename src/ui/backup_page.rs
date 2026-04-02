@@ -29,13 +29,13 @@ pub(crate) fn render_backup_page(ctx: &egui::Context, app: &mut BackupApp) {
                 .id_salt("backup_main_scroll")
                 .auto_shrink([false; 2])
                 .show(ui, |ui| {
-            // Enforce a minimum width so columns don't squish on small windows
-            ui.set_min_width(860.0);
+            let total_w = ui.available_width().max(900.0);
+            let col_w = (total_w - 16.0) / 3.0;
 
-            ui.columns(3, |cols| {
+            ui.horizontal_top(|ui| {
                 // ── Column 1: Step 1 — Source Folders ──
-                {
-                    let ui = &mut cols[0];
+                ui.vertical(|ui| {
+                    ui.set_width(col_w);
                     ui.label(
                         RichText::new("Step 1: Select Source Folders")
                             .size(12.0)
@@ -179,11 +179,13 @@ pub(crate) fn render_backup_page(ctx: &egui::Context, app: &mut BackupApp) {
                         app.add_custom_backup_source();
                         backup_sources_changed = true;
                     }
-                }
+                }); // end col 1
+
+                ui.add_space(8.0);
 
                 // ── Column 2: Step 2 — Destination ──
-                {
-                    let ui = &mut cols[1];
+                ui.vertical(|ui| {
+                    ui.set_width(col_w);
                     ui.label(
                         RichText::new("Step 2: Choose PC Destination")
                             .size(12.0)
@@ -250,11 +252,13 @@ pub(crate) fn render_backup_page(ctx: &egui::Context, app: &mut BackupApp) {
                     });
                     ui.add_space(4.0);
                     summary_strip(ui, &app.progress, app.last_summary.as_ref());
-                }
+                }); // end col 2
+
+                ui.add_space(8.0);
 
                 // ── Column 3: Step 3 — Analyze & Configure ──
-                {
-                    let ui = &mut cols[2];
+                ui.vertical(|ui| {
+                    ui.set_width(col_w);
                     ui.label(
                         RichText::new("Step 3: Analyze & Configure")
                             .size(12.0)
@@ -376,8 +380,8 @@ pub(crate) fn render_backup_page(ctx: &egui::Context, app: &mut BackupApp) {
                             .desired_width(f32::INFINITY)
                             .hint_text("adb"),
                     );
-                }
-            }); // end ui.columns
+                }); // end col 3
+            }); // end ui.horizontal_top
 
             // ── Auto-delete toggle / progress bar ──
             ui.add_space(10.0);
