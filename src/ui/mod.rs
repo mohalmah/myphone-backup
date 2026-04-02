@@ -6,3 +6,4 @@ pub mod coming_soon;
 pub mod nav_rail;
 pub mod dashboard_page;
 pub mod backup_page;
+pub mod cleanup_page;
