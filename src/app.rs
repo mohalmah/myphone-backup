@@ -3,9 +3,9 @@ use crate::core::{
     logging::LogEntry,
     models::{
         BackupAnalysis, BackupPreset, BackupSourceConfig, BackupSourceScan, DeviceConnectionState,
-        DeviceInfo, FileRecord, RemoteDirectory, RemoteFile,
-        RemoteFolderEntryKind, RemoteFolderPreview, RunSummary, Settings, SyncProgress,
-        guess_destination_subfolder, legacy_source_from_path,
+        DeviceInfo, FileRecord, RemoteDirectory, RemoteFile, RemoteFolderEntryKind,
+        RemoteFolderPreview, RunSummary, Settings, SyncProgress, guess_destination_subfolder,
+        legacy_source_from_path,
     },
     sync::{self, SyncEvent, SyncHandle, SyncPlan},
 };
@@ -67,6 +67,7 @@ pub(crate) struct BackupAnalysisState {
     pub(crate) receiver: Option<Receiver<Result<BackupAnalysis, String>>>,
     pub(crate) is_loading: bool,
     pub(crate) error: Option<String>,
+    pub(crate) started_at: Option<std::time::Instant>,
 }
 
 #[derive(Default)]
@@ -75,6 +76,7 @@ pub(crate) struct BackupSourceLibraryState {
     pub(crate) is_scanning: bool,
     pub(crate) scan_results: Vec<BackupSourceScan>,
     pub(crate) scan_error: Option<String>,
+    pub(crate) started_at: Option<std::time::Instant>,
 }
 
 pub struct BackupApp {
@@ -102,6 +104,7 @@ pub struct BackupApp {
     pub(crate) error_banner: Option<String>,
     pub(crate) nerd_mode: bool,
     pub(crate) last_backup_time: Option<String>,
+    pub(crate) last_backup_bytes_per_sec: Option<f64>,
 }
 
 impl BackupApp {
@@ -151,6 +154,7 @@ impl BackupApp {
             error_banner: None,
             nerd_mode: false,
             last_backup_time: None,
+            last_backup_bytes_per_sec: None,
         };
 
         if config::settings_path().exists() {
@@ -252,6 +256,7 @@ impl BackupApp {
     pub(crate) fn refresh_backup_source_scan(&mut self) {
         self.backup_source_library.is_scanning = true;
         self.backup_source_library.scan_error = None;
+        self.backup_source_library.started_at = Some(std::time::Instant::now());
         self.backup_source_library.scan_receiver = Some(sync::start_backup_source_scan(
             self.settings.clone(),
             self.background_log_sender.clone(),
@@ -275,6 +280,7 @@ impl BackupApp {
         if let Some(result) = outcome {
             self.backup_source_library.scan_receiver = None;
             self.backup_source_library.is_scanning = false;
+            self.backup_source_library.started_at = None;
             match result {
                 Ok(results) => {
                     let available_count = results.iter().filter(|source| source.exists).count();
@@ -296,6 +302,7 @@ impl BackupApp {
         } else if disconnected {
             self.backup_source_library.scan_receiver = None;
             self.backup_source_library.is_scanning = false;
+            self.backup_source_library.started_at = None;
         }
     }
 
@@ -468,12 +475,29 @@ impl BackupApp {
     pub(crate) fn request_backup_analysis(&mut self) {
         self.backup_analysis.is_loading = true;
         self.backup_analysis.error = None;
+        self.backup_analysis.started_at = Some(std::time::Instant::now());
         self.backup_analysis.receiver = Some(sync::start_backup_analysis(
             self.settings.clone(),
             self.background_log_sender.clone(),
         ));
         self.status_banner = "Analyzing backup source and local space...".to_string();
         self.push_log("[INFO] Running backup preflight analysis");
+    }
+
+    pub(crate) fn cancel_backup_analysis(&mut self) {
+        self.backup_analysis.receiver = None;
+        self.backup_analysis.is_loading = false;
+        self.backup_analysis.started_at = None;
+        self.status_banner = "Analysis cancelled.".to_string();
+        self.push_log("[INFO] Backup analysis cancelled by user");
+    }
+
+    pub(crate) fn cancel_backup_source_scan(&mut self) {
+        self.backup_source_library.scan_receiver = None;
+        self.backup_source_library.is_scanning = false;
+        self.backup_source_library.started_at = None;
+        self.status_banner = "Scan cancelled.".to_string();
+        self.push_log("[INFO] Source scan cancelled by user");
     }
 
     fn poll_backup_analysis(&mut self) {
@@ -491,6 +515,7 @@ impl BackupApp {
         if let Some(result) = outcome {
             self.backup_analysis.receiver = None;
             self.backup_analysis.is_loading = false;
+            self.backup_analysis.started_at = None;
             match result {
                 Ok(analysis) => {
                     let total_bytes = analysis.preflight.total_bytes;
@@ -518,6 +543,7 @@ impl BackupApp {
         } else if disconnected {
             self.backup_analysis.receiver = None;
             self.backup_analysis.is_loading = false;
+            self.backup_analysis.started_at = None;
         }
     }
 
@@ -1027,7 +1053,11 @@ impl BackupApp {
             }
             SyncEvent::Finished(summary) => {
                 self.last_summary = Some(summary.clone());
-                self.last_backup_time = Some(chrono::Local::now().format("%A at %I:%M %p").to_string());
+                self.last_backup_time =
+                    Some(chrono::Local::now().format("%A at %I:%M %p").to_string());
+                if self.progress.speed_bytes_per_sec > 0.0 {
+                    self.last_backup_bytes_per_sec = Some(self.progress.speed_bytes_per_sec);
+                }
                 if summary.cancelled {
                     self.status_banner = "Run stopped.".to_string();
                 } else if summary.failed > 0 || summary.conflicts > 0 {
@@ -1137,15 +1167,13 @@ impl BackupApp {
                 if let Some(source) = self.settings.backup_sources.get_mut(index) {
                     source.source_path = current_path.clone();
                     if source.destination_subfolder.trim().is_empty() {
-                        source.destination_subfolder =
-                            guess_destination_subfolder(&current_path);
+                        source.destination_subfolder = guess_destination_subfolder(&current_path);
                     }
                     let source_label = source.label.clone();
                     let _ = source;
                     self.sync_legacy_source_path_from_sources();
                     self.invalidate_backup_analysis();
-                    self.status_banner =
-                        format!("Selected backup source folder: {current_path}");
+                    self.status_banner = format!("Selected backup source folder: {current_path}");
                     self.push_log(format!(
                         "[INFO] Backup source folder selected for {}: {current_path}",
                         source_label
@@ -1234,4 +1262,3 @@ impl eframe::App for BackupApp {
         crate::ui::backup_page::render_remote_folder_picker(ctx, self);
     }
 }
-

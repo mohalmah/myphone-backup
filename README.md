@@ -167,7 +167,7 @@ If you prefer not to add ADB to `PATH`, you can still use the app by pointing th
 
 ```powershell
 cd dist\releases
-.\adb-smart-backup-v0.1.0-windows-x86_64.exe
+.\adb-smart-backup-v0.6.0-windows-x86_64.exe
 ```
 
 5. Click `Refresh Device` and confirm the status shows `CONNECTED`.
@@ -336,7 +336,7 @@ The optimized executable will be created at:
 
 The packaged local release artifact is staged at:
 
-`dist\releases\adb-smart-backup-v0.1.0-windows-x86_64.exe`
+`dist\releases\adb-smart-backup-v0.6.0-windows-x86_64.exe`
 
 ## GitHub Releases
 
@@ -354,12 +354,12 @@ Release notes prepared in this repo:
 
 Published release:
 
-- [ADB Smart Backup & Cleanup v0.1.0](https://github.com/mohalmah/myphone-backup/releases/tag/v0.1.0)
+- [ADB Smart Backup & Cleanup v0.6.0](https://github.com/mohalmah/myphone-backup/releases/tag/v0.6.0)
 
 Release assets:
 
-- `adb-smart-backup-v0.1.0-windows-x86_64.exe`
-- `adb-smart-backup-v0.1.0-windows-x86_64.zip`
+- `adb-smart-backup-v0.6.0-windows-x86_64.exe`
+- `adb-smart-backup-v0.6.0-windows-x86_64.zip`
 
 ## Troubleshooting
 

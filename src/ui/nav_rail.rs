@@ -1,8 +1,6 @@
-use eframe::egui::{
-    self, Align, Color32, CornerRadius, Frame, Layout, Margin, RichText, Stroke,
-};
 use crate::app::{AppTab, BackupApp};
 use crate::ui::theme::*;
+use eframe::egui::{self, Align, Color32, CornerRadius, Frame, Layout, Margin, RichText, Stroke};
 
 pub(crate) fn render_nav_rail(ctx: &egui::Context, app: &mut BackupApp) {
     egui::SidePanel::left("nav_rail")
@@ -86,7 +84,11 @@ fn nav_item(
     } else {
         TEXT_PRIMARY
     };
-    let fill = if is_active { BG_CARD } else { Color32::TRANSPARENT };
+    let fill = if is_active {
+        BG_CARD
+    } else {
+        Color32::TRANSPARENT
+    };
 
     let inner = Frame::new()
         .fill(fill)

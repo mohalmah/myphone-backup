@@ -172,9 +172,18 @@ After implementation, bump version to `0.5.0` in `Cargo.toml`, tag `v0.5.0`, cre
 
 ---
 
+## Nerd Mode (raw log panel)
+
+A global **Nerd Mode** toggle is available on every page via a small button in the nav rail footer area (below Settings, e.g. a `⌨` icon or "Nerd" label). When toggled on, a resizable bottom panel slides up showing the raw detailed log in monospace text — identical to the current `render_log_panel` with "Show very detailed logs" always on.
+
+- State stored in `app.nerd_mode: bool` (not persisted between sessions)
+- When `nerd_mode` is true, `egui::TopBottomPanel::bottom("nerd_log")` renders below the active page
+- The panel shows all log entries, newest first, monospace, with a "Clear" button
+- The toggle is the only way to show/hide it — no other UI changes
+
 ## Known intentional regressions
 
-- **Log panel no longer always visible**: the current bottom log panel is visible on all tabs. After the redesign the log is only accessible on the Dashboard page. This is intentional to match the reference mockup. Users who want to monitor a running backup should stay on the Dashboard or Backup page.
+- **Dashboard log card** shows only the last 10 log entries (friendly summary). Full raw log is in Nerd Mode only.
 
 ---
 

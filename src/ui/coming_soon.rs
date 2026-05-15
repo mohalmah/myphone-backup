@@ -1,6 +1,6 @@
-use eframe::egui::{self, Align, Frame, Layout, Margin, RichText};
 use crate::app::{AppTab, BackupApp};
 use crate::ui::theme::*;
+use eframe::egui::{self, Align, Frame, Layout, Margin, RichText};
 
 pub(crate) fn render_coming_soon_page(ctx: &egui::Context, app: &mut BackupApp, title: &str) {
     egui::CentralPanel::default()
@@ -11,7 +11,12 @@ pub(crate) fn render_coming_soon_page(ctx: &egui::Context, app: &mut BackupApp, 
             ui.with_layout(Layout::top_down(Align::Center), |ui| {
                 ui.label(RichText::new("🔧").size(48.0));
                 ui.add_space(12.0);
-                ui.label(RichText::new("Coming Soon").size(22.0).strong().color(TEXT_SECONDARY));
+                ui.label(
+                    RichText::new("Coming Soon")
+                        .size(22.0)
+                        .strong()
+                        .color(TEXT_SECONDARY),
+                );
                 ui.add_space(6.0);
                 ui.label(
                     RichText::new("This feature is under development")

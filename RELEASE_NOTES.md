@@ -1,5 +1,24 @@
 # Release Notes
 
+## v0.6.0
+
+UI revamp release focused on a cleaner, simpler backup workflow.
+
+### Included
+
+- Reworked Backup page into a simpler setup-and-run layout
+- Moved presets into a clearer quick-selection area
+- Kept multi-preset chip loading and source merging
+- Added a Windows folder picker for each source's PC destination in the source library
+- Improved per-source destination preview so users can see where each phone folder will copy locally
+- Kept preflight analysis, space checks, dry-run mode, validation settings, and run controls in one focused panel
+- Kept the recent file queue and retry actions available below the main workflow
+
+### Release Assets
+
+- `adb-smart-backup-v0.6.0-windows-x86_64.exe`
+- `adb-smart-backup-v0.6.0-windows-x86_64.zip`
+
 ## v0.1.0
 
 First packaged release of ADB Smart Backup & Cleanup.

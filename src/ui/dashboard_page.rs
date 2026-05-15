@@ -1,9 +1,9 @@
-use eframe::egui::{
-    self, Align, Color32, CornerRadius, Frame, Layout, Margin, RichText, ScrollArea, Stroke,
-};
 use crate::app::{AppTab, BackupApp};
 use crate::ui::theme::*;
 use crate::ui::widgets::*;
+use eframe::egui::{
+    self, Align, Color32, CornerRadius, Frame, Layout, Margin, RichText, ScrollArea, Stroke,
+};
 
 pub(crate) fn render_dashboard_page(ctx: &egui::Context, app: &mut BackupApp) {
     egui::CentralPanel::default()
@@ -51,18 +51,10 @@ fn device_card(ui: &mut egui::Ui, app: &mut BackupApp) {
                     } else {
                         format!("{model} ({})", app.device_info.serial)
                     };
-                    ui.label(
-                        RichText::new(label)
-                            .size(13.0)
-                            .strong()
-                            .color(TEXT_PRIMARY),
-                    );
+                    ui.label(RichText::new(label).size(13.0).strong().color(TEXT_PRIMARY));
                 }
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                    if ui
-                        .button(RichText::new("↻ Re-scan").size(12.0))
-                        .clicked()
-                    {
+                    if ui.button(RichText::new("↻ Re-scan").size(12.0)).clicked() {
                         app.refresh_device_info();
                     }
                 });
@@ -81,7 +73,11 @@ fn device_card(ui: &mut egui::Ui, app: &mut BackupApp) {
                 ui.colored_label(ERROR, RichText::new(err).size(11.0));
             }
             if !app.status_banner.is_empty() {
-                ui.label(RichText::new(&app.status_banner).size(11.0).color(TEXT_SECONDARY));
+                ui.label(
+                    RichText::new(&app.status_banner)
+                        .size(11.0)
+                        .color(TEXT_SECONDARY),
+                );
             }
         });
 }
@@ -93,7 +89,11 @@ fn storage_row(ui: &mut egui::Ui, app: &BackupApp) {
         let total = crate::core::storage::total_space_for_path(&dest).unwrap_or(0);
         (free, total)
     };
-    let pc_used_frac = if pc_total > 0 { 1.0 - (pc_free as f32 / pc_total as f32) } else { 0.0 };
+    let pc_used_frac = if pc_total > 0 {
+        1.0 - (pc_free as f32 / pc_total as f32)
+    } else {
+        0.0
+    };
 
     ui.columns(2, |cols| {
         // PC Storage
@@ -103,13 +103,27 @@ fn storage_row(ui: &mut egui::Ui, app: &BackupApp) {
             .corner_radius(CornerRadius::same(8))
             .inner_margin(Margin::same(14))
             .show(&mut cols[0], |ui| {
-                ui.label(RichText::new("PC STORAGE").size(10.0).strong().color(TEXT_SECONDARY));
+                ui.label(
+                    RichText::new("PC STORAGE")
+                        .size(10.0)
+                        .strong()
+                        .color(TEXT_SECONDARY),
+                );
                 ui.add_space(4.0);
-                ui.add(egui::ProgressBar::new(pc_used_frac).fill(ACCENT).desired_width(ui.available_width()).corner_radius(3));
+                ui.add(
+                    egui::ProgressBar::new(pc_used_frac)
+                        .fill(ACCENT)
+                        .desired_width(ui.available_width())
+                        .corner_radius(3),
+                );
                 ui.add_space(4.0);
                 ui.label(
                     RichText::new(if pc_total > 0 {
-                        format!("{} free / {} total", format_bytes(pc_free), format_bytes(pc_total))
+                        format!(
+                            "{} free / {} total",
+                            format_bytes(pc_free),
+                            format_bytes(pc_total)
+                        )
                     } else {
                         "Set destination to see storage".to_string()
                     })
@@ -125,11 +139,25 @@ fn storage_row(ui: &mut egui::Ui, app: &BackupApp) {
             .corner_radius(CornerRadius::same(8))
             .inner_margin(Margin::same(14))
             .show(&mut cols[1], |ui| {
-                ui.label(RichText::new("PHONE STORAGE").size(10.0).strong().color(TEXT_SECONDARY));
+                ui.label(
+                    RichText::new("PHONE STORAGE")
+                        .size(10.0)
+                        .strong()
+                        .color(TEXT_SECONDARY),
+                );
                 ui.add_space(4.0);
-                ui.add(egui::ProgressBar::new(0.0).fill(ACCENT).desired_width(ui.available_width()).corner_radius(3));
+                ui.add(
+                    egui::ProgressBar::new(0.0)
+                        .fill(ACCENT)
+                        .desired_width(ui.available_width())
+                        .corner_radius(3),
+                );
                 ui.add_space(4.0);
-                ui.label(RichText::new("Connect device to see storage").size(11.0).color(TEXT_TERTIARY));
+                ui.label(
+                    RichText::new("Connect device to see storage")
+                        .size(11.0)
+                        .color(TEXT_TERTIARY),
+                );
             });
     });
 }
@@ -139,7 +167,9 @@ fn action_buttons(ui: &mut egui::Ui, app: &mut BackupApp) {
     ui.columns(2, |cols| {
         let w0 = cols[0].available_width();
         let start_btn = egui::Button::new(
-            RichText::new("↺  Start New Backup").size(13.0).color(Color32::WHITE),
+            RichText::new("↺  Start New Backup")
+                .size(13.0)
+                .color(Color32::WHITE),
         )
         .fill(ACCENT)
         .corner_radius(CornerRadius::same(6))
@@ -150,7 +180,9 @@ fn action_buttons(ui: &mut egui::Ui, app: &mut BackupApp) {
 
         let w1 = cols[1].available_width();
         let cleanup_btn = egui::Button::new(
-            RichText::new("🧹  Cleanup Phone").size(13.0).color(TEXT_PRIMARY),
+            RichText::new("🧹  Cleanup Phone")
+                .size(13.0)
+                .color(TEXT_PRIMARY),
         )
         .fill(BG_CARD)
         .stroke(Stroke::new(1.0, BORDER_CARD))

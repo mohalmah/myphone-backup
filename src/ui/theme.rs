@@ -2,11 +2,11 @@
 use eframe::egui::{self, Color32, Context, FontData, FontDefinitions, FontFamily, Stroke};
 
 // ── Fluent Design Light Mode Color Tokens ──
-pub const BG_BASE: Color32 = Color32::from_rgb(243, 243, 243);       // Mica base
-pub const BG_LAYER: Color32 = Color32::from_rgb(249, 249, 249);      // Layer/surface
-pub const BG_CARD: Color32 = Color32::from_rgb(255, 255, 255);       // Card
+pub const BG_BASE: Color32 = Color32::from_rgb(243, 243, 243); // Mica base
+pub const BG_LAYER: Color32 = Color32::from_rgb(249, 249, 249); // Layer/surface
+pub const BG_CARD: Color32 = Color32::from_rgb(255, 255, 255); // Card
 pub const BG_CARD_HOVER: Color32 = Color32::from_rgb(246, 246, 246); // Card hover
-pub const ACCENT: Color32 = Color32::from_rgb(0, 120, 212);          // Windows blue
+pub const ACCENT: Color32 = Color32::from_rgb(0, 120, 212); // Windows blue
 pub const ACCENT_HOVER: Color32 = Color32::from_rgb(0, 99, 177);
 pub const TEXT_PRIMARY: Color32 = Color32::from_rgb(28, 28, 28);
 pub const TEXT_SECONDARY: Color32 = Color32::from_rgb(96, 96, 96);

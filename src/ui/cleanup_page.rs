@@ -1,10 +1,10 @@
-use eframe::egui::{
-    self, Align, Color32, CornerRadius, Frame, Layout, Margin, RichText, ScrollArea, Stroke,
-};
 use crate::app::BackupApp;
 use crate::core::models::RemoteFolderEntryKind;
 use crate::ui::theme::*;
 use crate::ui::widgets::*;
+use eframe::egui::{
+    self, Align, Color32, CornerRadius, Frame, Layout, Margin, RichText, ScrollArea, Stroke,
+};
 
 pub(crate) fn render_cleanup_page(ctx: &egui::Context, app: &mut BackupApp) {
     let adb_job_active = app.has_active_adb_job();
@@ -52,7 +52,10 @@ fn breadcrumb_bar(ui: &mut egui::Ui, app: &mut BackupApp, adb_job_active: bool) 
                 // Back/forward (back = go up)
                 let can_go_up = parent_remote_path(&app.folder_cleanup.folder_path).is_some()
                     && app.folder_cleanup.preview.is_some();
-                if ui.add_enabled(can_go_up && !adb_job_active, egui::Button::new("‹")).clicked() {
+                if ui
+                    .add_enabled(can_go_up && !adb_job_active, egui::Button::new("‹"))
+                    .clicked()
+                {
                     if let Some(parent) = parent_remote_path(&app.folder_cleanup.folder_path) {
                         app.set_cleanup_folder_path(parent);
                         app.request_cleanup_preview();
@@ -61,23 +64,30 @@ fn breadcrumb_bar(ui: &mut egui::Ui, app: &mut BackupApp, adb_job_active: bool) 
                 // Current path
                 ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
                     let mut path = app.folder_cleanup.folder_path.clone();
-                    if ui.add(
-                        egui::TextEdit::singleline(&mut path)
-                            .desired_width(ui.available_width() - 72.0)
-                            .hint_text("Phone folder..."),
-                    ).changed() {
+                    if ui
+                        .add(
+                            egui::TextEdit::singleline(&mut path)
+                                .desired_width(ui.available_width() - 72.0)
+                                .hint_text("Phone folder..."),
+                        )
+                        .changed()
+                    {
                         app.set_cleanup_folder_path(path);
                     }
                 });
 
                 // Icons: pick folder + refresh
-                if ui.add_enabled(!adb_job_active, egui::Button::new("\u{1F4C1}"))
-                    .on_hover_text("Pick phone folder").clicked()
+                if ui
+                    .add_enabled(!adb_job_active, egui::Button::new("\u{1F4C1}"))
+                    .on_hover_text("Pick phone folder")
+                    .clicked()
                 {
                     app.open_cleanup_folder_picker();
                 }
-                if ui.add_enabled(!adb_job_active, egui::Button::new("↻"))
-                    .on_hover_text("Refresh").clicked()
+                if ui
+                    .add_enabled(!adb_job_active, egui::Button::new("↻"))
+                    .on_hover_text("Refresh")
+                    .clicked()
                 {
                     app.request_cleanup_preview();
                 }
@@ -87,7 +97,10 @@ fn breadcrumb_bar(ui: &mut egui::Ui, app: &mut BackupApp, adb_job_active: bool) 
 
 fn file_browser(ui: &mut egui::Ui, app: &mut BackupApp, adb_job_active: bool) {
     if app.folder_cleanup.is_fetching_preview {
-        ui.horizontal(|ui| { ui.spinner(); ui.label("Fetching..."); });
+        ui.horizontal(|ui| {
+            ui.spinner();
+            ui.label("Fetching...");
+        });
         return;
     }
 
@@ -100,9 +113,11 @@ fn file_browser(ui: &mut egui::Ui, app: &mut BackupApp, adb_job_active: bool) {
 
     let Some(preview) = app.folder_cleanup.preview.clone() else {
         ui.label(
-            RichText::new("Click ↻ Refresh to inspect the selected folder before deleting anything.")
-                .size(12.0)
-                .color(TEXT_TERTIARY),
+            RichText::new(
+                "Click ↻ Refresh to inspect the selected folder before deleting anything.",
+            )
+            .size(12.0)
+            .color(TEXT_TERTIARY),
         );
         return;
     };
@@ -110,13 +125,26 @@ fn file_browser(ui: &mut egui::Ui, app: &mut BackupApp, adb_job_active: bool) {
     // Sort bar + bulk select
     ui.horizontal_wrapped(|ui| {
         ui.label(RichText::new("Sort by").size(11.0).color(TEXT_SECONDARY));
-        ui.label(RichText::new("Largest first").size(11.0).color(TEXT_PRIMARY));
+        ui.label(
+            RichText::new("Largest first")
+                .size(11.0)
+                .color(TEXT_PRIMARY),
+        );
         ui.add_space(16.0);
-        if ui.add_enabled(!adb_job_active, egui::Button::new("Select All")).clicked() {
-            app.folder_cleanup.selected_paths =
-                preview.entries.iter().map(|e| e.full_path.clone()).collect();
+        if ui
+            .add_enabled(!adb_job_active, egui::Button::new("Select All"))
+            .clicked()
+        {
+            app.folder_cleanup.selected_paths = preview
+                .entries
+                .iter()
+                .map(|e| e.full_path.clone())
+                .collect();
         }
-        if ui.add_enabled(!adb_job_active, egui::Button::new("Files Only")).clicked() {
+        if ui
+            .add_enabled(!adb_job_active, egui::Button::new("Files Only"))
+            .clicked()
+        {
             app.folder_cleanup.selected_paths = preview
                 .entries
                 .iter()
@@ -124,13 +152,19 @@ fn file_browser(ui: &mut egui::Ui, app: &mut BackupApp, adb_job_active: bool) {
                 .map(|e| e.full_path.clone())
                 .collect();
         }
-        if ui.add_enabled(!adb_job_active, egui::Button::new("Clear Selection")).clicked() {
+        if ui
+            .add_enabled(!adb_job_active, egui::Button::new("Clear Selection"))
+            .clicked()
+        {
             app.folder_cleanup.selected_paths.clear();
         }
         ui.label(
-            RichText::new(format!("{} checked", app.folder_cleanup.selected_paths.len()))
-                .size(11.0)
-                .color(TEXT_TERTIARY),
+            RichText::new(format!(
+                "{} checked",
+                app.folder_cleanup.selected_paths.len()
+            ))
+            .size(11.0)
+            .color(TEXT_TERTIARY),
         );
     });
 
@@ -143,10 +177,20 @@ fn file_browser(ui: &mut egui::Ui, app: &mut BackupApp, adb_job_active: bool) {
         .show(ui, |ui| {
             ui.horizontal(|ui| {
                 ui.add_space(24.0); // checkbox width
-                ui.label(RichText::new("Name ▲").size(11.0).strong().color(TEXT_SECONDARY));
+                ui.label(
+                    RichText::new("Name ▲")
+                        .size(11.0)
+                        .strong()
+                        .color(TEXT_SECONDARY),
+                );
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                     ui.add_space(50.0); // Select link width
-                    ui.label(RichText::new("Size").size(11.0).strong().color(TEXT_SECONDARY));
+                    ui.label(
+                        RichText::new("Size")
+                            .size(11.0)
+                            .strong()
+                            .color(TEXT_SECONDARY),
+                    );
                 });
             });
         });
@@ -158,18 +202,27 @@ fn file_browser(ui: &mut egui::Ui, app: &mut BackupApp, adb_job_active: bool) {
             for entry in &preview.entries {
                 let is_selected = app.folder_cleanup.selected_paths.contains(&entry.full_path);
                 Frame::new()
-                    .fill(if is_selected { ACCENT.gamma_multiply(0.06) } else { BG_CARD })
+                    .fill(if is_selected {
+                        ACCENT.gamma_multiply(0.06)
+                    } else {
+                        BG_CARD
+                    })
                     .stroke(Stroke::new(1.0, BORDER_CARD))
                     .inner_margin(Margin::symmetric(8, 5))
                     .show(ui, |ui| {
                         ui.horizontal(|ui| {
                             let mut selected = is_selected;
-                            if ui.add_enabled(
-                                !app.folder_cleanup.is_deleting,
-                                egui::Checkbox::without_text(&mut selected),
-                            ).changed() {
+                            if ui
+                                .add_enabled(
+                                    !app.folder_cleanup.is_deleting,
+                                    egui::Checkbox::without_text(&mut selected),
+                                )
+                                .changed()
+                            {
                                 if selected {
-                                    app.folder_cleanup.selected_paths.insert(entry.full_path.clone());
+                                    app.folder_cleanup
+                                        .selected_paths
+                                        .insert(entry.full_path.clone());
                                 } else {
                                     app.folder_cleanup.selected_paths.remove(&entry.full_path);
                                 }
@@ -179,19 +232,36 @@ fn file_browser(ui: &mut egui::Ui, app: &mut BackupApp, adb_job_active: bool) {
                                 RemoteFolderEntryKind::Directory => "📁",
                                 RemoteFolderEntryKind::File => "📄",
                             };
-                            let name = entry.full_path.rsplit('/').next().unwrap_or(&entry.full_path);
-                            ui.label(RichText::new(format!("{icon} {}", display_text_for_ui(name))).size(12.0));
+                            let name = entry
+                                .full_path
+                                .rsplit('/')
+                                .next()
+                                .unwrap_or(&entry.full_path);
+                            ui.label(
+                                RichText::new(format!("{icon} {}", display_text_for_ui(name)))
+                                    .size(12.0),
+                            );
 
                             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                                if ui.add_enabled(!adb_job_active,
-                                    egui::Button::new(RichText::new("Select").size(11.0).color(ACCENT))
-                                        .fill(Color32::TRANSPARENT)
-                                ).clicked() {
-                                    app.folder_cleanup.selected_paths.insert(entry.full_path.clone());
+                                if ui
+                                    .add_enabled(
+                                        !adb_job_active,
+                                        egui::Button::new(
+                                            RichText::new("Select").size(11.0).color(ACCENT),
+                                        )
+                                        .fill(Color32::TRANSPARENT),
+                                    )
+                                    .clicked()
+                                {
+                                    app.folder_cleanup
+                                        .selected_paths
+                                        .insert(entry.full_path.clone());
                                 }
                                 let size_text = match entry.kind {
                                     RemoteFolderEntryKind::Directory => "—".to_string(),
-                                    RemoteFolderEntryKind::File => format_bytes(entry.size_bytes.unwrap_or(0)),
+                                    RemoteFolderEntryKind::File => {
+                                        format_bytes(entry.size_bytes.unwrap_or(0))
+                                    }
                                 };
                                 ui.label(RichText::new(size_text).size(11.0).color(TEXT_SECONDARY));
                             });
@@ -214,24 +284,54 @@ fn right_panel(ui: &mut egui::Ui, app: &mut BackupApp, adb_job_active: bool) {
                 ui.label(RichText::new("Results").size(12.0).strong());
                 ui.add_space(4.0);
                 if let Some(file) = &app.progress.current_file {
-                    ui.label(RichText::new("Current file:").size(10.0).color(TEXT_SECONDARY));
-                    ui.add(egui::Label::new(RichText::new(display_text_for_ui(file)).size(10.0)).wrap());
+                    ui.label(
+                        RichText::new("Current file:")
+                            .size(10.0)
+                            .color(TEXT_SECONDARY),
+                    );
+                    ui.add(
+                        egui::Label::new(RichText::new(display_text_for_ui(file)).size(10.0))
+                            .wrap(),
+                    );
                 }
                 ui.add_space(4.0);
-                ui.label(RichText::new(format!("Files: {} / {}", app.progress.completed_files, app.progress.total_files)).size(11.0));
-                ui.label(RichText::new(format!("Speed: {}/s", format_bytes(app.progress.speed_bytes_per_sec.round() as u64))).size(11.0));
+                ui.label(
+                    RichText::new(format!(
+                        "Files: {} / {}",
+                        app.progress.completed_files, app.progress.total_files
+                    ))
+                    .size(11.0),
+                );
+                ui.label(
+                    RichText::new(format!(
+                        "Speed: {}/s",
+                        format_bytes(app.progress.speed_bytes_per_sec.round() as u64)
+                    ))
+                    .size(11.0),
+                );
                 if let Some(eta) = app.progress.eta_seconds {
                     ui.label(RichText::new(format!("ETA: {}", format_duration(eta))).size(11.0));
                 }
                 ui.add_space(6.0);
                 let running = app.is_running();
-                let paused = app.sync_handle.as_ref().map(|h| h.is_paused()).unwrap_or(false);
+                let paused = app
+                    .sync_handle
+                    .as_ref()
+                    .map(|h| h.is_paused())
+                    .unwrap_or(false);
                 ui.horizontal(|ui| {
-                    if ui.add_enabled(running, egui::Button::new(if paused { "▶" } else { "⏸" })).clicked() {
-                        if let Some(h) = &app.sync_handle { h.toggle_pause(); }
+                    if ui
+                        .add_enabled(running, egui::Button::new(if paused { "▶" } else { "⏸" }))
+                        .clicked()
+                    {
+                        if let Some(h) = &app.sync_handle {
+                            h.toggle_pause();
+                        }
                     }
                     if ui.add_enabled(running, egui::Button::new("⏹")).clicked() {
-                        if let Some(h) = &app.sync_handle { h.request_stop(); }
+                        if let Some(h) = &app.sync_handle {
+                            h.request_stop();
+                        }
                     }
                 });
             });
@@ -242,7 +342,10 @@ fn right_panel(ui: &mut egui::Ui, app: &mut BackupApp, adb_job_active: bool) {
     let preview_matches = app.cleanup_preview_matches_path();
     let selected_entries = app.selected_cleanup_entries();
     let selected_count = selected_entries.len();
-    let selected_bytes: u64 = selected_entries.iter().map(|e| e.size_bytes.unwrap_or(0)).sum();
+    let selected_bytes: u64 = selected_entries
+        .iter()
+        .map(|e| e.size_bytes.unwrap_or(0))
+        .sum();
 
     Frame::new()
         .fill(BG_CARD)
@@ -254,9 +357,12 @@ fn right_panel(ui: &mut egui::Ui, app: &mut BackupApp, adb_job_active: bool) {
             ui.add_space(6.0);
 
             ui.label(
-                RichText::new(format!("{selected_count} items | {}", format_bytes(selected_bytes)))
-                    .size(11.0)
-                    .color(TEXT_SECONDARY),
+                RichText::new(format!(
+                    "{selected_count} items | {}",
+                    format_bytes(selected_bytes)
+                ))
+                .size(11.0)
+                .color(TEXT_SECONDARY),
             );
             ui.add_space(4.0);
 
@@ -274,19 +380,30 @@ fn right_panel(ui: &mut egui::Ui, app: &mut BackupApp, adb_job_active: bool) {
                 && app.folder_cleanup.delete_armed
                 && !adb_job_active
                 && selected_count > 0
-                && selected_entries.iter().all(|e| protected_cleanup_folder_reason(&e.full_path).is_none());
+                && selected_entries
+                    .iter()
+                    .all(|e| protected_cleanup_folder_reason(&e.full_path).is_none());
 
-            if ui.add_enabled(root_ok, egui::Button::new("Delete Entire Folder")).clicked() {
+            if ui
+                .add_enabled(root_ok, egui::Button::new("Delete Entire Folder"))
+                .clicked()
+            {
                 app.request_cleanup_delete_folder();
             }
             ui.add_space(2.0);
-            if ui.add_enabled(root_ok, egui::Button::new("Delete Contents Only")).clicked() {
+            if ui
+                .add_enabled(root_ok, egui::Button::new("Delete Contents Only"))
+                .clicked()
+            {
                 app.request_cleanup_delete_contents_only();
             }
             ui.add_space(6.0);
 
             let del_btn = egui::Button::new(
-                RichText::new("DELETE SELECTED").size(12.0).color(Color32::WHITE).strong(),
+                RichText::new("DELETE SELECTED")
+                    .size(12.0)
+                    .color(Color32::WHITE)
+                    .strong(),
             )
             .fill(ERROR)
             .corner_radius(CornerRadius::same(5))
@@ -298,7 +415,10 @@ fn right_panel(ui: &mut egui::Ui, app: &mut BackupApp, adb_job_active: bool) {
 
             if app.folder_cleanup.is_deleting {
                 ui.add_space(4.0);
-                ui.horizontal(|ui| { ui.spinner(); ui.label("Deleting..."); });
+                ui.horizontal(|ui| {
+                    ui.spinner();
+                    ui.label("Deleting...");
+                });
             }
         });
 

@@ -8,8 +8,8 @@ use unicode_bidi::BidiInfo;
 use crate::core::{
     logging::{LogEntry, LogLevel},
     models::{
-        BackupAnalysis, BackupPreset, RemoteFolderPreview,
-        RunSummary, SyncProgress, guess_destination_subfolder,
+        BackupAnalysis, BackupPreset, RemoteFolderPreview, RunSummary, SyncProgress,
+        guess_destination_subfolder,
     },
 };
 
@@ -62,7 +62,11 @@ pub(crate) fn wrapped_path_text(ui: &mut egui::Ui, text: &str) {
     );
 }
 
-pub(crate) fn settings_card(ui: &mut egui::Ui, title: &str, add_contents: impl FnOnce(&mut egui::Ui)) {
+pub(crate) fn settings_card(
+    ui: &mut egui::Ui,
+    title: &str,
+    add_contents: impl FnOnce(&mut egui::Ui),
+) {
     use crate::ui::theme::*;
     Frame::new()
         .fill(BG_CARD)
@@ -83,7 +87,11 @@ pub(crate) struct PresetBadge {
     pub(crate) color: Color32,
 }
 
-pub(crate) fn render_preset_chip(ui: &mut egui::Ui, preset: &BackupPreset, selected: bool) -> egui::Response {
+pub(crate) fn render_preset_chip(
+    ui: &mut egui::Ui,
+    preset: &BackupPreset,
+    selected: bool,
+) -> egui::Response {
     use crate::ui::theme::*;
     let badges = preset_badges(preset);
     let primary_badge = badges.first().cloned();
@@ -130,8 +138,6 @@ pub(crate) fn render_preset_chip(ui: &mut egui::Ui, preset: &BackupPreset, selec
 
     response.on_hover_text(preset_chip_hover_text(preset))
 }
-
-
 
 pub(crate) fn preset_badges(preset: &BackupPreset) -> Vec<PresetBadge> {
     let mut badges = Vec::new();
@@ -219,7 +225,11 @@ pub(crate) fn status_pill(ui: &mut egui::Ui, text: &str, color: Color32) {
         });
 }
 
-pub(crate) fn summary_strip(ui: &mut egui::Ui, progress: &SyncProgress, summary: Option<&RunSummary>) {
+pub(crate) fn summary_strip(
+    ui: &mut egui::Ui,
+    progress: &SyncProgress,
+    summary: Option<&RunSummary>,
+) {
     ui.horizontal_wrapped(|ui| {
         metric_chip(
             ui,
@@ -365,7 +375,11 @@ pub(crate) fn cleanup_summary(preview: &RemoteFolderPreview) -> String {
     )
 }
 
-pub(crate) fn render_backup_analysis(ui: &mut egui::Ui, analysis: &BackupAnalysis, file_filter: &mut String) {
+pub(crate) fn render_backup_analysis(
+    ui: &mut egui::Ui,
+    analysis: &BackupAnalysis,
+    file_filter: &mut String,
+) {
     let normalized_filter = file_filter.trim().to_lowercase();
     let filtered_files = analysis
         .files
@@ -616,7 +630,11 @@ pub(crate) fn initial_local_directory(path: &str) -> PathBuf {
     std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."))
 }
 
-pub(crate) fn derive_destination_subfolder(selected_folder: &PathBuf, destination_root: &str, fallback: &str) -> String {
+pub(crate) fn derive_destination_subfolder(
+    selected_folder: &PathBuf,
+    destination_root: &str,
+    fallback: &str,
+) -> String {
     let selected = selected_folder.to_string_lossy().to_string();
     let root = destination_root.trim();
 
