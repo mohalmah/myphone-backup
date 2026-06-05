@@ -5,77 +5,37 @@ use eframe::egui::{self, Align, Color32, CornerRadius, Frame, Layout, Margin, Ri
 pub(crate) fn render_nav_rail(ctx: &egui::Context, app: &mut BackupApp) {
     egui::SidePanel::left("nav_rail")
         .resizable(false)
-        .exact_width(88.0)
+        .exact_width(92.0)
         .show_separator_line(false)
         .frame(
             Frame::new()
                 .fill(BG_LAYER)
                 .stroke(Stroke::new(1.0, BORDER_CARD))
-                .inner_margin(Margin::same(0)),
+                .inner_margin(Margin::symmetric(8, 10)),
         )
         .show(ctx, |ui| {
             ui.set_min_height(ui.available_height());
 
-            // Hamburger (decorative — always expanded)
-            ui.add_space(6.0);
-            ui.horizontal(|ui| {
-                ui.add_space(10.0);
-                ui.label(RichText::new("☰").size(18.0).color(TEXT_PRIMARY));
+            ui.vertical_centered(|ui| {
+                ui.label(RichText::new("ADB").size(15.0).strong().color(TEXT_PRIMARY));
+                ui.label(RichText::new("Backup").size(10.0).color(TEXT_TERTIARY));
             });
-            ui.add_space(8.0);
+            ui.add_space(16.0);
 
-            // Primary nav items
-            nav_item(ui, app, AppTab::Dashboard, "⊞", "Dashboard", false);
-            nav_item(ui, app, AppTab::Backup, "📦", "Backup", false);
-            nav_item(ui, app, AppTab::Cleanup, "🧹", "Cleanup", false);
-            nav_item(ui, app, AppTab::Devices, "📱", "Devices", true);
+            nav_item(ui, app, AppTab::Dashboard, "Home", false);
+            nav_item(ui, app, AppTab::Backup, "Backup", false);
+            nav_item(ui, app, AppTab::Cleanup, "Cleanup", false);
+            nav_item(ui, app, AppTab::Devices, "Device", true);
 
-            // Bottom-pinned items
-            ui.with_layout(Layout::bottom_up(Align::LEFT), |ui| {
-                // Nerd mode toggle
-                ui.add_space(6.0);
-                let nerd_color = if app.nerd_mode { ACCENT } else { TEXT_TERTIARY };
-                let inner = Frame::new()
-                    .fill(Color32::TRANSPARENT)
-                    .corner_radius(CornerRadius::same(6))
-                    .inner_margin(Margin::symmetric(4, 6))
-                    .show(ui, |ui| {
-                        ui.set_min_width(72.0);
-                        ui.vertical_centered(|ui| {
-                            ui.label(RichText::new("⌨").size(14.0).color(nerd_color));
-                            ui.label(
-                                RichText::new(if app.nerd_mode { "Nerd ✓" } else { "Nerd" })
-                                    .size(9.0)
-                                    .color(nerd_color),
-                            );
-                        });
-                    });
-                let resp = ui.interact(
-                    inner.response.rect,
-                    ui.make_persistent_id("nerd_toggle"),
-                    egui::Sense::click(),
-                );
-                if resp.hovered() {
-                    ui.output_mut(|o| o.cursor_icon = egui::CursorIcon::PointingHand);
-                }
-                if resp.clicked() {
-                    app.nerd_mode = !app.nerd_mode;
-                }
-
-                // Settings nav item (bottom-pinned)
-                nav_item(ui, app, AppTab::Settings, "⚙", "Settings", false);
+            ui.with_layout(Layout::bottom_up(Align::Center), |ui| {
+                nav_item(ui, app, AppTab::Settings, "Settings", false);
+                ui.add_space(8.0);
+                nerd_toggle(ui, app);
             });
         });
 }
 
-fn nav_item(
-    ui: &mut egui::Ui,
-    app: &mut BackupApp,
-    tab: AppTab,
-    icon: &str,
-    label: &str,
-    coming_soon: bool,
-) {
+fn nav_item(ui: &mut egui::Ui, app: &mut BackupApp, tab: AppTab, label: &str, coming_soon: bool) {
     let is_active = app.active_tab == tab;
     let text_color = if coming_soon {
         TEXT_TERTIARY
@@ -85,32 +45,32 @@ fn nav_item(
         TEXT_PRIMARY
     };
     let fill = if is_active {
-        BG_CARD
+        ACCENT.gamma_multiply(0.08)
     } else {
         Color32::TRANSPARENT
     };
 
     let inner = Frame::new()
         .fill(fill)
-        .corner_radius(CornerRadius::same(6))
-        .inner_margin(Margin::symmetric(4, 8))
+        .stroke(Stroke::new(
+            if is_active { 1.0 } else { 0.0 },
+            if is_active {
+                ACCENT
+            } else {
+                Color32::TRANSPARENT
+            },
+        ))
+        .corner_radius(CornerRadius::same(8))
+        .inner_margin(Margin::symmetric(8, 9))
         .show(ui, |ui| {
-            ui.set_min_width(72.0);
+            ui.set_min_width(58.0);
             ui.vertical_centered(|ui| {
-                ui.label(RichText::new(icon).size(16.0).color(text_color));
-                ui.label(RichText::new(label).size(9.5).color(text_color));
+                ui.label(RichText::new(label).size(11.0).strong().color(text_color));
+                if coming_soon {
+                    ui.label(RichText::new("soon").size(9.0).color(TEXT_TERTIARY));
+                }
             });
         });
-
-    // Accent left-edge indicator bar for active item
-    if is_active {
-        let rect = inner.response.rect;
-        ui.painter().rect_filled(
-            egui::Rect::from_min_size(rect.left_top(), egui::vec2(3.0, rect.height())),
-            0.0,
-            ACCENT,
-        );
-    }
 
     let response = ui.interact(
         inner.response.rect,
@@ -118,11 +78,48 @@ fn nav_item(
         egui::Sense::click(),
     );
     if response.hovered() && !coming_soon {
-        ui.output_mut(|o| o.cursor_icon = egui::CursorIcon::PointingHand);
+        ui.output_mut(|output| output.cursor_icon = egui::CursorIcon::PointingHand);
     }
     if response.clicked() && !coming_soon {
         app.active_tab = tab;
     }
 
-    ui.add_space(2.0);
+    ui.add_space(6.0);
+}
+
+fn nerd_toggle(ui: &mut egui::Ui, app: &mut BackupApp) {
+    let label = if app.nerd_mode { "Logs on" } else { "Logs" };
+    let color = if app.nerd_mode {
+        ACCENT
+    } else {
+        TEXT_SECONDARY
+    };
+    let fill = if app.nerd_mode {
+        ACCENT.gamma_multiply(0.08)
+    } else {
+        Color32::TRANSPARENT
+    };
+
+    let inner = Frame::new()
+        .fill(fill)
+        .corner_radius(CornerRadius::same(8))
+        .inner_margin(Margin::symmetric(8, 8))
+        .show(ui, |ui| {
+            ui.set_min_width(58.0);
+            ui.vertical_centered(|ui| {
+                ui.label(RichText::new(label).size(10.5).strong().color(color));
+            });
+        });
+
+    let response = ui.interact(
+        inner.response.rect,
+        ui.make_persistent_id("nerd_toggle"),
+        egui::Sense::click(),
+    );
+    if response.hovered() {
+        ui.output_mut(|output| output.cursor_icon = egui::CursorIcon::PointingHand);
+    }
+    if response.clicked() {
+        app.nerd_mode = !app.nerd_mode;
+    }
 }

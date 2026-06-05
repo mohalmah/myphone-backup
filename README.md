@@ -110,7 +110,7 @@ What you need on the phone is:
 
 1. Open `Settings`.
 2. Open `About phone`.
-3. Tap `Build number` or your device’s equivalent entry 7 times.
+3. Tap `Build number` or your device's equivalent entry 7 times.
 4. Go back to `Settings`.
 5. Open `Developer options`.
 6. Enable `USB debugging`.
@@ -167,12 +167,12 @@ If you prefer not to add ADB to `PATH`, you can still use the app by pointing th
 
 ```powershell
 cd dist\releases
-.\adb-smart-backup-v0.6.0-windows-x86_64.exe
+.\adb-smart-backup-v0.7.0-windows-x86_64.exe
 ```
 
-5. Click `Refresh Device` and confirm the status shows `CONNECTED`.
+5. Open the dashboard and confirm the status shows `CONNECTED`.
 6. If needed, set the `ADB executable` field to your full `adb.exe` path.
-7. Leave `Dry-run mode` enabled for the first test.
+7. Leave `Simulation mode` enabled for the first test.
 8. Scan sources, review the analysis, and run a test backup before enabling any delete option.
 
 ## Recommended First Test
@@ -181,9 +181,9 @@ Use this order the first time:
 
 1. Pick a small throwaway source folder on the phone.
 2. Choose a local destination with plenty of free space.
-3. Keep `Dry-run mode` on and `Auto delete after success` off.
-4. Click `Scan Sources`.
-5. Click `Analyze Selected Sources`.
+3. Keep `Simulation mode` on and `Delete from phone after validated backup` off.
+4. Click `Scan folders`.
+5. Click `Analyze`.
 6. Review file counts, size, and free-space checks.
 7. Run the backup.
 8. Turn dry-run off and run again.
@@ -213,9 +213,9 @@ The `Backup` tab is for safe media transfer.
 - Add your own custom Android folders
 - Use `Pick Folder` to browse folders on the connected phone
 
-### 4. Scan Sources
+### 4. Scan Folders
 
-`Scan Sources` checks the configured phone folders and shows:
+`Scan folders` checks the configured phone folders and shows:
 
 - Whether each folder exists
 - File count
@@ -224,9 +224,9 @@ The `Backup` tab is for safe media transfer.
 
 This helps you decide what to include before starting a backup.
 
-### 5. Analyze Selected Sources
+### 5. Analyze The Backup Plan
 
-`Analyze Selected Sources` builds a combined preflight summary for the enabled sources and shows:
+`Analyze` builds a combined preflight summary for the enabled sources and shows:
 
 - Total files found
 - Total bytes found
@@ -251,8 +251,8 @@ Existing file behavior:
 
 Safety toggles:
 
-- `Dry-run mode`
-- `Auto delete after success`
+- `Simulation mode`
+- `Delete from phone after validated backup`
 
 Important:
 
@@ -273,7 +273,7 @@ Use it when you want to inspect a folder first and then delete:
 ### Cleanup Steps
 
 1. Choose a phone folder.
-2. Click `Fetch Contents`.
+2. Click `Preview contents`.
 3. Review the preview summary:
    - root folder
    - file count
@@ -336,7 +336,7 @@ The optimized executable will be created at:
 
 The packaged local release artifact is staged at:
 
-`dist\releases\adb-smart-backup-v0.6.0-windows-x86_64.exe`
+`dist\releases\adb-smart-backup-v0.7.0-windows-x86_64.exe`
 
 ## GitHub Releases
 
@@ -354,12 +354,12 @@ Release notes prepared in this repo:
 
 Published release:
 
-- [ADB Smart Backup & Cleanup v0.6.0](https://github.com/mohalmah/myphone-backup/releases/tag/v0.6.0)
+- [ADB Smart Backup & Cleanup v0.7.0](https://github.com/mohalmah/myphone-backup/releases/tag/v0.7.0)
 
 Release assets:
 
-- `adb-smart-backup-v0.6.0-windows-x86_64.exe`
-- `adb-smart-backup-v0.6.0-windows-x86_64.zip`
+- `adb-smart-backup-v0.7.0-windows-x86_64.exe`
+- `adb-smart-backup-v0.7.0-windows-x86_64.zip`
 
 ## Troubleshooting
 

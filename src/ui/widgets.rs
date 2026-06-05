@@ -8,14 +8,11 @@ use unicode_bidi::BidiInfo;
 use crate::core::{
     logging::{LogEntry, LogLevel},
     models::{
-        BackupAnalysis, BackupPreset, RemoteFolderPreview, RunSummary, SyncProgress,
+        BackupAnalysis, BackupPreset, RemoteFolderPreview, SyncProgress,
         guess_destination_subfolder,
     },
 };
-
-pub(crate) fn icon_or_text(icon: &str, _fallback: &str) -> String {
-    icon.to_string()
-}
+use crate::ui::theme::*;
 
 pub(crate) fn contains_arabic(text: &str) -> bool {
     text.chars().any(|character| {
@@ -54,31 +51,7 @@ pub(crate) fn wrapped_text(ui: &mut egui::Ui, text: &str) {
 }
 
 pub(crate) fn wrapped_path_text(ui: &mut egui::Ui, text: &str) {
-    ui.add(
-        egui::Label::new(
-            RichText::new(display_text_for_ui(text)).color(Color32::from_rgb(86, 74, 60)),
-        )
-        .wrap(),
-    );
-}
-
-pub(crate) fn settings_card(
-    ui: &mut egui::Ui,
-    title: &str,
-    add_contents: impl FnOnce(&mut egui::Ui),
-) {
-    use crate::ui::theme::*;
-    Frame::new()
-        .fill(BG_CARD)
-        .stroke(Stroke::new(1.0, BORDER_CARD))
-        .corner_radius(CornerRadius::same(8))
-        .inner_margin(Margin::same(12))
-        .show(ui, |ui| {
-            ui.label(RichText::new(title).size(13.0).strong().color(TEXT_PRIMARY));
-            ui.add_space(6.0);
-            add_contents(ui);
-        });
-    ui.add_space(8.0);
+    ui.add(egui::Label::new(RichText::new(display_text_for_ui(text)).color(TEXT_SECONDARY)).wrap());
 }
 
 #[derive(Clone, Copy)]
@@ -92,37 +65,37 @@ pub(crate) fn render_preset_chip(
     preset: &BackupPreset,
     selected: bool,
 ) -> egui::Response {
-    use crate::ui::theme::*;
     let badges = preset_badges(preset);
-    let primary_badge = badges.first().cloned();
-
     let (fill, stroke_color, text_color) = if selected {
         (ACCENT.gamma_multiply(0.12), ACCENT, ACCENT)
     } else {
-        (BG_CARD, BORDER_CARD, TEXT_PRIMARY)
+        (BG_LAYER, BORDER_CARD, TEXT_PRIMARY)
     };
 
     let inner = Frame::new()
         .fill(fill)
-        .stroke(Stroke::new(if selected { 1.5 } else { 1.0 }, stroke_color))
-        .corner_radius(CornerRadius::same(4))
-        .inner_margin(Margin::symmetric(8, 4))
+        .stroke(Stroke::new(if selected { 1.4 } else { 1.0 }, stroke_color))
+        .corner_radius(CornerRadius::same(20))
+        .inner_margin(Margin::symmetric(10, 6))
         .show(ui, |ui| {
             ui.horizontal(|ui| {
-                ui.spacing_mut().item_spacing.x = 3.0;
-                if let Some(badge) = &primary_badge {
-                    ui.label(RichText::new(badge.icon).size(12.0).color(badge.color));
-                }
-                for badge in badges.iter().skip(1) {
-                    ui.label(RichText::new(badge.icon).size(11.0).color(badge.color));
+                ui.spacing_mut().item_spacing.x = 5.0;
+                for badge in &badges {
+                    ui.label(
+                        RichText::new(badge.icon)
+                            .size(10.5)
+                            .strong()
+                            .color(badge.color),
+                    );
                 }
                 ui.label(
                     RichText::new(display_text_for_ui(&preset.name))
                         .size(12.0)
+                        .strong()
                         .color(text_color),
                 );
                 if selected {
-                    ui.label(RichText::new("✓").size(11.0).strong().color(ACCENT));
+                    ui.label(RichText::new("ON").size(9.5).strong().color(ACCENT));
                 }
             });
         });
@@ -140,7 +113,6 @@ pub(crate) fn render_preset_chip(
 }
 
 pub(crate) fn preset_badges(preset: &BackupPreset) -> Vec<PresetBadge> {
-    let mut badges = Vec::new();
     let name = preset.name.to_lowercase();
     let sources = if preset.sources.is_empty() {
         preset.source_path.to_lowercase()
@@ -154,35 +126,35 @@ pub(crate) fn preset_badges(preset: &BackupPreset) -> Vec<PresetBadge> {
             .to_lowercase()
     };
     let combined = format!("{name} {sources}");
+    let mut badges = Vec::new();
 
     if combined.contains("whatsapp") {
         badges.push(PresetBadge {
-            icon: "💬",
+            icon: "WA",
             color: Color32::from_rgb(42, 157, 93),
         });
     }
     if combined.contains("telegram") {
         badges.push(PresetBadge {
-            icon: "✈",
+            icon: "TG",
             color: Color32::from_rgb(44, 127, 184),
         });
     }
     if combined.contains("download") {
         badges.push(PresetBadge {
-            icon: "⬇",
+            icon: "DL",
             color: Color32::from_rgb(198, 106, 44),
         });
     }
     if combined.contains("camera") || combined.contains("/dcim/") {
         badges.push(PresetBadge {
-            icon: "📷",
+            icon: "CAM",
             color: Color32::from_rgb(129, 92, 51),
         });
     }
-
     if badges.is_empty() {
         badges.push(PresetBadge {
-            icon: "📁",
+            icon: "SET",
             color: Color32::from_rgb(118, 104, 85),
         });
     }
@@ -218,99 +190,23 @@ pub(crate) fn status_pill(ui: &mut egui::Ui, text: &str, color: Color32) {
     Frame::new()
         .fill(color.gamma_multiply(0.10))
         .stroke(Stroke::new(1.0, color.gamma_multiply(0.30)))
-        .corner_radius(CornerRadius::same(4))
-        .inner_margin(Margin::symmetric(8, 3))
+        .corner_radius(CornerRadius::same(20))
+        .inner_margin(Margin::symmetric(10, 4))
         .show(ui, |ui| {
-            ui.colored_label(color, RichText::new(text).size(11.0).strong());
+            ui.colored_label(color, RichText::new(text).size(10.5).strong());
         });
-}
-
-pub(crate) fn summary_strip(
-    ui: &mut egui::Ui,
-    progress: &SyncProgress,
-    summary: Option<&RunSummary>,
-) {
-    ui.horizontal_wrapped(|ui| {
-        metric_chip(
-            ui,
-            "Total Files",
-            progress.total_files.to_string(),
-            Color32::from_rgb(73, 121, 92),
-        );
-        metric_chip(
-            ui,
-            "Processed",
-            progress.completed_files.to_string(),
-            Color32::from_rgb(198, 106, 44),
-        );
-        metric_chip(
-            ui,
-            "Speed",
-            format!(
-                "{}/s",
-                format_bytes(progress.speed_bytes_per_sec.round() as u64)
-            ),
-            Color32::from_rgb(67, 102, 153),
-        );
-        metric_chip(
-            ui,
-            "ETA",
-            progress
-                .eta_seconds
-                .map(format_duration)
-                .unwrap_or_else(|| "n/a".to_string()),
-            Color32::from_rgb(124, 92, 161),
-        );
-    });
-    ui.add_space(10.0);
-
-    if let Some(summary) = summary {
-        ui.horizontal_wrapped(|ui| {
-            metric_chip(
-                ui,
-                "Copied",
-                summary.copied.to_string(),
-                Color32::from_rgb(73, 121, 92),
-            );
-            metric_chip(
-                ui,
-                "Deleted",
-                summary.deleted.to_string(),
-                Color32::from_rgb(168, 52, 33),
-            );
-            metric_chip(
-                ui,
-                "Skipped",
-                summary.skipped.to_string(),
-                Color32::from_rgb(115, 95, 69),
-            );
-            metric_chip(
-                ui,
-                "Failed",
-                summary.failed.to_string(),
-                Color32::from_rgb(168, 52, 33),
-            );
-            metric_chip(
-                ui,
-                "Conflicts",
-                summary.conflicts.to_string(),
-                Color32::from_rgb(145, 92, 39),
-            );
-        });
-    }
 }
 
 pub(crate) fn metric_chip(ui: &mut egui::Ui, label: &str, value: String, color: Color32) {
-    use crate::ui::theme::*;
     Frame::new()
-        .fill(BG_CARD)
+        .fill(BG_LAYER)
         .stroke(Stroke::new(1.0, BORDER_CARD))
-        .corner_radius(CornerRadius::same(4))
-        .inner_margin(Margin::symmetric(8, 4))
+        .corner_radius(CornerRadius::same(20))
+        .inner_margin(Margin::symmetric(10, 5))
         .show(ui, |ui| {
             ui.horizontal(|ui| {
-                ui.label(RichText::new(label).size(11.0).color(TEXT_SECONDARY));
-                ui.label(RichText::new(value).size(12.0).strong().color(color));
+                ui.label(RichText::new(label).size(10.5).color(TEXT_SECONDARY));
+                ui.label(RichText::new(value).size(11.5).strong().color(color));
             });
         });
 }
@@ -392,198 +288,273 @@ pub(crate) fn render_backup_analysis(
         .collect::<Vec<_>>();
 
     Frame::new()
-        .fill(Color32::WHITE)
-        .stroke(Stroke::new(1.0, Color32::from_rgb(221, 211, 190)))
-        .corner_radius(CornerRadius::same(14))
+        .fill(BG_CARD)
+        .stroke(Stroke::new(1.0, BORDER_CARD))
+        .corner_radius(CornerRadius::same(12))
         .inner_margin(Margin::same(14))
         .show(ui, |ui| {
-            ui.horizontal(|ui| {
-                ui.label(RichText::new("Backup Source Analysis").strong());
+            ui.horizontal_wrapped(|ui| {
+                ui.label(
+                    RichText::new("Backup analysis")
+                        .size(15.0)
+                        .strong()
+                        .color(TEXT_PRIMARY),
+                );
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                     ui.label(
                         RichText::new(format!("{} files", analysis.preflight.total_files))
-                            .color(Color32::from_rgb(118, 104, 85)),
+                            .size(11.0)
+                            .color(TEXT_TERTIARY),
                     );
                 });
             });
-            ui.add_space(8.0);
-
-            Frame::new()
-                .fill(Color32::from_rgb(250, 247, 240))
-                .stroke(Stroke::new(1.0, Color32::from_rgb(228, 219, 203)))
-                .corner_radius(CornerRadius::same(12))
-                .inner_margin(Margin::same(12))
-                .show(ui, |ui| {
-                    ScrollArea::vertical()
-                        .id_salt("backup_analysis_summary_scroll")
-                        .max_height(220.0)
-                        .auto_shrink([false; 2])
-                        .show(ui, |ui| {
-                            wrapped_text(ui, &analysis.preflight.source_path);
-                            wrapped_path_text(ui, &analysis.preflight.destination_path);
-                            ui.add_space(6.0);
-                            ui.label(format!(
-                                "Total source data: {}",
-                                format_bytes(analysis.preflight.total_bytes)
-                            ));
-                            ui.label(format!(
-                                "Needs copy: {} across {} files",
-                                format_bytes(analysis.preflight.bytes_to_copy),
-                                analysis.preflight.files_to_copy
-                            ));
-                            ui.label(format!(
-                                "Already present locally: {} | Conflicts: {}",
-                                analysis.preflight.matching_local_files,
-                                analysis.preflight.conflicting_local_files
-                            ));
-                            ui.label(format!(
-                                "Destination free space: {}",
-                                analysis
-                                    .preflight
-                                    .destination_available_bytes
-                                    .map(format_bytes)
-                                    .unwrap_or_else(|| "unknown".to_string())
-                            ));
-                            ui.label(format!(
-                                "Destination space check: {}",
-                                if analysis.preflight.destination_has_enough_space {
-                                    "Enough space"
-                                } else {
-                                    "Not enough space"
-                                }
-                            ));
-                            if let Some(system_drive) = &analysis.preflight.system_drive_path {
-                                ui.label(format!(
-                                    "System drive {} free: {}",
-                                    system_drive,
-                                    analysis
-                                        .preflight
-                                        .system_drive_available_bytes
-                                        .map(format_bytes)
-                                        .unwrap_or_else(|| "unknown".to_string())
-                                ));
-                            }
-                            if let Some(error) = &analysis.preflight.destination_space_error {
-                                ui.colored_label(Color32::from_rgb(168, 52, 33), error);
-                            }
-                            if let Some(warning) = &analysis.preflight.system_drive_warning {
-                                ui.colored_label(Color32::from_rgb(145, 92, 39), warning);
-                            }
-                            if !analysis.source_summaries.is_empty() {
-                                ui.add_space(8.0);
-                                ui.label(RichText::new("Selected source folders").strong());
-                                for source in &analysis.source_summaries {
-                                    wrapped_text(
-                                        ui,
-                                        &format!(
-                                            "{} | {} file(s) | {} | subfolder {}",
-                                            source.label,
-                                            source.file_count,
-                                            format_bytes(source.total_bytes),
-                                            if source.destination_subfolder.trim().is_empty() {
-                                                "root".to_string()
-                                            } else {
-                                                source.destination_subfolder.clone()
-                                            }
-                                        ),
-                                    );
-                                    wrapped_path_text(ui, &source.source_path);
-                                    ui.add_space(4.0);
-                                }
-                            }
-                        });
-                });
-
             ui.add_space(10.0);
-            Frame::new()
-                .fill(Color32::from_rgb(252, 249, 244))
-                .stroke(Stroke::new(1.0, Color32::from_rgb(228, 219, 203)))
-                .corner_radius(CornerRadius::same(12))
-                .inner_margin(Margin::same(12))
+
+            analysis_summary(ui, analysis);
+            ui.add_space(12.0);
+            analysis_file_list(ui, analysis, &filtered_files, file_filter);
+        });
+}
+
+fn analysis_summary(ui: &mut egui::Ui, analysis: &BackupAnalysis) {
+    Frame::new()
+        .fill(BG_LAYER)
+        .stroke(Stroke::new(1.0, BORDER_CARD))
+        .corner_radius(CornerRadius::same(10))
+        .inner_margin(Margin::same(12))
+        .show(ui, |ui| {
+            ScrollArea::vertical()
+                .id_salt("backup_analysis_summary_scroll")
+                .max_height(210.0)
+                .auto_shrink([false; 2])
                 .show(ui, |ui| {
-                    ui.horizontal_wrapped(|ui| {
-                        ui.label(RichText::new("Source Files").strong());
-                        ui.add_space(8.0);
-                        ui.label("Filter");
-                        ui.add(
-                            egui::TextEdit::singleline(file_filter)
-                                .hint_text("name or path")
-                                .desired_width(240.0),
-                        );
-                        ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                            ui.label(
-                                RichText::new(format!(
-                                    "{} shown / {} total",
-                                    filtered_files.len(),
-                                    analysis.files.len()
-                                ))
-                                .color(Color32::from_rgb(118, 104, 85)),
-                            );
-                        });
-                    });
+                    wrapped_text(ui, &analysis.preflight.source_path);
+                    wrapped_path_text(ui, &analysis.preflight.destination_path);
                     ui.add_space(8.0);
 
-                    ScrollArea::vertical()
-                        .id_salt("backup_source_files_scroll")
-                        .max_height(320.0)
-                        .auto_shrink([false; 2])
-                        .show(ui, |ui| {
-                            for file in &filtered_files {
-                                Frame::new()
-                                    .fill(Color32::from_rgb(250, 247, 240))
-                                    .stroke(Stroke::new(1.0, Color32::from_rgb(228, 219, 203)))
-                                    .corner_radius(CornerRadius::same(12))
-                                    .inner_margin(Margin::same(10))
-                                    .show(ui, |ui| {
-                                        ui.horizontal_wrapped(|ui| {
-                                            ui.label(
-                                                RichText::new(format_bytes(file.size_bytes))
-                                                    .color(Color32::from_rgb(67, 102, 153)),
-                                            );
-                                        });
-                                        ui.add_space(4.0);
-                                        wrapped_text(ui, &file.name);
-                                        ui.add_space(2.0);
-                                        wrapped_path_text(ui, &file.remote_path);
-                                    });
-                                ui.add_space(8.0);
-                            }
+                    analysis_row(
+                        ui,
+                        "Total source data",
+                        format_bytes(analysis.preflight.total_bytes),
+                        TEXT_PRIMARY,
+                    );
+                    analysis_row(
+                        ui,
+                        "Needs copy",
+                        format!(
+                            "{} across {} files",
+                            format_bytes(analysis.preflight.bytes_to_copy),
+                            analysis.preflight.files_to_copy
+                        ),
+                        ACCENT,
+                    );
+                    analysis_row(
+                        ui,
+                        "Already local",
+                        analysis.preflight.matching_local_files.to_string(),
+                        SUCCESS,
+                    );
+                    analysis_row(
+                        ui,
+                        "Conflicts",
+                        analysis.preflight.conflicting_local_files.to_string(),
+                        WARNING,
+                    );
+                    analysis_row(
+                        ui,
+                        "Destination free",
+                        analysis
+                            .preflight
+                            .destination_available_bytes
+                            .map(format_bytes)
+                            .unwrap_or_else(|| "Unknown".to_string()),
+                        if analysis.preflight.destination_has_enough_space {
+                            SUCCESS
+                        } else {
+                            ERROR
+                        },
+                    );
 
-                            if filtered_files.is_empty() {
-                                ui.add_space(10.0);
-                                ui.label("No source files match the current filter.");
-                            }
-                        });
+                    if let Some(system_drive) = &analysis.preflight.system_drive_path {
+                        analysis_row(
+                            ui,
+                            &format!("System drive {system_drive}"),
+                            analysis
+                                .preflight
+                                .system_drive_available_bytes
+                                .map(format_bytes)
+                                .unwrap_or_else(|| "Unknown".to_string()),
+                            TEXT_SECONDARY,
+                        );
+                    }
+                    if let Some(error) = &analysis.preflight.destination_space_error {
+                        ui.add_space(6.0);
+                        ui.colored_label(ERROR, error);
+                    }
+                    if let Some(warning) = &analysis.preflight.system_drive_warning {
+                        ui.add_space(6.0);
+                        ui.colored_label(WARNING, warning);
+                    }
+
+                    if !analysis.source_summaries.is_empty() {
+                        ui.add_space(10.0);
+                        ui.label(
+                            RichText::new("Selected folders")
+                                .size(12.0)
+                                .strong()
+                                .color(TEXT_PRIMARY),
+                        );
+                        for source in &analysis.source_summaries {
+                            ui.add_space(6.0);
+                            wrapped_text(
+                                ui,
+                                &format!(
+                                    "{} | {} files | {} | to {}",
+                                    source.label,
+                                    source.file_count,
+                                    format_bytes(source.total_bytes),
+                                    if source.destination_subfolder.trim().is_empty() {
+                                        "destination root".to_string()
+                                    } else {
+                                        source.destination_subfolder.clone()
+                                    }
+                                ),
+                            );
+                            wrapped_path_text(ui, &source.source_path);
+                        }
+                    }
+                });
+        });
+}
+
+fn analysis_row(ui: &mut egui::Ui, label: &str, value: String, color: Color32) {
+    ui.horizontal(|ui| {
+        ui.label(RichText::new(label).size(12.0).color(TEXT_SECONDARY));
+        ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+            ui.label(RichText::new(value).size(12.0).strong().color(color));
+        });
+    });
+}
+
+fn analysis_file_list(
+    ui: &mut egui::Ui,
+    analysis: &BackupAnalysis,
+    filtered_files: &[&crate::core::models::RemoteFile],
+    file_filter: &mut String,
+) {
+    Frame::new()
+        .fill(BG_LAYER)
+        .stroke(Stroke::new(1.0, BORDER_CARD))
+        .corner_radius(CornerRadius::same(10))
+        .inner_margin(Margin::same(12))
+        .show(ui, |ui| {
+            ui.horizontal_wrapped(|ui| {
+                ui.label(
+                    RichText::new("Files")
+                        .size(13.0)
+                        .strong()
+                        .color(TEXT_PRIMARY),
+                );
+                ui.add_space(8.0);
+                ui.add(
+                    egui::TextEdit::singleline(file_filter)
+                        .hint_text("Filter by name or path")
+                        .desired_width(230.0),
+                );
+                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                    ui.label(
+                        RichText::new(format!(
+                            "{} shown / {} total",
+                            filtered_files.len(),
+                            analysis.files.len()
+                        ))
+                        .size(11.0)
+                        .color(TEXT_TERTIARY),
+                    );
+                });
+            });
+            ui.add_space(10.0);
+
+            ScrollArea::vertical()
+                .id_salt("backup_source_files_scroll")
+                .max_height(320.0)
+                .auto_shrink([false; 2])
+                .show(ui, |ui| {
+                    for file in filtered_files {
+                        Frame::new()
+                            .fill(BG_CARD)
+                            .stroke(Stroke::new(1.0, BORDER_CARD))
+                            .corner_radius(CornerRadius::same(8))
+                            .inner_margin(Margin::same(10))
+                            .show(ui, |ui| {
+                                ui.horizontal_wrapped(|ui| {
+                                    ui.label(
+                                        RichText::new(format_bytes(file.size_bytes))
+                                            .size(11.0)
+                                            .strong()
+                                            .color(ACCENT),
+                                    );
+                                    ui.label(
+                                        RichText::new(display_text_for_ui(&file.name))
+                                            .size(12.0)
+                                            .color(TEXT_PRIMARY),
+                                    );
+                                });
+                                wrapped_path_text(ui, &file.remote_path);
+                            });
+                        ui.add_space(6.0);
+                    }
+
+                    if filtered_files.is_empty() {
+                        ui.label(
+                            RichText::new("No source files match the current filter.")
+                                .size(12.0)
+                                .color(TEXT_TERTIARY),
+                        );
+                    }
                 });
         });
 }
 
 pub(crate) fn render_detailed_log_entry(ui: &mut egui::Ui, entry: &LogEntry) {
     Frame::new()
-        .fill(Color32::WHITE)
-        .stroke(Stroke::new(1.0, Color32::from_rgb(221, 211, 190)))
-        .corner_radius(CornerRadius::same(12))
+        .fill(BG_CARD)
+        .stroke(Stroke::new(1.0, BORDER_CARD))
+        .corner_radius(CornerRadius::same(10))
         .inner_margin(Margin::same(10))
         .show(ui, |ui| {
-            ui.horizontal(|ui| {
+            ui.horizontal_wrapped(|ui| {
                 ui.colored_label(
                     log_level_color(entry.level),
-                    RichText::new(entry.level.label()).strong(),
+                    RichText::new(entry.level.label()).size(11.0).strong(),
                 );
-                ui.label(RichText::new(&entry.timestamp).monospace());
+                ui.label(
+                    RichText::new(&entry.timestamp)
+                        .size(11.0)
+                        .monospace()
+                        .color(TEXT_SECONDARY),
+                );
             });
             ui.add_space(4.0);
-            ui.label(&entry.message);
+            ui.label(RichText::new(display_text_for_ui(&entry.message)).size(12.0));
 
             if let Some(detail) = &entry.detail {
                 ui.add_space(8.0);
                 Frame::new()
-                    .fill(Color32::from_rgb(248, 244, 237))
-                    .stroke(Stroke::new(1.0, Color32::from_rgb(230, 220, 204)))
-                    .corner_radius(CornerRadius::same(10))
+                    .fill(BG_LAYER)
+                    .stroke(Stroke::new(1.0, BORDER_CARD))
+                    .corner_radius(CornerRadius::same(8))
                     .inner_margin(Margin::same(10))
                     .show(ui, |ui| {
-                        ui.add(egui::Label::new(RichText::new(detail).monospace()).wrap());
+                        ui.add(
+                            egui::Label::new(
+                                RichText::new(display_text_for_ui(detail))
+                                    .size(11.0)
+                                    .monospace()
+                                    .color(TEXT_SECONDARY),
+                            )
+                            .wrap(),
+                        );
                     });
             }
         });
@@ -591,9 +562,9 @@ pub(crate) fn render_detailed_log_entry(ui: &mut egui::Ui, entry: &LogEntry) {
 
 pub(crate) fn log_level_color(level: LogLevel) -> Color32 {
     match level {
-        LogLevel::Info => Color32::from_rgb(73, 121, 92),
-        LogLevel::Error => Color32::from_rgb(168, 52, 33),
-        LogLevel::Trace => Color32::from_rgb(67, 102, 153),
+        LogLevel::Info => SUCCESS,
+        LogLevel::Error => ERROR,
+        LogLevel::Trace => ACCENT,
     }
 }
 
@@ -621,10 +592,10 @@ pub(crate) fn initial_local_directory(path: &str) -> PathBuf {
         return candidate;
     }
 
-    if let Some(parent) = candidate.parent() {
-        if parent.is_dir() {
-            return parent.to_path_buf();
-        }
+    if let Some(parent) = candidate.parent()
+        && parent.is_dir()
+    {
+        return parent.to_path_buf();
     }
 
     std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."))

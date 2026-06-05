@@ -1,5 +1,26 @@
 # Release Notes
 
+## v0.7.0
+
+UI overhaul focused on making the app more abstract, calmer, and easier to operate.
+
+### Included
+
+- Rebuilt the dashboard as a simple launch pad for backup and cleanup
+- Simplified the left navigation into compact text-first tabs
+- Reworked Backup into a plan-based flow: source packs, destination, selected phone folders, safety, and run
+- Moved advanced backup options behind collapsible sections
+- Reworked Cleanup into a guarded review flow with folder preview, delete plan, and contents list
+- Replaced fragile emoji/mojibake UI badges with plain text app chips such as `WA`, `TG`, `DL`, and `CAM`
+- Kept Windows folder selection for destination roots and per-source PC destinations
+- Improved the detailed activity log panel with an explicit `Show ADB details` toggle
+- Rebuilt the Windows release executable
+
+### Release Assets
+
+- `adb-smart-backup-v0.7.0-windows-x86_64.exe`
+- `adb-smart-backup-v0.7.0-windows-x86_64.zip`
+
 ## v0.6.0
 
 UI revamp release focused on a cleaner, simpler backup workflow.

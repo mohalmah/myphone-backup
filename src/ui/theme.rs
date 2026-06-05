@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 use eframe::egui::{self, Color32, Context, FontData, FontDefinitions, FontFamily, Stroke};
 
-// ── Fluent Design Light Mode Color Tokens ──
+// Fluent Design light-mode color tokens.
 pub const BG_BASE: Color32 = Color32::from_rgb(243, 243, 243); // Mica base
 pub const BG_LAYER: Color32 = Color32::from_rgb(249, 249, 249); // Layer/surface
 pub const BG_CARD: Color32 = Color32::from_rgb(255, 255, 255); // Card

@@ -1216,15 +1216,24 @@ impl eframe::App for BackupApp {
         if self.nerd_mode {
             egui::TopBottomPanel::bottom("nerd_log")
                 .resizable(true)
-                .default_height(200.0)
-                .min_height(80.0)
+                .default_height(260.0)
+                .min_height(110.0)
                 .show(ctx, |ui| {
                     ui.horizontal(|ui| {
                         ui.label(
-                            eframe::egui::RichText::new("Raw Log")
+                            eframe::egui::RichText::new("Detailed Activity Log")
                                 .strong()
                                 .color(crate::ui::theme::TEXT_SECONDARY),
                         );
+                        ui.label(
+                            eframe::egui::RichText::new(format!(
+                                "{} entries",
+                                self.log_entries.len()
+                            ))
+                            .size(11.0)
+                            .color(crate::ui::theme::TEXT_TERTIARY),
+                        );
+                        ui.checkbox(&mut self.show_detailed_logs, "Show ADB details");
                         if ui.button("Clear").clicked() {
                             self.log_entries.clear();
                         }
@@ -1235,7 +1244,11 @@ impl eframe::App for BackupApp {
                         .auto_shrink([false; 2])
                         .show(ui, |ui| {
                             for entry in self.log_entries.iter().rev() {
-                                ui.monospace(entry.compact_line());
+                                if entry.detailed_only && !self.show_detailed_logs {
+                                    continue;
+                                }
+                                crate::ui::widgets::render_detailed_log_entry(ui, entry);
+                                ui.add_space(6.0);
                             }
                         });
                 });

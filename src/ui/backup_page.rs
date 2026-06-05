@@ -17,29 +17,27 @@ pub(crate) fn render_backup_page(ctx: &egui::Context, app: &mut BackupApp) {
                 .auto_shrink([false; 2])
                 .show(ui, |ui| {
                     page_header(ui, app);
-                    ui.add_space(14.0);
+                    ui.add_space(16.0);
 
-                    let two_column = ui.available_width() >= 940.0;
-                    if two_column {
+                    if ui.available_width() >= 980.0 {
                         ui.horizontal_top(|ui| {
-                            ui.set_min_width(ui.available_width());
                             ui.vertical(|ui| {
-                                ui.set_width(430.0);
-                                render_setup_column(ui, app);
+                                ui.set_width((ui.available_width() * 0.58).max(520.0));
+                                plan_column(ui, app);
                             });
-                            ui.add_space(12.0);
+                            ui.add_space(14.0);
                             ui.vertical(|ui| {
-                                render_run_column(ui, app);
+                                run_column(ui, app);
                             });
                         });
                     } else {
-                        render_setup_column(ui, app);
-                        ui.add_space(12.0);
-                        render_run_column(ui, app);
+                        plan_column(ui, app);
+                        ui.add_space(14.0);
+                        run_column(ui, app);
                     }
 
                     ui.add_space(14.0);
-                    render_analysis_and_queue(ui, app);
+                    details_section(ui, app);
                 });
         });
 }
@@ -48,13 +46,13 @@ fn page_header(ui: &mut egui::Ui, app: &BackupApp) {
     ui.horizontal_wrapped(|ui| {
         ui.vertical(|ui| {
             ui.label(
-                RichText::new("Backup")
-                    .size(24.0)
+                RichText::new("Backup Plan")
+                    .size(25.0)
                     .strong()
                     .color(TEXT_PRIMARY),
             );
             ui.label(
-                RichText::new("Choose sources, confirm space, then run the transfer.")
+                RichText::new("Pick what moves, where it lands, then run.")
                     .size(12.0)
                     .color(TEXT_SECONDARY),
             );
@@ -63,10 +61,15 @@ fn page_header(ui: &mut egui::Ui, app: &BackupApp) {
         ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
             status_pill(
                 ui,
+                app.device_info.state.label(),
+                app.device_info.state.color(),
+            );
+            status_pill(
+                ui,
                 if app.settings.dry_run {
-                    "DRY RUN"
+                    "SIMULATION"
                 } else {
-                    "LIVE RUN"
+                    "LIVE"
                 },
                 if app.settings.dry_run {
                     WARNING
@@ -74,171 +77,196 @@ fn page_header(ui: &mut egui::Ui, app: &BackupApp) {
                     SUCCESS
                 },
             );
-            status_pill(
-                ui,
-                app.device_info.state.label(),
-                app.device_info.state.color(),
-            );
-            status_pill(ui, &format!("{} SOURCES", active_source_count(app)), ACCENT);
+            status_pill(ui, &format!("{} FOLDERS", active_source_count(app)), ACCENT);
         });
     });
 }
 
-fn render_setup_column(ui: &mut egui::Ui, app: &mut BackupApp) {
-    preset_card(ui, app);
-    destination_root_card(ui, app);
-    source_library_card(ui, app);
-}
+fn plan_column(ui: &mut egui::Ui, app: &mut BackupApp) {
+    card(ui, "Source Packs", |ui| {
+        source_pack_chips(ui, app);
+    });
 
-fn preset_card(ui: &mut egui::Ui, app: &mut BackupApp) {
-    settings_card(ui, "Presets", |ui| {
-        let presets = app.settings.presets.clone();
-        ui.horizontal_wrapped(|ui| {
-            ui.spacing_mut().item_spacing = egui::vec2(6.0, 6.0);
-            for preset in &presets {
-                let selected = app
-                    .selected_preset_names
-                    .iter()
-                    .any(|name| name == &preset.name);
-                if render_preset_chip(ui, preset, selected).clicked() {
-                    app.toggle_preset_chip_selection(&preset.name);
-                }
-            }
-        });
+    card(ui, "Destination", |ui| {
+        destination_summary(ui, app);
+    });
 
-        ui.add_space(8.0);
-        ui.horizontal_wrapped(|ui| {
-            if ui
-                .add_enabled(app.selected_preset_count() > 0, egui::Button::new("Clear"))
-                .on_hover_text("Clear selected preset chips")
-                .clicked()
-            {
-                app.clear_selected_preset_chips();
-                app.status_banner =
-                    "Preset selection cleared. Current source library stays loaded.".to_string();
-            }
-
-            ui.label(
-                RichText::new(format!("{} selected", app.selected_preset_count()))
-                    .size(11.0)
-                    .color(TEXT_TERTIARY),
-            );
-        });
-
-        ui.add_space(8.0);
-        ui.horizontal(|ui| {
-            ui.add(
-                egui::TextEdit::singleline(&mut app.preset_name_input)
-                    .desired_width(ui.available_width())
-                    .hint_text("Preset name"),
-            );
-            if ui.button("Save").clicked() {
-                app.save_current_preset();
-            }
-        });
+    card(ui, "Selected Phone Folders", |ui| {
+        source_library(ui, app);
     });
 }
 
-fn destination_root_card(ui: &mut egui::Ui, app: &mut BackupApp) {
-    settings_card(ui, "PC Destination", |ui| {
-        ui.horizontal(|ui| {
-            if ui
-                .add(
-                    egui::TextEdit::singleline(&mut app.settings.destination_path)
+fn run_column(ui: &mut egui::Ui, app: &mut BackupApp) {
+    readiness_card(ui, app);
+    safety_card(ui, app);
+    controls_card(ui, app);
+}
+
+fn source_pack_chips(ui: &mut egui::Ui, app: &mut BackupApp) {
+    let presets = app.settings.presets.clone();
+    ui.horizontal_wrapped(|ui| {
+        ui.spacing_mut().item_spacing = egui::vec2(6.0, 6.0);
+        for preset in &presets {
+            let selected = app
+                .selected_preset_names
+                .iter()
+                .any(|name| name == &preset.name);
+            if render_preset_chip(ui, preset, selected).clicked() {
+                app.toggle_preset_chip_selection(&preset.name);
+            }
+        }
+    });
+
+    ui.add_space(10.0);
+    ui.horizontal_wrapped(|ui| {
+        if ui
+            .add_enabled(
+                app.selected_preset_count() > 0,
+                egui::Button::new("Clear packs"),
+            )
+            .clicked()
+        {
+            app.clear_selected_preset_chips();
+            app.status_banner =
+                "Preset selection cleared. Current folders stay loaded.".to_string();
+        }
+        ui.label(
+            RichText::new(format!("{} active", app.selected_preset_count()))
+                .size(11.0)
+                .color(TEXT_TERTIARY),
+        );
+    });
+
+    egui::CollapsingHeader::new("Save this setup as a preset")
+        .id_salt("save_preset_details")
+        .default_open(false)
+        .show(ui, |ui| {
+            ui.horizontal(|ui| {
+                ui.add(
+                    egui::TextEdit::singleline(&mut app.preset_name_input)
                         .desired_width(ui.available_width())
-                        .hint_text("Choose a local backup folder"),
-                )
-                .changed()
-            {
-                app.invalidate_backup_analysis();
-            }
+                        .hint_text("Preset name"),
+                );
+                if ui.button("Save").clicked() {
+                    app.save_current_preset();
+                }
+            });
+        });
+}
 
+fn destination_summary(ui: &mut egui::Ui, app: &mut BackupApp) {
+    ui.horizontal_wrapped(|ui| {
+        ui.vertical(|ui| {
+            ui.label(
+                RichText::new("Root folder")
+                    .size(11.0)
+                    .color(TEXT_SECONDARY),
+            );
+            wrapped_path_text(
+                ui,
+                &empty_fallback(&app.settings.destination_path, "Not selected"),
+            );
+        });
+
+        ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
             if ui
-                .add_enabled(!app.has_active_adb_job(), egui::Button::new("Browse"))
-                .on_hover_text("Select Windows destination folder")
+                .add_enabled(
+                    !app.has_active_adb_job(),
+                    egui::Button::new("Choose folder"),
+                )
                 .clicked()
             {
                 app.pick_local_destination_folder();
             }
         });
-
-        ui.add_space(6.0);
-        wrapped_path_text(ui, &app.settings.destination_path);
     });
+
+    egui::CollapsingHeader::new("Edit destination path")
+        .id_salt("destination_path_details")
+        .default_open(false)
+        .show(ui, |ui| {
+            if ui
+                .add(
+                    egui::TextEdit::singleline(&mut app.settings.destination_path)
+                        .desired_width(f32::INFINITY)
+                        .hint_text("Local backup folder"),
+                )
+                .changed()
+            {
+                app.invalidate_backup_analysis();
+            }
+        });
 }
 
-fn source_library_card(ui: &mut egui::Ui, app: &mut BackupApp) {
+fn source_library(ui: &mut egui::Ui, app: &mut BackupApp) {
     let adb_job_active = app.has_active_adb_job();
     let mut remove_index = None;
     let mut pick_phone_index = None;
     let mut pick_destination_index = None;
     let mut changed = false;
 
-    settings_card(ui, "Source Library", |ui| {
-        ui.horizontal_wrapped(|ui| {
-            if ui
-                .add_enabled(!adb_job_active, egui::Button::new("Add Phone Folder"))
-                .clicked()
-            {
-                app.add_custom_backup_source();
-                changed = true;
-            }
-
-            if ui
-                .add_enabled(!adb_job_active, egui::Button::new("Scan Sources"))
-                .clicked()
-            {
-                app.refresh_backup_source_scan();
-            }
-
-            if app.backup_source_library.is_scanning {
-                ui.spinner();
-                if let Some(started) = app.backup_source_library.started_at {
-                    ui.label(
-                        RichText::new(format_duration(started.elapsed().as_secs_f64()))
-                            .size(11.0)
-                            .color(TEXT_TERTIARY),
-                    );
-                }
-                if ui.small_button("Cancel").clicked() {
-                    app.cancel_backup_source_scan();
-                }
-            }
-        });
-
-        if let Some(error) = &app.backup_source_library.scan_error {
-            ui.add_space(6.0);
-            ui.colored_label(ERROR, error);
+    ui.horizontal_wrapped(|ui| {
+        if ui
+            .add_enabled(!adb_job_active, egui::Button::new("Add folder"))
+            .clicked()
+        {
+            app.add_custom_backup_source();
+            changed = true;
         }
 
-        ui.add_space(8.0);
+        if ui
+            .add_enabled(!adb_job_active, egui::Button::new("Scan folders"))
+            .clicked()
+        {
+            app.refresh_backup_source_scan();
+        }
 
-        ScrollArea::vertical()
-            .id_salt("source_library_scroll")
-            .max_height(430.0)
-            .auto_shrink([false; 2])
-            .show(ui, |ui| {
-                let destination_root = app.settings.destination_path.clone();
-                let scan_results = app.backup_source_library.scan_results.clone();
-
-                for (index, source) in app.settings.backup_sources.iter_mut().enumerate() {
-                    let scan = scan_results.iter().find(|scan| scan.id == source.id);
-                    source_row(
-                        ui,
-                        index,
-                        source,
-                        scan,
-                        &destination_root,
-                        adb_job_active,
-                        &mut changed,
-                        &mut remove_index,
-                        &mut pick_phone_index,
-                        &mut pick_destination_index,
-                    );
-                    ui.add_space(8.0);
-                }
-            });
+        if app.backup_source_library.is_scanning {
+            ui.spinner();
+            if let Some(started) = app.backup_source_library.started_at {
+                ui.label(
+                    RichText::new(format_duration(started.elapsed().as_secs_f64()))
+                        .size(11.0)
+                        .color(TEXT_TERTIARY),
+                );
+            }
+            if ui.small_button("Cancel").clicked() {
+                app.cancel_backup_source_scan();
+            }
+        }
     });
+
+    if let Some(error) = &app.backup_source_library.scan_error {
+        ui.add_space(6.0);
+        ui.colored_label(ERROR, error);
+    }
+
+    ui.add_space(10.0);
+    let destination_root = app.settings.destination_path.clone();
+    let scan_results = app.backup_source_library.scan_results.clone();
+
+    ScrollArea::vertical()
+        .id_salt("source_library_scroll")
+        .max_height(460.0)
+        .auto_shrink([false; 2])
+        .show(ui, |ui| {
+            for (index, source) in app.settings.backup_sources.iter_mut().enumerate() {
+                let scan = scan_results.iter().find(|scan| scan.id == source.id);
+                compact_source_row(
+                    ui,
+                    index,
+                    source,
+                    scan,
+                    &destination_root,
+                    adb_job_active,
+                    &mut changed,
+                    &mut remove_index,
+                    &mut pick_phone_index,
+                    &mut pick_destination_index,
+                );
+                ui.add_space(6.0);
+            }
+        });
 
     if let Some(index) = remove_index {
         app.remove_backup_source(index);
@@ -262,7 +290,7 @@ fn source_library_card(ui: &mut egui::Ui, app: &mut BackupApp) {
 }
 
 #[allow(clippy::too_many_arguments)]
-fn source_row(
+fn compact_source_row(
     ui: &mut egui::Ui,
     index: usize,
     source: &mut crate::core::models::BackupSourceConfig,
@@ -274,13 +302,15 @@ fn source_row(
     pick_phone_index: &mut Option<usize>,
     pick_destination_index: &mut Option<usize>,
 ) {
+    let stroke = if source.enabled {
+        Stroke::new(1.0, BORDER_CARD)
+    } else {
+        Stroke::new(1.0, BG_CARD_HOVER)
+    };
+
     Frame::new()
-        .fill(if source.enabled {
-            BG_CARD
-        } else {
-            BG_CARD_HOVER
-        })
-        .stroke(Stroke::new(1.0, BORDER_CARD))
+        .fill(BG_CARD)
+        .stroke(stroke)
         .corner_radius(CornerRadius::same(8))
         .inner_margin(Margin::same(10))
         .show(ui, |ui| {
@@ -289,16 +319,19 @@ fn source_row(
                     *changed = true;
                 }
 
-                if ui
-                    .add(
-                        egui::TextEdit::singleline(&mut source.label)
-                            .desired_width(170.0)
-                            .hint_text("Source label"),
-                    )
-                    .changed()
-                {
-                    *changed = true;
-                }
+                ui.vertical(|ui| {
+                    if ui
+                        .add(
+                            egui::TextEdit::singleline(&mut source.label)
+                                .desired_width(190.0)
+                                .font(egui::TextStyle::Button),
+                        )
+                        .changed()
+                    {
+                        *changed = true;
+                    }
+                    ui.label(scan_summary(scan));
+                });
 
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                     if ui
@@ -308,8 +341,15 @@ fn source_row(
                         *remove_index = Some(index);
                     }
                     if ui
+                        .add_enabled(!adb_job_active, egui::Button::new("PC"))
+                        .on_hover_text("Choose PC destination for this folder")
+                        .clicked()
+                    {
+                        *pick_destination_index = Some(index);
+                    }
+                    if ui
                         .add_enabled(!adb_job_active, egui::Button::new("Phone"))
-                        .on_hover_text("Select Android source folder")
+                        .on_hover_text("Choose phone folder")
                         .clicked()
                     {
                         *pick_phone_index = Some(index);
@@ -318,111 +358,56 @@ fn source_row(
             });
 
             ui.add_space(6.0);
-            ui.label(
-                RichText::new("Phone source")
-                    .size(11.0)
-                    .color(TEXT_SECONDARY),
-            );
-            if ui
-                .add(
-                    egui::TextEdit::singleline(&mut source.source_path)
-                        .desired_width(f32::INFINITY),
-                )
-                .changed()
-            {
-                *changed = true;
-            }
-
-            ui.add_space(8.0);
-            ui.label(
-                RichText::new("PC destination for this source")
-                    .size(11.0)
-                    .color(TEXT_SECONDARY),
-            );
-            ui.horizontal(|ui| {
-                if ui
-                    .add(
-                        egui::TextEdit::singleline(&mut source.destination_subfolder)
-                            .desired_width(ui.available_width())
-                            .hint_text("Subfolder or full local path"),
-                    )
-                    .changed()
-                {
-                    *changed = true;
-                }
-
-                if ui
-                    .add_enabled(!adb_job_active, egui::Button::new("Browse"))
-                    .on_hover_text("Select a Windows folder for this source")
-                    .clicked()
-                {
-                    *pick_destination_index = Some(index);
-                }
-            });
-
             wrapped_path_text(
                 ui,
                 &resolved_destination_path(destination_root, &source.destination_subfolder),
             );
 
-            ui.add_space(6.0);
-            match scan {
-                Some(scan) if scan.exists => {
+            egui::CollapsingHeader::new("Folder paths")
+                .id_salt(("source_details", source.id.clone()))
+                .default_open(false)
+                .show(ui, |ui| {
+                    ui.label(RichText::new("Phone").size(11.0).color(TEXT_SECONDARY));
+                    if ui
+                        .add(
+                            egui::TextEdit::singleline(&mut source.source_path)
+                                .desired_width(f32::INFINITY),
+                        )
+                        .changed()
+                    {
+                        *changed = true;
+                    }
+
+                    ui.add_space(6.0);
                     ui.label(
-                        RichText::new(format!(
-                            "{} files | {}",
-                            scan.file_count,
-                            format_bytes(scan.total_bytes)
-                        ))
-                        .size(11.0)
-                        .color(SUCCESS),
-                    );
-                }
-                Some(scan) => {
-                    ui.colored_label(
-                        ERROR,
-                        scan.error
-                            .as_deref()
-                            .unwrap_or("Source was not available during scan."),
-                    );
-                }
-                None => {
-                    ui.label(
-                        RichText::new("Not scanned yet.")
+                        RichText::new("PC subfolder")
                             .size(11.0)
-                            .color(TEXT_TERTIARY),
+                            .color(TEXT_SECONDARY),
                     );
-                }
-            }
+                    if ui
+                        .add(
+                            egui::TextEdit::singleline(&mut source.destination_subfolder)
+                                .desired_width(f32::INFINITY)
+                                .hint_text("Subfolder inside the destination root"),
+                        )
+                        .changed()
+                    {
+                        *changed = true;
+                    }
+                });
         });
 }
 
-fn render_run_column(ui: &mut egui::Ui, app: &mut BackupApp) {
-    preflight_card(ui, app);
-    options_card(ui, app);
-    run_controls_card(ui, app);
-}
-
-fn preflight_card(ui: &mut egui::Ui, app: &mut BackupApp) {
-    settings_card(ui, "Preflight", |ui| {
+fn readiness_card(ui: &mut egui::Ui, app: &mut BackupApp) {
+    card(ui, "Ready Check", |ui| {
         if let Some(analysis) = &app.backup_analysis.analysis {
             let preflight = &analysis.preflight;
+            hero_metric(ui, format_bytes(preflight.bytes_to_copy), "to copy");
+            stat_line(ui, "Files", preflight.total_files.to_string(), TEXT_PRIMARY);
             stat_line(
                 ui,
-                "Files found",
-                preflight.total_files.to_string(),
-                TEXT_PRIMARY,
-            );
-            stat_line(
-                ui,
-                "Needs copy",
+                "New or changed",
                 preflight.files_to_copy.to_string(),
-                ACCENT,
-            );
-            stat_line(
-                ui,
-                "Data to copy",
-                format_bytes(preflight.bytes_to_copy),
                 ACCENT,
             );
             stat_line(
@@ -456,25 +441,21 @@ fn preflight_card(ui: &mut egui::Ui, app: &mut BackupApp) {
         } else if app.backup_analysis.is_loading {
             ui.horizontal(|ui| {
                 ui.spinner();
-                if let Some(started) = app.backup_analysis.started_at {
-                    ui.label(format!(
-                        "Analyzing for {}",
-                        format_duration(started.elapsed().as_secs_f64())
-                    ));
-                } else {
-                    ui.label("Analyzing...");
-                }
+                ui.label("Checking folders and disk space...");
                 if ui.small_button("Cancel").clicked() {
                     app.cancel_backup_analysis();
                 }
             });
         } else {
+            hero_metric(
+                ui,
+                format!("{} folders", active_source_count(app)),
+                "selected",
+            );
             ui.label(
-                RichText::new(
-                    "Run analysis before a real backup to check file counts and disk space.",
-                )
-                .size(12.0)
-                .color(TEXT_SECONDARY),
+                RichText::new("Analyze once before a real run to confirm file counts and space.")
+                    .size(12.0)
+                    .color(TEXT_SECONDARY),
             );
         }
 
@@ -483,12 +464,9 @@ fn preflight_card(ui: &mut egui::Ui, app: &mut BackupApp) {
             ui.colored_label(ERROR, error);
         }
 
-        ui.add_space(8.0);
+        ui.add_space(10.0);
         if ui
-            .add_enabled(
-                !app.has_active_adb_job(),
-                egui::Button::new("Analyze selected sources"),
-            )
+            .add_enabled(!app.has_active_adb_job(), egui::Button::new("Analyze"))
             .clicked()
         {
             app.request_backup_analysis();
@@ -496,74 +474,79 @@ fn preflight_card(ui: &mut egui::Ui, app: &mut BackupApp) {
     });
 }
 
-fn options_card(ui: &mut egui::Ui, app: &mut BackupApp) {
-    settings_card(ui, "Backup Options", |ui| {
-        egui::ComboBox::from_label("Validation")
-            .selected_text(app.settings.validation_mode.label())
-            .show_ui(ui, |ui| {
-                ui.selectable_value(
-                    &mut app.settings.validation_mode,
-                    ValidationMode::Size,
-                    ValidationMode::Size.label(),
-                );
-                ui.selectable_value(
-                    &mut app.settings.validation_mode,
-                    ValidationMode::Md5,
-                    ValidationMode::Md5.label(),
-                );
-            });
-
-        egui::ComboBox::from_label("Existing files")
-            .selected_text(app.settings.existing_file_behavior.label())
-            .show_ui(ui, |ui| {
-                ui.selectable_value(
-                    &mut app.settings.existing_file_behavior,
-                    ExistingFileBehavior::Skip,
-                    ExistingFileBehavior::Skip.label(),
-                );
-                ui.selectable_value(
-                    &mut app.settings.existing_file_behavior,
-                    ExistingFileBehavior::Validate,
-                    ExistingFileBehavior::Validate.label(),
-                );
-            });
-
-        ui.checkbox(&mut app.settings.dry_run, "Dry-run mode");
+fn safety_card(ui: &mut egui::Ui, app: &mut BackupApp) {
+    card(ui, "Safety", |ui| {
+        ui.checkbox(&mut app.settings.dry_run, "Simulation mode");
         ui.checkbox(
             &mut app.settings.auto_delete_after_success,
-            "Auto-delete after validated backup",
+            "Delete from phone after validated backup",
         );
 
-        let mut filter_recent = app.settings.only_last_days.is_some();
-        if ui
-            .checkbox(&mut filter_recent, "Only recent files")
-            .changed()
-        {
-            app.settings.only_last_days = if filter_recent { Some(7) } else { None };
-        }
-        if let Some(days) = &mut app.settings.only_last_days {
-            ui.horizontal(|ui| {
-                ui.label("Days");
-                ui.add(egui::DragValue::new(days).range(1..=365));
+        egui::CollapsingHeader::new("Advanced options")
+            .id_salt("backup_advanced_options")
+            .default_open(false)
+            .show(ui, |ui| {
+                egui::ComboBox::from_label("Validation")
+                    .selected_text(app.settings.validation_mode.label())
+                    .show_ui(ui, |ui| {
+                        ui.selectable_value(
+                            &mut app.settings.validation_mode,
+                            ValidationMode::Size,
+                            ValidationMode::Size.label(),
+                        );
+                        ui.selectable_value(
+                            &mut app.settings.validation_mode,
+                            ValidationMode::Md5,
+                            ValidationMode::Md5.label(),
+                        );
+                    });
+
+                egui::ComboBox::from_label("Existing files")
+                    .selected_text(app.settings.existing_file_behavior.label())
+                    .show_ui(ui, |ui| {
+                        ui.selectable_value(
+                            &mut app.settings.existing_file_behavior,
+                            ExistingFileBehavior::Skip,
+                            ExistingFileBehavior::Skip.label(),
+                        );
+                        ui.selectable_value(
+                            &mut app.settings.existing_file_behavior,
+                            ExistingFileBehavior::Validate,
+                            ExistingFileBehavior::Validate.label(),
+                        );
+                    });
+
+                let mut filter_recent = app.settings.only_last_days.is_some();
+                if ui
+                    .checkbox(&mut filter_recent, "Only recent files")
+                    .changed()
+                {
+                    app.settings.only_last_days = if filter_recent { Some(7) } else { None };
+                }
+                if let Some(days) = &mut app.settings.only_last_days {
+                    ui.horizontal(|ui| {
+                        ui.label("Days");
+                        ui.add(egui::DragValue::new(days).range(1..=365));
+                    });
+                }
+
+                ui.add_space(8.0);
+                ui.label(
+                    RichText::new("ADB executable")
+                        .size(11.0)
+                        .color(TEXT_SECONDARY),
+                );
+                ui.add(
+                    egui::TextEdit::singleline(&mut app.settings.adb_path)
+                        .desired_width(f32::INFINITY)
+                        .hint_text("adb"),
+                );
             });
-        }
-
-        ui.add_space(8.0);
-        ui.label(
-            RichText::new("ADB executable")
-                .size(11.0)
-                .color(TEXT_SECONDARY),
-        );
-        ui.add(
-            egui::TextEdit::singleline(&mut app.settings.adb_path)
-                .desired_width(f32::INFINITY)
-                .hint_text("adb"),
-        );
     });
 }
 
-fn run_controls_card(ui: &mut egui::Ui, app: &mut BackupApp) {
-    settings_card(ui, "Run", |ui| {
+fn controls_card(ui: &mut egui::Ui, app: &mut BackupApp) {
+    card(ui, "Run", |ui| {
         let running = app.is_running();
         let paused = app
             .sync_handle
@@ -571,20 +554,35 @@ fn run_controls_card(ui: &mut egui::Ui, app: &mut BackupApp) {
             .map(|handle| handle.is_paused())
             .unwrap_or(false);
 
+        let start_button = egui::Button::new(
+            RichText::new("Start Backup")
+                .size(14.0)
+                .strong()
+                .color(Color32::WHITE),
+        )
+        .fill(ACCENT)
+        .corner_radius(CornerRadius::same(6))
+        .min_size(egui::vec2(ui.available_width(), 38.0));
+        if ui
+            .add_enabled(!app.has_active_adb_job(), start_button)
+            .clicked()
+        {
+            app.start_full_backup();
+        }
+
+        ui.add_space(8.0);
         ui.horizontal_wrapped(|ui| {
-            let start_button = egui::Button::new(
-                RichText::new("Start Backup")
-                    .size(13.0)
-                    .strong()
-                    .color(Color32::WHITE),
-            )
-            .fill(ACCENT)
-            .corner_radius(CornerRadius::same(6));
             if ui
-                .add_enabled(!app.has_active_adb_job(), start_button)
+                .add_enabled(
+                    !app.has_active_adb_job(),
+                    egui::Button::new("Run simulation"),
+                )
                 .clicked()
             {
+                let previous = app.settings.dry_run;
+                app.settings.dry_run = true;
                 app.start_full_backup();
+                app.settings.dry_run = previous;
             }
 
             if ui
@@ -606,21 +604,7 @@ fn run_controls_card(ui: &mut egui::Ui, app: &mut BackupApp) {
             }
         });
 
-        ui.add_space(8.0);
-        if ui
-            .add_enabled(
-                !app.has_active_adb_job(),
-                egui::Button::new("Run dry-run now"),
-            )
-            .clicked()
-        {
-            let previous = app.settings.dry_run;
-            app.settings.dry_run = true;
-            app.start_full_backup();
-            app.settings.dry_run = previous;
-        }
-
-        ui.add_space(10.0);
+        ui.add_space(12.0);
         let total_progress = if app.progress.total_files == 0 {
             0.0
         } else {
@@ -654,76 +638,113 @@ fn run_controls_card(ui: &mut egui::Ui, app: &mut BackupApp) {
     });
 }
 
-fn render_analysis_and_queue(ui: &mut egui::Ui, app: &mut BackupApp) {
+fn details_section(ui: &mut egui::Ui, app: &mut BackupApp) {
     if let Some(analysis) = &app.backup_analysis.analysis.clone() {
-        render_backup_analysis(ui, analysis, &mut app.analysis_file_filter);
-        ui.add_space(14.0);
+        egui::CollapsingHeader::new("Analysis details")
+            .id_salt("analysis_details")
+            .default_open(false)
+            .show(ui, |ui| {
+                render_backup_analysis(ui, analysis, &mut app.analysis_file_filter);
+            });
+        ui.add_space(10.0);
     }
 
-    settings_card(ui, "Recent File Queue", |ui| {
-        if app.files.is_empty() {
-            ui.label(
-                RichText::new("No backup run has started in this session.")
-                    .size(12.0)
-                    .color(TEXT_TERTIARY),
-            );
-            return;
-        }
+    egui::CollapsingHeader::new("Recent file queue")
+        .id_salt("recent_file_queue_details")
+        .default_open(app.is_running() || !app.files.is_empty())
+        .show(ui, |ui| {
+            recent_file_queue(ui, app);
+        });
+}
 
-        let mut retry_target: Option<RemoteFile> = None;
-        ScrollArea::vertical()
-            .id_salt("recent_file_queue_scroll")
-            .max_height(280.0)
-            .auto_shrink([false; 2])
-            .show(ui, |ui| {
-                for record in app.files.iter().rev().take(60) {
-                    Frame::new()
-                        .fill(BG_CARD)
-                        .stroke(Stroke::new(1.0, BORDER_CARD))
-                        .corner_radius(CornerRadius::same(6))
-                        .inner_margin(Margin::same(8))
-                        .show(ui, |ui| {
-                            ui.horizontal_wrapped(|ui| {
-                                ui.colored_label(record.status.color(), record.status.label());
-                                ui.label(
-                                    RichText::new(format_bytes(record.size_bytes))
-                                        .color(TEXT_SECONDARY),
-                                );
-                                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                                    if record.status.is_retryable()
-                                        && !app.is_running()
-                                        && ui.button("Retry").clicked()
-                                    {
-                                        retry_target = Some(RemoteFile {
-                                            name: record.name.clone(),
-                                            remote_path: record.remote_path.clone(),
-                                            size_bytes: record.size_bytes,
-                                            modified_epoch_seconds: record.modified_epoch_seconds,
-                                            source_root: record.source_root.clone(),
-                                            source_label: record.source_label.clone(),
-                                            destination_subfolder: record
-                                                .destination_subfolder
-                                                .clone(),
-                                            relative_path: record.relative_path.clone(),
-                                        });
-                                    }
-                                });
-                            });
-                            wrapped_text(ui, &record.name);
-                            wrapped_path_text(ui, &record.local_path.display().to_string());
+fn recent_file_queue(ui: &mut egui::Ui, app: &mut BackupApp) {
+    if app.files.is_empty() {
+        ui.label(
+            RichText::new("No backup run has started in this session.")
+                .size(12.0)
+                .color(TEXT_TERTIARY),
+        );
+        return;
+    }
+
+    let mut retry_target: Option<RemoteFile> = None;
+    ScrollArea::vertical()
+        .id_salt("recent_file_queue_scroll")
+        .max_height(280.0)
+        .auto_shrink([false; 2])
+        .show(ui, |ui| {
+            for record in app.files.iter().rev().take(60) {
+                Frame::new()
+                    .fill(BG_CARD)
+                    .stroke(Stroke::new(1.0, BORDER_CARD))
+                    .corner_radius(CornerRadius::same(6))
+                    .inner_margin(Margin::same(8))
+                    .show(ui, |ui| {
+                        ui.horizontal_wrapped(|ui| {
+                            ui.colored_label(record.status.color(), record.status.label());
                             ui.label(
-                                RichText::new(display_text_for_ui(&record.detail))
-                                    .size(11.0)
+                                RichText::new(format_bytes(record.size_bytes))
                                     .color(TEXT_SECONDARY),
                             );
+                            ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                                if record.status.is_retryable()
+                                    && !app.is_running()
+                                    && ui.button("Retry").clicked()
+                                {
+                                    retry_target = Some(RemoteFile {
+                                        name: record.name.clone(),
+                                        remote_path: record.remote_path.clone(),
+                                        size_bytes: record.size_bytes,
+                                        modified_epoch_seconds: record.modified_epoch_seconds,
+                                        source_root: record.source_root.clone(),
+                                        source_label: record.source_label.clone(),
+                                        destination_subfolder: record.destination_subfolder.clone(),
+                                        relative_path: record.relative_path.clone(),
+                                    });
+                                }
+                            });
                         });
-                    ui.add_space(6.0);
-                }
-            });
+                        wrapped_text(ui, &record.name);
+                        ui.label(
+                            RichText::new(display_text_for_ui(&record.detail))
+                                .size(11.0)
+                                .color(TEXT_SECONDARY),
+                        );
+                    });
+                ui.add_space(6.0);
+            }
+        });
 
-        if let Some(file) = retry_target {
-            app.start_retry(file);
-        }
+    if let Some(file) = retry_target {
+        app.start_retry(file);
+    }
+}
+
+fn card(ui: &mut egui::Ui, title: &str, add_contents: impl FnOnce(&mut egui::Ui)) {
+    Frame::new()
+        .fill(BG_CARD)
+        .stroke(Stroke::new(1.0, BORDER_CARD))
+        .corner_radius(CornerRadius::same(8))
+        .inner_margin(Margin::same(14))
+        .show(ui, |ui| {
+            ui.label(RichText::new(title).size(13.0).strong().color(TEXT_PRIMARY));
+            ui.add_space(8.0);
+            add_contents(ui);
+        });
+    ui.add_space(10.0);
+}
+
+fn hero_metric(ui: &mut egui::Ui, value: String, label: &str) {
+    ui.label(RichText::new(value).size(27.0).strong().color(TEXT_PRIMARY));
+    ui.label(RichText::new(label).size(11.0).color(TEXT_SECONDARY));
+}
+
+fn stat_line(ui: &mut egui::Ui, label: &str, value: String, color: Color32) {
+    ui.horizontal(|ui| {
+        ui.label(RichText::new(label).size(12.0).color(TEXT_SECONDARY));
+        ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+            ui.label(RichText::new(value).size(12.0).strong().color(color));
+        });
     });
 }
 
@@ -735,13 +756,24 @@ fn active_source_count(app: &BackupApp) -> usize {
         .count()
 }
 
-fn stat_line(ui: &mut egui::Ui, label: &str, value: String, color: Color32) {
-    ui.horizontal(|ui| {
-        ui.label(RichText::new(label).size(12.0).color(TEXT_SECONDARY));
-        ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-            ui.label(RichText::new(value).size(12.0).strong().color(color));
-        });
-    });
+fn scan_summary(scan: Option<&crate::core::models::BackupSourceScan>) -> RichText {
+    match scan {
+        Some(scan) if scan.exists => RichText::new(format!(
+            "{} files | {}",
+            scan.file_count,
+            format_bytes(scan.total_bytes)
+        ))
+        .size(11.0)
+        .color(SUCCESS),
+        Some(scan) => RichText::new(
+            scan.error
+                .clone()
+                .unwrap_or_else(|| "Folder unavailable".to_string()),
+        )
+        .size(11.0)
+        .color(ERROR),
+        None => RichText::new("Not scanned").size(11.0).color(TEXT_TERTIARY),
+    }
 }
 
 fn resolved_destination_path(destination_root: &str, destination_subfolder: &str) -> String {
@@ -767,6 +799,14 @@ fn resolved_destination_path(destination_root: &str, destination_subfolder: &str
         .join(subfolder_path)
         .display()
         .to_string()
+}
+
+fn empty_fallback(value: &str, fallback: &str) -> String {
+    if value.trim().is_empty() {
+        fallback.to_string()
+    } else {
+        value.to_string()
+    }
 }
 
 pub(crate) fn render_remote_folder_picker(ctx: &egui::Context, app: &mut BackupApp) {
