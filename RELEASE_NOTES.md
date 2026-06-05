@@ -1,5 +1,22 @@
 # Release Notes
 
+## v0.7.1
+
+Patch release for UI polish and clearer long-running ADB feedback.
+
+### Included
+
+- Replaced the bad Settings placeholder with a real Settings page for ADB, safety defaults, folders, and logs
+- Fixed the left navigation so selected items use a fixed compact size and never stretch into a giant blue block
+- Added a global ADB work status strip that appears during device checks, folder browsing, source scans, backup analysis, backup runs, cleanup previews, and delete operations
+- Added visible spinner, elapsed time, latest activity, backup progress, and pause/stop or cancel actions where possible
+- Added a Windows file picker for selecting `adb.exe`
+
+### Release Assets
+
+- `adb-smart-backup-v0.7.1-windows-x86_64.exe`
+- `adb-smart-backup-v0.7.1-windows-x86_64.zip`
+
 ## v0.7.0
 
 UI overhaul focused on making the app more abstract, calmer, and easier to operate.

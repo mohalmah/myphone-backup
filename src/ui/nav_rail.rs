@@ -1,74 +1,91 @@
 use crate::app::{AppTab, BackupApp};
 use crate::ui::theme::*;
-use eframe::egui::{self, Align, Color32, CornerRadius, Frame, Layout, Margin, RichText, Stroke};
+use eframe::egui::{self, Color32, CornerRadius, Frame, Margin, RichText, Stroke};
 
 pub(crate) fn render_nav_rail(ctx: &egui::Context, app: &mut BackupApp) {
     egui::SidePanel::left("nav_rail")
         .resizable(false)
-        .exact_width(92.0)
+        .exact_width(116.0)
         .show_separator_line(false)
         .frame(
             Frame::new()
-                .fill(BG_LAYER)
+                .fill(Color32::from_rgb(252, 252, 252))
                 .stroke(Stroke::new(1.0, BORDER_CARD))
-                .inner_margin(Margin::symmetric(8, 10)),
+                .inner_margin(Margin::symmetric(12, 14)),
         )
         .show(ctx, |ui| {
-            ui.set_min_height(ui.available_height());
+            brand(ui);
+            ui.add_space(18.0);
 
+            nav_item(ui, app, AppTab::Dashboard, "Home", "Start here", false);
+            nav_item(ui, app, AppTab::Backup, "Backup", "Copy safely", false);
+            nav_item(ui, app, AppTab::Cleanup, "Cleanup", "Delete safely", false);
+            nav_item(ui, app, AppTab::Devices, "Device", "Soon", true);
+
+            ui.add_space(14.0);
+            ui.separator();
+            ui.add_space(10.0);
+
+            log_toggle(ui, app);
+            nav_item(ui, app, AppTab::Settings, "Settings", "Controls", false);
+        });
+}
+
+fn brand(ui: &mut egui::Ui) {
+    Frame::new()
+        .fill(ACCENT.gamma_multiply(0.08))
+        .corner_radius(CornerRadius::same(12))
+        .inner_margin(Margin::symmetric(10, 10))
+        .show(ui, |ui| {
+            ui.set_min_width(72.0);
             ui.vertical_centered(|ui| {
-                ui.label(RichText::new("ADB").size(15.0).strong().color(TEXT_PRIMARY));
-                ui.label(RichText::new("Backup").size(10.0).color(TEXT_TERTIARY));
-            });
-            ui.add_space(16.0);
-
-            nav_item(ui, app, AppTab::Dashboard, "Home", false);
-            nav_item(ui, app, AppTab::Backup, "Backup", false);
-            nav_item(ui, app, AppTab::Cleanup, "Cleanup", false);
-            nav_item(ui, app, AppTab::Devices, "Device", true);
-
-            ui.with_layout(Layout::bottom_up(Align::Center), |ui| {
-                nav_item(ui, app, AppTab::Settings, "Settings", false);
-                ui.add_space(8.0);
-                nerd_toggle(ui, app);
+                ui.label(RichText::new("ADB").size(16.0).strong().color(ACCENT));
+                ui.label(
+                    RichText::new("Smart Backup")
+                        .size(9.5)
+                        .color(TEXT_SECONDARY),
+                );
             });
         });
 }
 
-fn nav_item(ui: &mut egui::Ui, app: &mut BackupApp, tab: AppTab, label: &str, coming_soon: bool) {
-    let is_active = app.active_tab == tab;
-    let text_color = if coming_soon {
+fn nav_item(
+    ui: &mut egui::Ui,
+    app: &mut BackupApp,
+    tab: AppTab,
+    label: &str,
+    hint: &str,
+    disabled: bool,
+) {
+    let active = app.active_tab == tab;
+    let fill = if active {
+        Color32::from_rgb(232, 243, 255)
+    } else {
+        Color32::TRANSPARENT
+    };
+    let stroke = if active {
+        Stroke::new(1.0, ACCENT)
+    } else {
+        Stroke::new(1.0, Color32::TRANSPARENT)
+    };
+    let title_color = if disabled {
         TEXT_TERTIARY
-    } else if is_active {
+    } else if active {
         ACCENT
     } else {
         TEXT_PRIMARY
     };
-    let fill = if is_active {
-        ACCENT.gamma_multiply(0.08)
-    } else {
-        Color32::TRANSPARENT
-    };
 
     let inner = Frame::new()
         .fill(fill)
-        .stroke(Stroke::new(
-            if is_active { 1.0 } else { 0.0 },
-            if is_active {
-                ACCENT
-            } else {
-                Color32::TRANSPARENT
-            },
-        ))
-        .corner_radius(CornerRadius::same(8))
-        .inner_margin(Margin::symmetric(8, 9))
+        .stroke(stroke)
+        .corner_radius(CornerRadius::same(10))
+        .inner_margin(Margin::symmetric(10, 8))
         .show(ui, |ui| {
-            ui.set_min_width(58.0);
-            ui.vertical_centered(|ui| {
-                ui.label(RichText::new(label).size(11.0).strong().color(text_color));
-                if coming_soon {
-                    ui.label(RichText::new("soon").size(9.0).color(TEXT_TERTIARY));
-                }
+            ui.set_min_size(egui::vec2(78.0, 42.0));
+            ui.vertical(|ui| {
+                ui.label(RichText::new(label).size(12.0).strong().color(title_color));
+                ui.label(RichText::new(hint).size(9.0).color(TEXT_TERTIARY));
             });
         });
 
@@ -77,43 +94,50 @@ fn nav_item(ui: &mut egui::Ui, app: &mut BackupApp, tab: AppTab, label: &str, co
         ui.make_persistent_id(("nav_item", label)),
         egui::Sense::click(),
     );
-    if response.hovered() && !coming_soon {
+    if response.hovered() && !disabled {
         ui.output_mut(|output| output.cursor_icon = egui::CursorIcon::PointingHand);
     }
-    if response.clicked() && !coming_soon {
+    if response.clicked() && !disabled {
         app.active_tab = tab;
     }
 
     ui.add_space(6.0);
 }
 
-fn nerd_toggle(ui: &mut egui::Ui, app: &mut BackupApp) {
-    let label = if app.nerd_mode { "Logs on" } else { "Logs" };
-    let color = if app.nerd_mode {
-        ACCENT
-    } else {
-        TEXT_SECONDARY
-    };
-    let fill = if app.nerd_mode {
-        ACCENT.gamma_multiply(0.08)
+fn log_toggle(ui: &mut egui::Ui, app: &mut BackupApp) {
+    let active = app.nerd_mode;
+    let fill = if active {
+        Color32::from_rgb(232, 243, 255)
     } else {
         Color32::TRANSPARENT
+    };
+    let stroke = if active {
+        Stroke::new(1.0, ACCENT)
+    } else {
+        Stroke::new(1.0, Color32::TRANSPARENT)
     };
 
     let inner = Frame::new()
         .fill(fill)
-        .corner_radius(CornerRadius::same(8))
-        .inner_margin(Margin::symmetric(8, 8))
+        .stroke(stroke)
+        .corner_radius(CornerRadius::same(10))
+        .inner_margin(Margin::symmetric(10, 8))
         .show(ui, |ui| {
-            ui.set_min_width(58.0);
-            ui.vertical_centered(|ui| {
-                ui.label(RichText::new(label).size(10.5).strong().color(color));
+            ui.set_min_size(egui::vec2(78.0, 42.0));
+            ui.vertical(|ui| {
+                ui.label(
+                    RichText::new(if active { "Logs on" } else { "Logs" })
+                        .size(12.0)
+                        .strong()
+                        .color(if active { ACCENT } else { TEXT_PRIMARY }),
+                );
+                ui.label(RichText::new("ADB output").size(9.0).color(TEXT_TERTIARY));
             });
         });
 
     let response = ui.interact(
         inner.response.rect,
-        ui.make_persistent_id("nerd_toggle"),
+        ui.make_persistent_id("nav_logs_toggle"),
         egui::Sense::click(),
     );
     if response.hovered() {
@@ -122,4 +146,6 @@ fn nerd_toggle(ui: &mut egui::Ui, app: &mut BackupApp) {
     if response.clicked() {
         app.nerd_mode = !app.nerd_mode;
     }
+
+    ui.add_space(6.0);
 }

@@ -40,6 +40,7 @@ pub(crate) enum AppTab {
 pub(crate) struct RemoteFolderPicker {
     pub(crate) is_open: bool,
     pub(crate) is_loading: bool,
+    pub(crate) started_at: Option<std::time::Instant>,
     pub(crate) current_path: String,
     pub(crate) target: RemoteFolderPickerTarget,
     pub(crate) entries: Vec<RemoteDirectory>,
@@ -55,6 +56,8 @@ pub(crate) struct FolderCleanupState {
     pub(crate) delete_receiver: Option<Receiver<Result<String, String>>>,
     pub(crate) is_fetching_preview: bool,
     pub(crate) is_deleting: bool,
+    pub(crate) preview_started_at: Option<std::time::Instant>,
+    pub(crate) delete_started_at: Option<std::time::Instant>,
     pub(crate) preview_error: Option<String>,
     pub(crate) delete_error: Option<String>,
     pub(crate) delete_armed: bool,
@@ -83,6 +86,7 @@ pub struct BackupApp {
     pub(crate) settings: Settings,
     pub(crate) device_info: DeviceInfo,
     pub(crate) device_probe_receiver: Option<Receiver<Result<DeviceInfo, String>>>,
+    pub(crate) device_probe_started_at: Option<std::time::Instant>,
     pub(crate) background_log_sender: Sender<LogEntry>,
     pub(crate) background_log_receiver: Receiver<LogEntry>,
     pub(crate) sync_receiver: Option<Receiver<SyncEvent>>,
@@ -132,6 +136,7 @@ impl BackupApp {
             settings,
             device_info: DeviceInfo::default(),
             device_probe_receiver: None,
+            device_probe_started_at: None,
             background_log_sender,
             background_log_receiver,
             sync_receiver: None,
@@ -308,6 +313,7 @@ impl BackupApp {
 
     pub(crate) fn refresh_device_info(&mut self) {
         self.status_banner = "Checking ADB connection...".to_string();
+        self.device_probe_started_at = Some(std::time::Instant::now());
         self.device_probe_receiver = Some(sync::start_device_probe(
             self.settings.adb_path.clone(),
             self.background_log_sender.clone(),
@@ -564,6 +570,30 @@ impl BackupApp {
         }
     }
 
+    pub(crate) fn pick_adb_executable(&mut self) {
+        let current = PathBuf::from(&self.settings.adb_path);
+        let initial_directory = if current.is_file() {
+            current
+                .parent()
+                .map(|path| path.to_path_buf())
+                .unwrap_or_else(|| std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")))
+        } else {
+            std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."))
+        };
+
+        if let Some(file) = FileDialog::new()
+            .add_filter("ADB executable", &["exe"])
+            .set_directory(initial_directory)
+            .pick_file()
+        {
+            let selected = file.to_string_lossy().to_string();
+            self.settings.adb_path = selected.clone();
+            self.status_banner = format!("Selected ADB executable: {selected}");
+            self.push_log(format!("[INFO] ADB executable selected: {selected}"));
+            self.refresh_device_info();
+        }
+    }
+
     pub(crate) fn pick_backup_source_destination_folder(&mut self, index: usize) -> bool {
         if index >= self.settings.backup_sources.len() {
             return false;
@@ -632,6 +662,7 @@ impl BackupApp {
         self.remote_folder_picker.entries.clear();
         self.remote_folder_picker.error = None;
         self.remote_folder_picker.is_loading = true;
+        self.remote_folder_picker.started_at = Some(std::time::Instant::now());
         self.remote_folder_picker.receiver = Some(sync::start_remote_directory_list(
             self.settings.adb_path.clone(),
             normalized_path,
@@ -654,6 +685,7 @@ impl BackupApp {
         if let Some(result) = outcome {
             self.remote_folder_picker.receiver = None;
             self.remote_folder_picker.is_loading = false;
+            self.remote_folder_picker.started_at = None;
             match result {
                 Ok(entries) => {
                     self.remote_folder_picker.entries = entries;
@@ -667,6 +699,7 @@ impl BackupApp {
         } else if disconnected {
             self.remote_folder_picker.receiver = None;
             self.remote_folder_picker.is_loading = false;
+            self.remote_folder_picker.started_at = None;
         }
     }
 
@@ -677,6 +710,7 @@ impl BackupApp {
             self.folder_cleanup.preview = None;
             self.folder_cleanup.preview_receiver = None;
             self.folder_cleanup.is_fetching_preview = false;
+            self.folder_cleanup.preview_started_at = None;
             self.folder_cleanup.preview_error = None;
             self.folder_cleanup.delete_error = None;
             self.folder_cleanup.delete_armed = false;
@@ -688,6 +722,8 @@ impl BackupApp {
         self.folder_cleanup.preview = None;
         self.folder_cleanup.preview_receiver = None;
         self.folder_cleanup.is_fetching_preview = false;
+        self.folder_cleanup.preview_started_at = None;
+        self.folder_cleanup.delete_started_at = None;
         self.folder_cleanup.preview_error = None;
         self.folder_cleanup.delete_error = None;
         self.folder_cleanup.delete_armed = false;
@@ -763,6 +799,7 @@ impl BackupApp {
 
         self.folder_cleanup.delete_error = None;
         self.folder_cleanup.is_deleting = true;
+        self.folder_cleanup.delete_started_at = Some(std::time::Instant::now());
         Some(path)
     }
 
@@ -818,6 +855,7 @@ impl BackupApp {
         let selected_entries = self.selected_cleanup_entries();
         if selected_entries.is_empty() {
             self.folder_cleanup.is_deleting = false;
+            self.folder_cleanup.delete_started_at = None;
             self.folder_cleanup.delete_error =
                 Some("Select at least one file or folder from the preview first.".to_string());
             return;
@@ -828,6 +866,7 @@ impl BackupApp {
             .find_map(|entry| protected_cleanup_folder_reason(&entry.full_path))
         {
             self.folder_cleanup.is_deleting = false;
+            self.folder_cleanup.delete_started_at = None;
             self.folder_cleanup.delete_error = Some(reason.to_string());
             return;
         }
@@ -859,6 +898,7 @@ impl BackupApp {
         self.folder_cleanup.delete_armed = false;
         self.folder_cleanup.selected_paths.clear();
         self.folder_cleanup.is_fetching_preview = true;
+        self.folder_cleanup.preview_started_at = Some(std::time::Instant::now());
         self.folder_cleanup.preview_receiver = Some(sync::start_remote_folder_preview(
             self.settings.adb_path.clone(),
             path.clone(),
@@ -883,6 +923,7 @@ impl BackupApp {
         if let Some(result) = preview_outcome {
             self.folder_cleanup.preview_receiver = None;
             self.folder_cleanup.is_fetching_preview = false;
+            self.folder_cleanup.preview_started_at = None;
             match result {
                 Ok(preview) => {
                     let message = format!(
@@ -905,6 +946,7 @@ impl BackupApp {
         } else if preview_disconnected {
             self.folder_cleanup.preview_receiver = None;
             self.folder_cleanup.is_fetching_preview = false;
+            self.folder_cleanup.preview_started_at = None;
         }
 
         let mut delete_outcome = None;
@@ -921,6 +963,7 @@ impl BackupApp {
         if let Some(result) = delete_outcome {
             self.folder_cleanup.delete_receiver = None;
             self.folder_cleanup.is_deleting = false;
+            self.folder_cleanup.delete_started_at = None;
             self.folder_cleanup.delete_armed = false;
             match result {
                 Ok(message) => {
@@ -940,6 +983,7 @@ impl BackupApp {
         } else if delete_disconnected {
             self.folder_cleanup.delete_receiver = None;
             self.folder_cleanup.is_deleting = false;
+            self.folder_cleanup.delete_started_at = None;
         }
     }
 
@@ -1086,6 +1130,7 @@ impl BackupApp {
 
         if let Some(result) = outcome {
             self.device_probe_receiver = None;
+            self.device_probe_started_at = None;
             match result {
                 Ok(info) => {
                     self.device_info = info.clone();
@@ -1112,6 +1157,7 @@ impl BackupApp {
             }
         } else if disconnected {
             self.device_probe_receiver = None;
+            self.device_probe_started_at = None;
         }
     }
 
@@ -1212,6 +1258,7 @@ impl eframe::App for BackupApp {
         }
 
         crate::ui::nav_rail::render_nav_rail(ctx, self);
+        crate::ui::work_status::render_work_status_bar(ctx, self);
 
         if self.nerd_mode {
             egui::TopBottomPanel::bottom("nerd_log")
@@ -1268,7 +1315,7 @@ impl eframe::App for BackupApp {
                 crate::ui::coming_soon::render_coming_soon_page(ctx, self, "Devices");
             }
             crate::app::AppTab::Settings => {
-                crate::ui::coming_soon::render_coming_soon_page(ctx, self, "Settings");
+                crate::ui::settings_page::render_settings_page(ctx, self);
             }
         }
 

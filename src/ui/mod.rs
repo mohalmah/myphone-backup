@@ -3,5 +3,7 @@ pub mod cleanup_page;
 pub mod coming_soon;
 pub mod dashboard_page;
 pub mod nav_rail;
+pub mod settings_page;
 pub mod theme;
 pub mod widgets;
+pub mod work_status;
